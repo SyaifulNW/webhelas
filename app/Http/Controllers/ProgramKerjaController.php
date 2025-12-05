@@ -224,7 +224,7 @@ public function updateInisiatif(Request $request, $id)
     /**
      * Hapus program kerja & inisiatifnya
      */
-public function deleteInisiatif(Request $request)
+public function destroyInisiatif(Request $request)
 {
     $request->validate([
         'id' => 'required|integer|exists:inisiatifs,id',
