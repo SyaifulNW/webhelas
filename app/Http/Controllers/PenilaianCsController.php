@@ -48,12 +48,56 @@ class PenilaianCsController extends Controller
     $totalOmset         = (clone $query)->where('status', 'sudah_transfer')->sum('nominal');
     $nilaiOmset         = round(($totalOmset / 50000000) * 100);
 
+    // Query Data Penilaian Manual
+    $manual = \App\Models\PenilaianManual::where('user_id', $userId)
+            ->where('bulan', $bulan)
+            ->where('tahun', $tahun)
+            ->first();
+
     return view('admin.penilaian-cs.index', compact(
         'bulan','tahun','userId','daftarCs',
         'countTertarik','countMauTransfer','countSudahTransfer','countNo','countCold',
         'totalDatabase','totalClosing','totalTidakClosing','databaseBaru',
-        'persenClosing','closingTarget','totalOmset','nilaiOmset'
+        'persenClosing','closingTarget','totalOmset','nilaiOmset',
+        'manual'
     ));
+}
+
+public function store(Request $request)
+{
+    $request->validate([
+        'user_id' => 'required',
+        'bulan' => 'required',
+        'tahun' => 'required',
+        'kerajinan' => 'required|integer|min:0|max:100',
+        'kerjasama' => 'required|integer|min:0|max:100',
+        'tanggung_jawab' => 'required|integer|min:0|max:100',
+        'inisiatif' => 'required|integer|min:0|max:100',
+        'komunikasi' => 'required|integer|min:0|max:100',
+    ]);
+
+    // Hitung rata-rata atau total
+    $total = ($request->kerajinan + $request->kerjasama + $request->tanggung_jawab + $request->inisiatif + $request->komunikasi) / 5;
+
+    \App\Models\PenilaianManual::updateOrCreate(
+        [
+            'user_id' => $request->user_id,
+            'bulan' => $request->bulan,
+            'tahun' => $request->tahun,
+        ],
+        [
+            'kerajinan' => $request->kerajinan,
+            'kerjasama' => $request->kerjasama,
+            'tanggung_jawab' => $request->tanggung_jawab,
+            'inisiatif' => $request->inisiatif,
+            'komunikasi' => $request->komunikasi,
+            'total_nilai' => $total,
+            'catatan' => $request->catatan,
+            'created_by' => auth()->id(),
+        ]
+    );
+
+    return redirect()->back()->with('success', 'Penilaian berhasil disimpan.');
 }
 
 }

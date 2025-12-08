@@ -74,6 +74,8 @@ use App\Http\Controllers\PenilaianCsController;
 Route::prefix('admin')->name('admin.')->group(function () {
     Route::get('penilaian-cs', [PenilaianCsController::class, 'index'])
         ->name('penilaian-cs.index');
+    Route::post('penilaian-cs', [PenilaianCsController::class, 'store'])
+        ->name('penilaian-cs.store');
 });
 
 Route::prefix('admin')->name('admin.')->middleware(['auth'])->group(function () {

@@ -122,6 +122,14 @@ class PenilaianController extends Controller
         }
 
         // ============================
+        // 7.b AMBIL NILAI MANUAL (ATASAN)
+        // ============================
+        $manual = \App\Models\PenilaianManual::where('user_id', $csId)
+                    ->where('bulan', $bulanNum)
+                    ->where('tahun', $tahun)
+                    ->first();
+
+        // ============================
         // 8. KIRIM KE VIEW
         // ============================
         return view('admin.penilaian.index', compact(
@@ -137,7 +145,8 @@ class PenilaianController extends Controller
             'labels',
             'scores',
             'historyNilai',
-            'kelasOmsetFiltered'
+            'kelasOmsetFiltered',
+            'manual'
         ));
     }
 

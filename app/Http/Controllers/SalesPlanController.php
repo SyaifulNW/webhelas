@@ -12,54 +12,108 @@ class SalesPlanController extends Controller
 {
 public function index(Request $request)
 {
-    $kelasFilter = $request->input('kelas');
-    $userId      = auth()->id();
-    $perPage     = $request->get('per_page', 100);
+    $kelasFilter  = $request->input('kelas');
+    $csFilter     = $request->input('created_by');
+    $statusFilter = $request->input('status');
+    $userId       = auth()->id();
+    $perPage      = $request->get('per_page', 100);
 
-    // 🔥 Dropdown kelas
+    // Dropdown data
     $kelasList = Kelas::all();
+    $csList    = User::orderBy('name', 'asc')->get();
 
-    // 🔥 Dropdown CS (tambahkan ini)
-    $csList = User::orderBy('name', 'asc')->get();
 
-    // Query Salesplan
+    // =====================================================
+    // 🔥 JIKA ADMIN BELUM MEMFILTER → JANGAN TAMPILKAN DATA
+    // =====================================================
+    $isAdmin = in_array($userId, [1, 13]);
+    $noFilter = empty($kelasFilter) && empty($csFilter) && empty($statusFilter);
+
+    if ($isAdmin && $noFilter) {
+
+        return view('admin.salesplan.index', [
+            'salesplans'      => collect(),  // kosongkan
+            'pesertaTransfer' => collect(),  // kosongkan
+            'kelasList'       => $kelasList,
+            'csList'          => $csList,
+            'kelasFilter'     => $kelasFilter,
+            'csFilter'        => $csFilter,
+            'statusFilter'    => $statusFilter,
+            'salesplansByCS'  => collect(),  // kosongkan
+            'message'         => "Silakan pilih filter untuk menampilkan data."
+        ]);
+    }
+
+
+    // ======================================
+    // 🔥 QUERY UTAMA SALESPLAN
+    // ======================================
     $salesplans = SalesPlan::with('kelas')
+
         ->when($kelasFilter, function ($query) use ($kelasFilter) {
             $query->whereHas('kelas', function ($sub) use ($kelasFilter) {
                 $sub->where('nama_kelas', $kelasFilter);
             });
         })
-        ->when($userId !== 1, function ($query) use ($userId) {
+
+        ->when($csFilter, function ($query) use ($csFilter) {
+            $query->where('created_by', $csFilter);
+        })
+
+        ->when($statusFilter, function ($query) use ($statusFilter) {
+            $query->where('status', $statusFilter);
+        })
+
+        ->when(! $isAdmin, function ($query) use ($userId) {
             $query->where('created_by', $userId);
         })
+
         ->paginate($perPage);
 
-    // Peserta transfer
+
+    // ======================================
+    // 🔥 PESERTA TRANSFER
+    // ======================================
     $pesertaTransfer = SalesPlan::where('status', 'sudah_transfer')
-        ->when($userId !== 1, fn($q) => $q->where('created_by', $userId))
-        ->when($kelasFilter, function ($q) use ($kelasFilter) {
-            $q->whereHas('kelas', fn($s) => $s->where('nama_kelas', $kelasFilter));
+
+        ->when($kelasFilter, function ($query) use ($kelasFilter) {
+            $query->whereHas('kelas', function ($sub) use ($kelasFilter) {
+                $sub->where('nama_kelas', $kelasFilter);
+            });
         })
+
+        ->when($csFilter, function ($query) use ($csFilter) {
+            $query->where('created_by', $csFilter);
+        })
+
+        ->when(! $isAdmin, function ($query) use ($userId) {
+            $query->where('created_by', $userId);
+        })
+
         ->get();
 
-    // Group by CS
+
     $salesplansByCS = $salesplans->groupBy('created_by');
+
 
     return view('admin.salesplan.index', [
         'salesplans'      => $salesplans,
-        'kelasList'       => $kelasList,
-        'kelasFilter'     => $kelasFilter,
         'pesertaTransfer' => $pesertaTransfer,
+        'kelasList'       => $kelasList,
+        'csList'          => $csList,
+        'kelasFilter'     => $kelasFilter,
+        'csFilter'        => $csFilter,
+        'statusFilter'    => $statusFilter,
         'salesplansByCS'  => $salesplansByCS,
-        'csList'          => $csList,    // <= WAJIB dikirim
         'message'         => null
     ]);
 }
 
 
 
+
     /**
-     * FILTER — sekarang tetep kirim variabel yang sama seperti index()
+     * FILTER â€” sekarang tetep kirim variabel yang sama seperti index()
      */
     public function filter($kelas)
     {
@@ -69,7 +123,7 @@ public function index(Request $request)
 
 
     /**
-     * SEARCH — tetep kirim variabel view yang sama
+     * SEARCH â€” tetep kirim variabel view yang sama
      */
     public function search(Request $request)
     {

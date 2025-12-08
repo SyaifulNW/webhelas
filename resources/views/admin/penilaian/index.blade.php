@@ -153,6 +153,60 @@
         </div>
     </div>
 
+    {{-- ================== TABEL PENILAIAN MANUAL (ATASAN) ================== --}}
+    @if(isset($manual))
+    <div class="card shadow-lg border-0 mt-4">
+        <div class="card-header bg-primary text-white text-center fw-bold fs-5">
+            PENILAIAN KUALITATIF (OLEH ATASAN)
+        </div>
+        <div class="card-body p-0">
+            <table class="table table-bordered table-striped table-hover mb-0 align-middle">
+                <thead class="table-primary text-center">
+                    <tr>
+                        <th>Aspek</th>
+                        <th>Nilai (0-100)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="fw-bold">Kerajinan</td>
+                        <td class="text-center">{{ $manual->kerajinan }}</td>
+                    </tr>
+                    <tr>
+                        <td class="fw-bold">Kerjasama</td>
+                        <td class="text-center">{{ $manual->kerjasama }}</td>
+                    </tr>
+                    <tr>
+                        <td class="fw-bold">Tanggung Jawab</td>
+                        <td class="text-center">{{ $manual->tanggung_jawab }}</td>
+                    </tr>
+                    <tr>
+                        <td class="fw-bold">Inisiatif</td>
+                        <td class="text-center">{{ $manual->inisiatif }}</td>
+                    </tr>
+                    <tr>
+                        <td class="fw-bold">Komunikasi</td>
+                        <td class="text-center">{{ $manual->komunikasi }}</td>
+                    </tr>
+                </tbody>
+                <tfoot>
+                    <tr class="table-info fw-bold">
+                        <td class="text-end">RATA-RATA</td>
+                        <td class="text-center">{{ $manual->total_nilai }}</td>
+                    </tr>
+                    <tr>
+                        <td colspan="2" class="p-3">
+                            <strong>Catatan Atasan:</strong><br>
+                            <em>{{ $manual->catatan ?? '-' }}</em>
+                        </td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+    @endif
+</div>
+
 
 
 <div class="nilai-wrapper" style="

@@ -577,6 +577,84 @@
       
         <input type="text" id="searchSalesPlan" class="form-control" placeholder="Cari nama peserta...">
     </div>
+    
+    
+  <!-- FILTER STATUS (Modern Style) -->
+
+
+
+        <form method="GET" class="d-flex">
+
+            <input type="hidden" name="kelas" value="{{ request('kelas') }}">
+
+            <select name="status" id="status_filter"
+                class="form-select filter-select"
+                onchange="this.form.submit()">
+
+                <option value="">🔍 Semua Status</option>
+
+                <option value="cold" {{ request('status') == 'cold' ? 'selected' : '' }}>
+                    ⚪ Cold 
+                </option>
+
+                <option value="tertarik" {{ request('status') == 'tertarik' ? 'selected' : '' }}>
+                    🟡 Tertarik 
+                </option>
+
+                <option value="mau_transfer" {{ request('status') == 'mau_transfer' ? 'selected' : '' }}>
+                    🟢 Mau Transfer 
+                </option>
+
+                <option value="sudah_transfer" {{ request('status') == 'sudah_transfer' ? 'selected' : '' }}>
+                    🔵 Sudah Transfer 
+                </option>
+
+                <option value="no" {{ request('status') == 'no' ? 'selected' : '' }}>
+                    🔴 No 
+                </option>
+
+            </select>
+        </form>
+
+    
+
+
+<style>
+    /* Card ringan pembungkus */
+    .filter-container {
+        background: #ffffff;
+        border-radius: 12px;
+        border-left: 5px solid #ffb300;
+        transition: 0.2s ease-in-out;
+    }
+
+    .filter-container:hover {
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+        transform: translateY(-1px);
+    }
+
+    /* Select Style */
+    .filter-select {
+        min-width: 230px;
+        padding: 8px 12px;
+        border-radius: 10px;
+        border: 1px solid #ddd;
+        transition: 0.2s ease-in-out;
+        background-color: #fafafa;
+        cursor: pointer;
+    }
+
+    .filter-select:hover {
+        box-shadow: 0 0 8px rgba(255, 179, 0, 0.4);
+        border-color: #ffb300;
+    }
+
+    .filter-select:focus {
+        border-color: #ffb300;
+        box-shadow: 0 0 8px rgba(255, 179, 0, 0.6);
+    }
+</style>
+    
 </div>
 
 
