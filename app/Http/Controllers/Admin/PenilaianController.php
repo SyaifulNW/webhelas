@@ -59,12 +59,12 @@ class PenilaianController extends Controller
         $totalOmset = $kelasOmsetFiltered->sum('omset');
 
         // ============================
-        // 2. NILAI OMSET
+        // 2. NILAI OMSET (40%)
         // ============================
         $nilaiOmset = min(40, intval($totalOmset / 50000000 * 40));
 
         // ============================
-        // 3. CLOSING PAKET
+        // 3. CLOSING PAKET (20%)
         // ============================
         $closingPaket = SalesPlan::where('created_by', $csId)
             ->where('closing_paket', 1)
@@ -72,25 +72,53 @@ class PenilaianController extends Controller
             ->whereMonth('updated_at', $bulanNum)
             ->count();
 
-        $nilaiClosingPaket = min(30, $closingPaket * 15);
+        // Target: 2 Paket = 20 Poin (10 poin/paket)
+        // Jika closing 1 = 10, closing 2 = 20.
+        $nilaiClosingPaket = min(20, $closingPaket * 10);
 
         // ============================
-        // 4. DATABASE BARU
+        // 4. DATABASE BARU (20%)
         // ============================
         $databaseBaru = Data::where('created_by', $namaUserData)
             ->whereYear('created_at', $tahun)
             ->whereMonth('created_at', $bulanNum)
             ->count();
 
-        $nilaiDatabaseBaru = min(30, intval($databaseBaru / 50 * 30));
+        // Target: 50 Database = 20 Poin
+        $nilaiDatabaseBaru = min(20, intval($databaseBaru / 50 * 20));
 
         // ============================
-        // 5. TOTAL NILAI
+        // 5. NILAI MANUAL (20%)
         // ============================
-        $totalNilai = $nilaiOmset + $nilaiClosingPaket + $nilaiDatabaseBaru;
+        $manual = \App\Models\PenilaianManual::where('user_id', $csId)
+                    ->where('bulan', $bulanNum)
+                    ->where('tahun', $tahun)
+                    ->first();
+
+        $nilaiManualPart = 0;
+        $totalSumManual = 0; // Inisialisasi variabel total sum
+
+        if ($manual) {
+            // Hitung Total Sum dari 5 aspek
+            $totalSumManual = $manual->kerajinan + 
+                              $manual->kerjasama + 
+                              $manual->tanggung_jawab + 
+                              $manual->inisiatif + 
+                              $manual->komunikasi;
+
+            // Konversi ke bobot 20 (Total Sum / 500 * 20)
+            $nilaiManualPart = round(($totalSumManual / 500) * 20); 
+        }
 
         // ============================
-        // 6. CHART 6 BULAN (REAL)
+        // 6. TOTAL NILAI (SUM)
+        // ============================
+        $totalNilai = $nilaiOmset + $nilaiClosingPaket + $nilaiDatabaseBaru + $nilaiManualPart;
+        
+        $nilaiSistem = $nilaiOmset + $nilaiClosingPaket + $nilaiDatabaseBaru; // Untuk info saja
+
+        // ============================
+        // 7. CHART & HISTORY
         // ============================
         $labels = [];
         $scores = [];
@@ -107,9 +135,6 @@ class PenilaianController extends Controller
             );
         }
 
-        // ============================
-        // 7. HISTORY NILAI 12 BULAN
-        // ============================
         $historyNilai = array_fill(1, 12, 0);
 
         for ($m = 1; $m <= 12; $m++) {
@@ -120,14 +145,6 @@ class PenilaianController extends Controller
                 $tahun
             );
         }
-
-        // ============================
-        // 7.b AMBIL NILAI MANUAL (ATASAN)
-        // ============================
-        $manual = \App\Models\PenilaianManual::where('user_id', $csId)
-                    ->where('bulan', $bulanNum)
-                    ->where('tahun', $tahun)
-                    ->first();
 
         // ============================
         // 8. KIRIM KE VIEW
@@ -142,6 +159,9 @@ class PenilaianController extends Controller
             'databaseBaru',
             'nilaiDatabaseBaru',
             'totalNilai',
+            'nilaiSistem',
+            'nilaiManualPart',
+            'totalSumManual', // Kirim total sum ke view
             'labels',
             'scores',
             'historyNilai',
@@ -156,7 +176,7 @@ class PenilaianController extends Controller
     // ======================================================
     private function hitungTotalNilai($csId, $namaUserData, $bulan, $tahun)
     {
-        // OMSET
+        // OMSET (40%)
         $kelasOmset = Kelas::whereYear('tanggal_mulai', $tahun)
             ->whereMonth('tanggal_mulai', $bulan)
             ->with(['salesplans' => function ($q) use ($csId, $tahun, $bulan) {
@@ -169,24 +189,36 @@ class PenilaianController extends Controller
         $totalOmset = $kelasOmset->sum(fn ($k) => $k->salesplans->sum('nominal'));
         $nilaiOmset = min(40, intval($totalOmset / 50000000 * 40));
 
-        // CLOSING PAKET
+        // CLOSING PAKET (20%)
         $closing = SalesPlan::where('created_by', $csId)
             ->where('closing_paket', 1)
             ->whereYear('updated_at', $tahun)
             ->whereMonth('updated_at', $bulan)
             ->count();
 
-        $nilaiClosing = min(30, $closing * 15);
+        $nilaiClosing = min(20, $closing * 10);
 
-        // DATABASE BARU
+        // DATABASE BARU (20%)
         $dbBaru = Data::where('created_by', $namaUserData)
             ->whereYear('created_at', $tahun)
             ->whereMonth('created_at', $bulan)
             ->count();
 
-        $nilaiDb = min(30, intval($dbBaru / 50 * 30));
+        $nilaiDb = min(20, intval($dbBaru / 50 * 20));
 
-        return $nilaiOmset + $nilaiClosing + $nilaiDb;
+        // MANUAL (20%)
+        $manual = \App\Models\PenilaianManual::where('user_id', $csId)
+                    ->where('bulan', $bulan)
+                    ->where('tahun', $tahun)
+                    ->first();
+
+        $nilaiManualPart = 0;
+        if ($manual) {
+            $sum = $manual->kerajinan + $manual->kerjasama + $manual->tanggung_jawab + $manual->inisiatif + $manual->komunikasi;
+            $nilaiManualPart = round(($sum / 500) * 20);
+        }
+
+        return $nilaiOmset + $nilaiClosing + $nilaiDb + $nilaiManualPart;
     }
 
 

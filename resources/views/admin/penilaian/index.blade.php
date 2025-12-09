@@ -126,8 +126,8 @@
                     <tr>
                         <td class="text-center fw-bold">2</td>
                         <td class="fw-bold">Closing Paket</td>
-                        <td>Minimal 1 closing paket per bulan</td>
-                        <td class="text-center fw-bold">30%</td>
+                        <td>Target 1 closing paket per bulan</td>
+                        <td class="text-center fw-bold">20%</td>
                         <td class="fw-bold">{{ $closingPaket }} peserta</td>
                         <td class="text-center fw-bold">{{ $nilaiClosingPaket }}</td>
                     </tr>
@@ -137,9 +137,25 @@
                         <td class="text-center fw-bold">3</td>
                         <td class="fw-bold">Database Baru</td>
                         <td>Target 50 database baru</td>
-                        <td class="text-center fw-bold">30%</td>
+                        <td class="text-center fw-bold">20%</td>
                         <td class="fw-bold">{{ $databaseBaru }}</td>
                         <td class="text-center fw-bold">{{ $nilaiDatabaseBaru }}</td>
+                    </tr>
+
+                    {{-- 4 --}}
+                    @php
+                        $totalSumManual = 0;
+                        if(isset($manual)){
+                            $totalSumManual = $manual->kerajinan + $manual->kerjasama + $manual->tanggung_jawab + $manual->inisiatif + $manual->komunikasi;
+                        }
+                    @endphp
+                    <tr>
+                        <td class="text-center fw-bold">4</td>
+                        <td class="fw-bold">Penilaian Atasan</td>
+                        <td>Total Skor Kualitatif (Max 500)</td>
+                        <td class="text-center fw-bold">20%</td>
+                        <td class="fw-bold">{{ $totalSumManual }}</td>
+                        <td class="text-center fw-bold">{{ $nilaiManualPart ?? 0 }}</td>
                     </tr>
                 </tbody>
 
@@ -191,7 +207,11 @@
                 </tbody>
                 <tfoot>
                     <tr class="table-info fw-bold">
-                        <td class="text-end">RATA-RATA</td>
+                        <td class="text-end">TOTAL SKOR</td>
+                        <td class="text-center">{{ $totalSumManual }}</td>
+                    </tr>
+                    <tr class="table-warning fw-bold">
+                        <td class="text-end">RATA-RATA NILAI</td>
                         <td class="text-center">{{ $manual->total_nilai }}</td>
                     </tr>
                     <tr>
@@ -505,12 +525,6 @@ motivasi.innerHTML = `
     @endforeach
 
 </div>
-
-
-
-
-
-
 
 </div>
 

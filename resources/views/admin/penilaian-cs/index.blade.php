@@ -9,7 +9,7 @@
         <!-- Card Filter -->
         <div class="card shadow mb-4">
             <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                <h6 class="m-0 font-weight-bold text-primary">Filter CS & Periode</h6>
+                <h6 class="m-0 font-weight-bold text-primary">Filter Karyawan & Periode</h6>
             </div>
             <div class="card-body">
                 <form method="GET" action="{{ route('admin.penilaian-cs.index') }}">
@@ -151,22 +151,27 @@
                 </div>
 
                 <hr>
-                
-                <h5 class="small font-weight-bold">Persentase Closing <span class="float-right">{{ $persenClosing }}%</span></h5>
-                <div class="progress mb-4">
-                    <div class="progress-bar bg-info" role="progressbar" style="width: {{ $persenClosing }}%" aria-valuenow="{{ $persenClosing }}" aria-valuemin="0" aria-valuemax="100"></div>
-                </div>
-
-                <h5 class="small font-weight-bold">Closing Target Achievement <span class="float-right">{{ $closingTarget }}%</span></h5>
+                      <h5 class="small font-weight-bold">Total Closing  ({{ $totalClosing }} / 30) <span class="float-right">{{ $closingTarget }}%</span></h5>
                 <div class="progress mb-4">
                     <div class="progress-bar bg-success" role="progressbar" style="width: {{ $closingTarget }}%" aria-valuenow="{{ $closingTarget }}" aria-valuemin="0" aria-valuemax="100"></div>
                 </div>
-
-                <h5 class="small font-weight-bold">Pencapaian Omset <span class="float-right">{{ $nilaiOmset }}%</span></h5>
+                
+                <h5 class="small font-weight-bold">Closing Paket 0 <span class="float-right">0%</span></h5>
                 <div class="progress mb-4">
-                    <div class="progress-bar bg-warning" role="progressbar" style="width: {{ $nilaiOmset }}%" aria-valuenow="{{ $nilaiOmset }}" aria-valuemin="0" aria-valuemax="100"></div>
+                    <div class="progress-bar bg-success" role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
                 </div>
 
+                <h5 class="small font-weight-bold">Pencapaian Omset <span class="float-right">{{ $nilaiOmset }}%</span></h5>
+                <div class="progress mb-2">
+                    <div class="progress-bar bg-warning" role="progressbar" style="width: {{ $nilaiOmset }}%" aria-valuenow="{{ $nilaiOmset }}" aria-valuemin="0" aria-valuemax="100"></div>
+                </div>
+                <div class="text-right font-weight-bold text-gray-800 mb-4">
+                    Omset Bulan Ini: Rp {{ number_format($totalOmset, 0, ',', '.') }}
+                </div>
+                <div class="text-right font-weight-bold text-gray-800 mb-4">
+                    Target Omset: Rp {{ number_format($targetOmset, 0, ',', '.') }}
+                </div>
+<!-- 
                 <div class="mt-4 text-center small">
                     <span class="mr-2">
                         <i class="fas fa-circle text-primary"></i> Tertarik: {{ $countTertarik }}
@@ -180,7 +185,7 @@
                     <span class="mr-2">
                         <i class="fas fa-circle text-danger"></i> No: {{ $countNo }}
                     </span>
-                </div>
+                </div> -->
 
             </div>
         </div>

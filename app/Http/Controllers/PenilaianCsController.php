@@ -24,29 +24,50 @@ class PenilaianCsController extends Controller
 
     $daftarCs = User::orderBy('name')->get();
 
-    $query = SalesPlan::where('created_by', $userId)
-        ->whereYear('tanggal', $tahun)
-        ->whereMonth('tanggal', $bulan);
+    $userTarget = User::find($userId);
+    $namaUser = $userTarget->name ?? '';
 
-    // STATUS COUNTS
-    $countTertarik      = (clone $query)->where('status', 'tertarik')->count();
-    $countMauTransfer   = (clone $query)->where('status', 'mau_transfer')->count();
-    $countSudahTransfer = (clone $query)->where('status', 'sudah_transfer')->count();
-    $countNo            = (clone $query)->where('status', 'no')->count();
-    $countCold          = (clone $query)->where('status', 'cold')->count();
+    // 1. TOTAL DATABASE (dari input Data baru bulan ini)
+    // Asumsi: created_by di tabel 'data' menyimpan NAMA user (sesuai history percakapan sebelumnya)
+    // Jika menyimpan ID, ganti ke $userId. Mari kita coba pakai Nama dulu karena di DataController biasanya store nama.
+    // Tapi wait, di Data.php ada relasi createdBy ke User class, berarti harusnya ID.
+    // Namun di step 34 PenilaianController.php ada: $databaseBaru = Data::where('created_by', $namaUserData)...
+    // Jadi likely di tabel data kolom created_by itu STRING NAMA.
+    $totalDatabase = \App\Models\Data::where('created_by', $namaUser)
+        ->whereYear('created_at', $tahun)
+        ->whereMonth('created_at', $bulan)
+        ->count();
 
-    // PERHITUNGAN
-    $totalDatabase      = $countTertarik + $countMauTransfer + $countSudahTransfer + $countNo + $countCold;
-    $totalClosing       = $countSudahTransfer;
-    $totalTidakClosing  = $totalDatabase - $totalClosing;
-    $databaseBaru       = $countTertarik + $countMauTransfer + $countCold;
+    // 2. TOTAL CLOSING (SalesPlan kategori sudah transfer)
+    $totalClosing = SalesPlan::where('created_by', $userId)
+        ->whereYear('updated_at', $tahun)
+        ->whereMonth('updated_at', $bulan)
+        ->where('status', 'sudah_transfer')
+        ->count();
 
-    $persenClosing      = $totalDatabase > 0 ? round(($totalClosing / $totalDatabase) * 100) : 0;
-    $closingTarget      = round(($totalClosing / 30) * 100);
+    // 3. PERSENTASE CLOSING
+    $persenClosing = $totalDatabase > 0 ? round(($totalClosing / $totalDatabase) * 100) : 0;
 
-    // OMSET
-    $totalOmset         = (clone $query)->where('status', 'sudah_transfer')->sum('nominal');
-    $nilaiOmset         = round(($totalOmset / 50000000) * 100);
+    // 4. CLOSING TARGET ACHIEVEMENT (Target misal 30)
+    $targetClosingBulanan = 30; // Bisa disesuaikan
+    $closingTarget = round(($totalClosing / $targetClosingBulanan) * 100);
+
+    // 5. PENCAPAIAN OMSET
+    $totalOmset = SalesPlan::where('created_by', $userId)
+        ->whereYear('updated_at', $tahun)
+        ->whereMonth('updated_at', $bulan)
+        ->where('status', 'sudah_transfer')
+        ->sum('nominal');
+    
+    $targetOmset = 50000000; // 50 Juta
+    $nilaiOmset = round(($totalOmset / $targetOmset) * 100);
+
+    // Variabel lain untuk view (opsional, sesuaikan dg view)
+    $countTertarik      = SalesPlan::where('created_by', $userId)->whereYear('updated_at', $tahun)->whereMonth('updated_at', $bulan)->where('status', 'tertarik')->count();
+    $countMauTransfer   = SalesPlan::where('created_by', $userId)->whereYear('updated_at', $tahun)->whereMonth('updated_at', $bulan)->where('status', 'mau_transfer')->count();
+    $countSudahTransfer = $totalClosing;
+    $countNo            = SalesPlan::where('created_by', $userId)->whereYear('updated_at', $tahun)->whereMonth('updated_at', $bulan)->where('status', 'no')->count();
+    $countCold          = SalesPlan::where('created_by', $userId)->whereYear('updated_at', $tahun)->whereMonth('updated_at', $bulan)->where('status', 'cold')->count();
 
     // Query Data Penilaian Manual
     $manual = \App\Models\PenilaianManual::where('user_id', $userId)
@@ -56,9 +77,9 @@ class PenilaianCsController extends Controller
 
     return view('admin.penilaian-cs.index', compact(
         'bulan','tahun','userId','daftarCs',
+        'totalDatabase','totalClosing',
+        'persenClosing','closingTarget','totalOmset','nilaiOmset','targetOmset',
         'countTertarik','countMauTransfer','countSudahTransfer','countNo','countCold',
-        'totalDatabase','totalClosing','totalTidakClosing','databaseBaru',
-        'persenClosing','closingTarget','totalOmset','nilaiOmset',
         'manual'
     ));
 }
