@@ -345,6 +345,7 @@ private function filterKelasByUser($user)
         $salesPlan->situasi_bisnis      = $data->situasi_bisnis; // dari tabel peserta
         $salesPlan->kendala      = $data->kendala;       // dari tabel peserta
         $salesPlan->kelas_id     = $data->kelas_id;
+       $salesPlan->data_id      = $data->id; // Link ke data asli 
         $salesPlan->created_by   = auth()->id();
         $salesPlan->status       = 'cold'; // default awal
 

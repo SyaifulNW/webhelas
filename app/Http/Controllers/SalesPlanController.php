@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\SalesPlan;
 use App\Models\Kelas;
 use App\Models\User;
+use App\Models\Data;
 use Rap2hpoutre\FastExcel\FastExcel;
 
 class SalesPlanController extends Controller
@@ -52,7 +53,7 @@ class SalesPlanController extends Controller
     // ======================================
     // 🔥 QUERY UTAMA SALESPLAN
     // ======================================
-    $salesplans = SalesPlan::with('kelas')
+    $salesplans = SalesPlan::with(['kelas', 'data'])
 
         ->when($kelasFilter, function ($query) use ($kelasFilter) {
             $query->whereHas('kelas', function ($sub) use ($kelasFilter) {
@@ -108,6 +109,10 @@ class SalesPlanController extends Controller
 
     $salesplansByCS = $salesplans->groupBy('created_by');
 
+    // Fallback: Ambil data berdasarkan nama jika data_id null (untuk data lama)
+    $names = $salesplans->pluck('nama')->filter()->toArray();
+    $dataMap = Data::whereIn('nama', $names)->get()->keyBy('nama');
+
 
     return view('admin.salesplan.index', [
         'salesplans'      => $salesplans,
@@ -121,6 +126,7 @@ class SalesPlanController extends Controller
         'bulanFilter'     => $bulanFilter,
         'tahunFilter'     => $tahunFilter,
         'salesplansByCS'  => $salesplansByCS,
+        'dataMap'         => $dataMap,
         'message'         => null
     ]);
 }
@@ -147,7 +153,7 @@ class SalesPlanController extends Controller
 
         $kelasList = Kelas::all();
 
-        $salesplans = SalesPlan::with('kelas')
+        $salesplans = SalesPlan::with(['kelas', 'data'])
             ->where('nama', 'like', "%$q%")
             ->orWhereHas('kelas', fn($q2) => $q2->where('nama_kelas', 'like', "%$q%"))
             ->paginate(100);
@@ -156,12 +162,17 @@ class SalesPlanController extends Controller
         $pesertaTransfer = collect([]);
         $salesplansByCS  = $salesplans->groupBy('created_by');
 
+        // Fallback: Ambil data berdasarkan nama
+        $names = $salesplans->pluck('nama')->filter()->toArray();
+        $dataMap = Data::whereIn('nama', $names)->get()->keyBy('nama');
+
         return view('admin.salesplan.index', [
             'salesplans'      => $salesplans,
             'kelasList'       => $kelasList,
             'kelasFilter'     => $kelasFilter,
             'pesertaTransfer' => $pesertaTransfer,
             'salesplansByCS'  => $salesplansByCS,
+            'dataMap'         => $dataMap,
             'message'         => "Hasil pencarian: $q"
         ]);
     }

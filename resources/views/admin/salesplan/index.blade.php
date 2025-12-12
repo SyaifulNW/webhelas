@@ -498,6 +498,15 @@
     .table th, .table td { vertical-align: middle; }
 .progress { background-color: #e9ecef; border-radius: 10px; }
 .progress-bar { border-radius: 10px; transition: width 0.6s ease; }
+
+/* Custom Badge Colors for Leads */
+.badge-leads-iklan { background-color: #28a745; color: white; } /* Hijau */
+.badge-leads-instagram { background-color: #6f42c1; color: white; } /* Ungu */
+.badge-leads-facebook { background-color: #0d6efd; color: white; } /* Biru */
+.badge-leads-alumni { background-color: #dc3545; color: white; } /* Merah */
+.badge-leads-marketing { background-color: #ffc107; color: black; } /* Kuning */
+.badge-leads-lain { background-color: #6c757d; color: white; } /* Abu-abu */
+
 </style>
 
 
@@ -697,6 +706,7 @@ $(document).ready(function() {
                         <tr>
                             <th rowspan="3">No</th>
                             <th rowspan="3">Nama</th>
+                            <th rowspan="3">Sumber Leads</th>
                          <th rowspan="3">
     {{ $kelasFilter == 'Start-Up Muda Indonesia' ? 'Situasi Anak' : 'Situasi Bisnis' }}
 </th>
@@ -763,6 +773,28 @@ $(document).ready(function() {
     @endif">
                             <td class="text-center">{{ $loop->iteration }}</td>
                             <td>{{ $plan->nama ?? '-' }}</td>
+                            @php
+                                $leadSource = $plan->data->leads ?? ($dataMap[$plan->nama]->leads ?? '-');
+                                $leadLower = strtolower($leadSource);
+                                $badgeClass = 'badge-leads-lain'; // Default abu-abu
+
+                                if (str_contains($leadLower, 'iklan')) {
+                                    $badgeClass = 'badge-leads-iklan';
+                                } elseif (str_contains($leadLower, 'instagram') || str_contains($leadLower, 'ig')) {
+                                    $badgeClass = 'badge-leads-instagram';
+                                } elseif (str_contains($leadLower, 'facebook') || str_contains($leadLower, 'fb')) {
+                                    $badgeClass = 'badge-leads-facebook';
+                                } elseif (str_contains($leadLower, 'alumni')) {
+                                    $badgeClass = 'badge-leads-alumni';
+                                } elseif (str_contains($leadLower, 'marketing')) {
+                                    $badgeClass = 'badge-leads-marketing';
+                                }
+                            @endphp
+                            <td>
+                                <span class="badge {{ $badgeClass }}">
+                                    {{ $leadSource }}
+                                </span>
+                            </td>
                             <td>{{ $plan->situasi_bisnis ?? '-' }}</td>
                             <td>{{ $plan->kendala ?? '-' }}</td>
 
