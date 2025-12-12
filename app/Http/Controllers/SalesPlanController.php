@@ -10,13 +10,16 @@ use Rap2hpoutre\FastExcel\FastExcel;
 
 class SalesPlanController extends Controller
 {
-public function index(Request $request)
-{
-    $kelasFilter  = $request->input('kelas');
-    $csFilter     = $request->input('created_by');
-    $statusFilter = $request->input('status');
-    $userId       = auth()->id();
-    $perPage      = $request->get('per_page', 100);
+    public function index(Request $request)
+    {
+        $kelasFilter  = $request->input('kelas');
+        $csFilter     = $request->input('created_by');
+        $statusFilter = $request->input('status');
+        $bulanFilter  = $request->input('bulan');
+        $tahunFilter  = $request->input('tahun', date('Y')); // Default tahun ini
+
+        $userId       = auth()->id();
+        $perPage      = $request->get('per_page', 100);
 
     // Dropdown data
     $kelasList = Kelas::all();
@@ -39,6 +42,7 @@ public function index(Request $request)
             'kelasFilter'     => $kelasFilter,
             'csFilter'        => $csFilter,
             'statusFilter'    => $statusFilter,
+            'bulanFilter'     => $bulanFilter,
             'salesplansByCS'  => collect(),  // kosongkan
             'message'         => "Silakan pilih filter untuk menampilkan data."
         ]);
@@ -62,6 +66,11 @@ public function index(Request $request)
 
         ->when($statusFilter, function ($query) use ($statusFilter) {
             $query->where('status', $statusFilter);
+        })
+
+        ->when($bulanFilter, function ($query) use ($bulanFilter, $tahunFilter) {
+            $query->whereMonth('updated_at', $bulanFilter)
+                  ->whereYear('updated_at', $tahunFilter);
         })
 
         ->when(! $isAdmin, function ($query) use ($userId) {
@@ -90,6 +99,10 @@ public function index(Request $request)
             $query->where('created_by', $userId);
         })
 
+        ->when($bulanFilter, function ($query) use ($bulanFilter, $tahunFilter) {
+            $query->whereMonth('updated_at', $bulanFilter)
+                  ->whereYear('updated_at', $tahunFilter);
+        })
         ->get();
 
 
@@ -103,7 +116,10 @@ public function index(Request $request)
         'csList'          => $csList,
         'kelasFilter'     => $kelasFilter,
         'csFilter'        => $csFilter,
+        'csFilter'        => $csFilter,
         'statusFilter'    => $statusFilter,
+        'bulanFilter'     => $bulanFilter,
+        'tahunFilter'     => $tahunFilter,
         'salesplansByCS'  => $salesplansByCS,
         'message'         => null
     ]);

@@ -38,7 +38,7 @@
 <div class="container mt-4">
 
     {{-- ================== JUDUL ================== --}}
-    <h3 class="fw-bold mb-3 text-center">Penilaian Hasil CS MBC</h3>
+    <h3 class="fw-bold mb-3 text-center">Penilaian Hasil CS</h3>
     {{-- ================== FILTER BULAN ================== --}}
 <form method="GET" class="mb-3 d-flex justify-content-center" style="gap: 10px;">
     <select name="bulan" class="form-select w-auto" onchange="this.form.submit()">
@@ -75,7 +75,7 @@
 
     {{-- ================== PROGRESS BAR TOTAL ================== --}}
     @php
-        $totalNilai = ($nilaiOmset ?? 0) + ($nilaiClosingPaket ?? 0) + ($nilaiDatabaseBaru ?? 0);
+        // Gunakan variable totalNilai dari controller
         $persen = ($totalNilai / 100) * 100;
         $warna = $totalNilai >= 80 ? 'bg-success' : ($totalNilai >= 60 ? 'bg-warning' : 'bg-danger');
     @endphp
@@ -95,7 +95,7 @@
     {{-- ================== TABEL PENILAIAN ================== --}}
     <div class="card shadow-lg border-0 mt-4">
         <div class="card-header bg-success text-white text-center fw-bold fs-5">
-            PENILAIAN HASIL (CS MBC)
+            PENILAIAN HASIL cs
         </div>
 
         <div class="card-body p-0">
@@ -112,9 +112,10 @@
                 </thead>
 
                 <tbody class="text-dark">
+                    @php $no = 1; @endphp
                     {{-- 1 --}}
                     <tr>
-                        <td class="text-center fw-bold">1</td>
+                        <td class="text-center fw-bold">{{ $no++ }}</td>
                         <td class="fw-bold">Penjualan & Omset</td>
                         <td>Target Rp 50 juta/bulan</td>
                         <td class="text-center fw-bold">40%</td>
@@ -122,22 +123,24 @@
                         <td class="text-center fw-bold">{{ $nilaiOmset }}</td>
                     </tr>
 
-                    {{-- 2 --}}
+                    {{-- 2 (Closing Paket - Hide for cs-smi) --}}
+                    @if(auth()->user()->role !== 'cs-smi')
                     <tr>
-                        <td class="text-center fw-bold">2</td>
+                        <td class="text-center fw-bold">{{ $no++ }}</td>
                         <td class="fw-bold">Closing Paket</td>
                         <td>Target 1 closing paket per bulan</td>
                         <td class="text-center fw-bold">20%</td>
                         <td class="fw-bold">{{ $closingPaket }} peserta</td>
                         <td class="text-center fw-bold">{{ $nilaiClosingPaket }}</td>
                     </tr>
+                    @endif
 
                     {{-- 3 --}}
                     <tr>
-                        <td class="text-center fw-bold">3</td>
+                        <td class="text-center fw-bold">{{ $no++ }}</td>
                         <td class="fw-bold">Database Baru</td>
                         <td>Target 50 database baru</td>
-                        <td class="text-center fw-bold">20%</td>
+                        <td class="text-center fw-bold">{{ auth()->user()->role == 'cs-smi' ? '30%' : '20%' }}</td>
                         <td class="fw-bold">{{ $databaseBaru }}</td>
                         <td class="text-center fw-bold">{{ $nilaiDatabaseBaru }}</td>
                     </tr>
@@ -150,10 +153,10 @@
                         }
                     @endphp
                     <tr>
-                        <td class="text-center fw-bold">4</td>
+                        <td class="text-center fw-bold">{{ $no++ }}</td>
                         <td class="fw-bold">Penilaian Atasan</td>
                         <td>Total Skor Kualitatif (Max 500)</td>
-                        <td class="text-center fw-bold">20%</td>
+                        <td class="text-center fw-bold">{{ auth()->user()->role == 'cs-smi' ? '30%' : '20%' }}</td>
                         <td class="fw-bold">{{ $totalSumManual }}</td>
                         <td class="text-center fw-bold">{{ $nilaiManualPart ?? 0 }}</td>
                     </tr>
@@ -482,15 +485,19 @@ motivasi.innerHTML = `
         @php
             $nilai = $historyNilai[$m] ?? 0;
 
-            // kategori warna
-            if($nilai >= 85){
-                $warna = "#22c55e"; // hijau
-            } elseif($nilai >= 70){
-                $warna = "#eab308"; // kuning
-            } elseif($nilai >= 50){
-                $warna = "#fb923c"; // orange
+            // Kategori warna sesuai Keterangan Skala Nilai
+            if($nilai > 100){
+                $warna = "#009300"; // Sangat Baik
+            } elseif($nilai >= 80){
+                $warna = "#22b122"; // Baik
+            } elseif($nilai >= 60){
+                $warna = "#ffe75c"; // Cukup
+            } elseif($nilai >= 40){
+                $warna = "#ff9933"; // Pembinaan
+            } elseif($nilai > 0){
+                $warna = "#e53935"; // Underperformance
             } else {
-                $warna = "#e5e7eb"; // putih/abu kalau belum dinilai
+                $warna = "#e5e7eb"; // Belum dinilai (0)
             }
         @endphp
 

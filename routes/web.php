@@ -53,6 +53,10 @@ Route::get('/administrator', [App\Http\Controllers\AdministratorController::clas
     return view('hr');
 })->middleware(['auth'])->name('hr');
 
+// ✅ Halaman untuk Advertising
+Route::get('/advertising', [App\Http\Controllers\AdvertisingController::class, 'index'])
+    ->middleware('auth')
+    ->name('advertising');
 
 
 // ✅ Halaman untuk CS & Marketing
@@ -64,6 +68,10 @@ Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])
 Route::get('/manager', [App\Http\Controllers\DashboardManagerController::class, 'index'])
     ->middleware('auth')
     ->name('manager');
+
+Route::get('/manager/penilaian-cs', [App\Http\Controllers\PenilaianCsController::class, 'managerIndex'])
+    ->middleware('auth')
+    ->name('manager.penilaian-cs.index');
 
 
 
@@ -292,6 +300,14 @@ Route::middleware(['auth'])->group(function () {
 use App\Http\Controllers\AdminActivityController;
 
 Route::prefix('admin')->middleware(['auth','role:administrator'])->group(function () {
+    // --- SETTINGS ---
+    Route::get('/settings', [App\Http\Controllers\Admin\SettingController::class, 'index'])->name('admin.settings.index');
+    Route::post('/settings/users', [App\Http\Controllers\Admin\SettingController::class, 'storeUser'])->name('admin.settings.users.store');
+    Route::put('/settings/users/{id}', [App\Http\Controllers\Admin\SettingController::class, 'updateUser'])->name('admin.settings.users.update');
+    Route::delete('/settings/users/{id}', [App\Http\Controllers\Admin\SettingController::class, 'destroyUser'])->name('admin.settings.users.destroy');
+    Route::post('/settings/target', [App\Http\Controllers\Admin\SettingController::class, 'updateTarget'])->name('admin.settings.target.update');
+    Route::post('/settings/menus/toggle', [App\Http\Controllers\Admin\SettingController::class, 'toggleMenu'])->name('admin.settings.menus.toggle');
+
     Route::get('/activity-cs', [AdminActivityController::class, 'index'])->name('admin.activity-cs.index');
     Route::get('/activity-cs/view-pdf-bulanan', [AdminActivityController::class, 'viewPdfBulanan'])->name('admin.activity-cs.viewPdfBulanan');
 });

@@ -15,6 +15,7 @@ class CreateAlumniTable extends Migration
     {
         Schema::create('alumni', function (Blueprint $table) {
             $table->id();
+            $table->unsignedBigInteger('data_id')->nullable();
             $table->string('nama'); // Name of the alumni
             $table->enum('leads', ['Iklan', 'Instagram', 'Facebook', 'Tiktok', 'Lain-Lain'])->default('Iklan');
             $table->string('leads_custom')->nullable(); // Custom field for leads
@@ -33,7 +34,6 @@ class CreateAlumniTable extends Migration
             $table->json('sudah_pernah_ikut_kelas_apa_saja')->nullable();
             $table->json('kelas_yang_belum_diikuti_apa_saja')->nullable();
             $table->timestamps();
-            $table->unsignedBigInteger('data_id')->nullable()->after('id');
             $table->foreign('data_id')->references('id')->on('data')->onDelete('cascade');
         });
     }

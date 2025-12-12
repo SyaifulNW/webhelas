@@ -30,18 +30,30 @@ class PenilaianController extends Controller
         // ============================
         // 1. HITUNG OMSET REAL
         // ============================
-        $kelasOmset = Kelas::whereYear('tanggal_mulai', $tahun)
-            ->whereMonth('tanggal_mulai', $bulanNum)
-            ->with(['salesplans' => function ($q) use ($csId, $tahun, $bulanNum) {
-                $q->where('created_by', $csId)
-                  ->whereYear('updated_at', $tahun)
-                  ->whereMonth('updated_at', $bulanNum);
-            }])
-            ->get();
+        if ($user->role === 'cs-smi') {
+            $kelasOmset = Kelas::where('nama_kelas', 'like', '%Start-Up Muda Indonesia%')
+                ->with(['salesplans' => function ($q) use ($csId, $tahun, $bulanNum) {
+                    $q->where('created_by', $csId)
+                      ->whereYear('updated_at', $tahun)
+                      ->whereMonth('updated_at', $bulanNum)
+                      ->where('status', 'sudah_transfer');
+                }])
+                ->get();
+        } else {
+            $kelasOmset = Kelas::whereYear('tanggal_mulai', $tahun)
+                ->whereMonth('tanggal_mulai', $bulanNum)
+                ->with(['salesplans' => function ($q) use ($csId, $tahun, $bulanNum) {
+                    $q->where('created_by', $csId)
+                      ->whereYear('updated_at', $tahun)
+                      ->whereMonth('updated_at', $bulanNum);
+                }])
+                ->get();
+        }
 
         $kelasOmsetFiltered = $kelasOmset->map(function ($kelas) {
             $omset = $kelas->salesplans->sum('nominal');
-            $target = 25000000;
+            $targetGlobal = \App\Models\Setting::where('key', 'target_omset')->value('value') ?? 50000000;
+            $target = $targetGlobal / 2;
 
             $komisiSementara = $omset * 0.01;
             $komisiTotal = $omset >= $target ? $komisiSementara + 300000 : $komisiSementara;
@@ -61,7 +73,8 @@ class PenilaianController extends Controller
         // ============================
         // 2. NILAI OMSET (40%)
         // ============================
-        $nilaiOmset = min(40, intval($totalOmset / 50000000 * 40));
+        $targetGlobal = \App\Models\Setting::where('key', 'target_omset')->value('value') ?? 50000000;
+        $nilaiOmset = $targetGlobal > 0 ? min(40, intval($totalOmset / $targetGlobal * 40)) : 0;
 
         // ============================
         // 3. CLOSING PAKET (20%)
@@ -74,21 +87,29 @@ class PenilaianController extends Controller
 
         // Target: 2 Paket = 20 Poin (10 poin/paket)
         // Jika closing 1 = 10, closing 2 = 20.
-        $nilaiClosingPaket = min(20, $closingPaket * 10);
+        // KHUSUS CS-SMI: Closing paket tidak dinilai (0)
+        if ($user->role === 'cs-smi') {
+            $nilaiClosingPaket = 0;
+        } else {
+            $nilaiClosingPaket = min(20, $closingPaket * 10);
+        }
 
         // ============================
-        // 4. DATABASE BARU (20%)
+        // 4. DATABASE BARU (20% or 30%)
         // ============================
         $databaseBaru = Data::where('created_by', $namaUserData)
             ->whereYear('created_at', $tahun)
             ->whereMonth('created_at', $bulanNum)
             ->count();
 
-        // Target: 50 Database = 20 Poin
-        $nilaiDatabaseBaru = min(20, intval($databaseBaru / 50 * 20));
+        // Target: 50 Database
+        // Jika CS-SMI: Bobot 30%
+        // Jika Lainnya: Bobot 20%
+        $bobotDb = ($user->role === 'cs-smi') ? 30 : 20;
+        $nilaiDatabaseBaru = min($bobotDb, intval($databaseBaru / 50 * $bobotDb));
 
         // ============================
-        // 5. NILAI MANUAL (20%)
+        // 5. NILAI MANUAL (20% or 30%)
         // ============================
         $manual = \App\Models\PenilaianManual::where('user_id', $csId)
                     ->where('bulan', $bulanNum)
@@ -106,8 +127,9 @@ class PenilaianController extends Controller
                               $manual->inisiatif + 
                               $manual->komunikasi;
 
-            // Konversi ke bobot 20 (Total Sum / 500 * 20)
-            $nilaiManualPart = round(($totalSumManual / 500) * 20); 
+            // Konversi ke bobot (Total Sum / 500 * Bobot)
+            $bobotManual = ($user->role === 'cs-smi') ? 30 : 20;
+            $nilaiManualPart = round(($totalSumManual / 500) * $bobotManual); 
         }
 
         // ============================
@@ -123,6 +145,8 @@ class PenilaianController extends Controller
         $labels = [];
         $scores = [];
 
+        $role = $user->role;
+
         for ($i = 5; $i >= 0; $i--) {
             $dt = Carbon::now()->subMonths($i);
             $labels[] = $dt->format('M Y');
@@ -131,7 +155,8 @@ class PenilaianController extends Controller
                 $csId,
                 $namaUserData,
                 $dt->month,
-                $dt->year
+                $dt->year,
+                $role
             );
         }
 
@@ -142,7 +167,8 @@ class PenilaianController extends Controller
                 $csId,
                 $namaUserData,
                 $m,
-                $tahun
+                $tahun,
+                $role
             );
         }
 
@@ -174,39 +200,56 @@ class PenilaianController extends Controller
     // ======================================================
     // FUNGSI HITUNG TOTAL NILAI (REUSABLE)
     // ======================================================
-    private function hitungTotalNilai($csId, $namaUserData, $bulan, $tahun)
+    private function hitungTotalNilai($csId, $namaUserData, $bulan, $tahun, $role)
     {
         // OMSET (40%)
-        $kelasOmset = Kelas::whereYear('tanggal_mulai', $tahun)
-            ->whereMonth('tanggal_mulai', $bulan)
-            ->with(['salesplans' => function ($q) use ($csId, $tahun, $bulan) {
-                $q->where('created_by', $csId)
-                  ->whereYear('updated_at', $tahun)
-                  ->whereMonth('updated_at', $bulan);
-            }])
-            ->get();
+        if ($role === 'cs-smi') {
+            $kelasOmset = Kelas::where('nama_kelas', 'like', '%Start-Up Muda Indonesia%')
+                ->with(['salesplans' => function ($q) use ($csId, $tahun, $bulan) {
+                    $q->where('created_by', $csId)
+                      ->whereYear('updated_at', $tahun)
+                      ->whereMonth('updated_at', $bulan)
+                      ->where('status', 'sudah_transfer');
+                }])
+                ->get();
+        } else {
+            $kelasOmset = Kelas::whereYear('tanggal_mulai', $tahun)
+                ->whereMonth('tanggal_mulai', $bulan)
+                ->with(['salesplans' => function ($q) use ($csId, $tahun, $bulan) {
+                    $q->where('created_by', $csId)
+                      ->whereYear('updated_at', $tahun)
+                      ->whereMonth('updated_at', $bulan);
+                }])
+                ->get();
+        }
 
         $totalOmset = $kelasOmset->sum(fn ($k) => $k->salesplans->sum('nominal'));
-        $nilaiOmset = min(40, intval($totalOmset / 50000000 * 40));
+        $targetGlobal = \App\Models\Setting::where('key', 'target_omset')->value('value') ?? 50000000;
+        $nilaiOmset = $targetGlobal > 0 ? min(40, intval($totalOmset / $targetGlobal * 40)) : 0;
 
         // CLOSING PAKET (20%)
-        $closing = SalesPlan::where('created_by', $csId)
-            ->where('closing_paket', 1)
-            ->whereYear('updated_at', $tahun)
-            ->whereMonth('updated_at', $bulan)
-            ->count();
+        if ($role === 'cs-smi') {
+            $nilaiClosing = 0;
+        } else {
+            $closing = SalesPlan::where('created_by', $csId)
+                ->where('closing_paket', 1)
+                ->whereYear('updated_at', $tahun)
+                ->whereMonth('updated_at', $bulan)
+                ->count();
+    
+            $nilaiClosing = min(20, $closing * 10);
+        }
 
-        $nilaiClosing = min(20, $closing * 10);
-
-        // DATABASE BARU (20%)
+        // DATABASE BARU (20% or 30%)
         $dbBaru = Data::where('created_by', $namaUserData)
             ->whereYear('created_at', $tahun)
             ->whereMonth('created_at', $bulan)
             ->count();
 
-        $nilaiDb = min(20, intval($dbBaru / 50 * 20));
+        $bobotDb = ($role === 'cs-smi') ? 30 : 20;
+        $nilaiDb = min($bobotDb, intval($dbBaru / 50 * $bobotDb));
 
-        // MANUAL (20%)
+        // MANUAL (20% or 30%)
         $manual = \App\Models\PenilaianManual::where('user_id', $csId)
                     ->where('bulan', $bulan)
                     ->where('tahun', $tahun)
@@ -215,7 +258,8 @@ class PenilaianController extends Controller
         $nilaiManualPart = 0;
         if ($manual) {
             $sum = $manual->kerajinan + $manual->kerjasama + $manual->tanggung_jawab + $manual->inisiatif + $manual->komunikasi;
-            $nilaiManualPart = round(($sum / 500) * 20);
+            $bobotManual = ($role === 'cs-smi') ? 30 : 20;
+            $nilaiManualPart = round(($sum / 500) * $bobotManual);
         }
 
         return $nilaiOmset + $nilaiClosing + $nilaiDb + $nilaiManualPart;
@@ -233,8 +277,9 @@ class PenilaianController extends Controller
 
         $bulan = $request->bulan ?? date('m');
         $tahun = $request->tahun ?? date('Y');
+        $role = $user->role;
 
-        $nilai = $this->hitungTotalNilai($csId, $namaUserData, $bulan, $tahun);
+        $nilai = $this->hitungTotalNilai($csId, $namaUserData, $bulan, $tahun, $role);
 
         $data = [
             'bulan' => $bulan,

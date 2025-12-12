@@ -5,10 +5,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class PenilaianManual extends Model
+class Setting extends Model
 {
     use HasFactory;
-
-    protected $table = 'penilaian_manuals';
-    protected $guarded = [];
+    protected $fillable = ['key', 'value'];
 }

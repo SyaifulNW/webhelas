@@ -42,20 +42,34 @@ class HomeController extends Controller
             ->count();
 
         // ====================== 💰 OMSET & KOMISI ======================
-        $kelasOmset = Kelas::where(function ($query) use ($tahun, $bulanNum) {
-            $query->whereYear('tanggal_mulai', $tahun)
-                ->whereMonth('tanggal_mulai', $bulanNum);
-        })
-            ->with(['salesplans' => function ($query) use ($csId, $tahun, $bulanNum) {
-                $query->where('created_by', $csId)
-                    ->whereYear('updated_at', $tahun)
-                    ->whereMonth('updated_at', $bulanNum);
-            }])
-            ->get();
+        $isCsSmi = auth()->user()->role === 'cs-smi';
+
+        if ($isCsSmi) {
+            // Khusus CS SMI: Ambil kelas Start-Up Muda Indonesia (tanpa filter tanggal mulai)
+            $kelasOmset = Kelas::where('nama_kelas', 'like', '%Start-Up Muda Indonesia%')
+                ->with(['salesplans' => function ($query) use ($csId, $tahun, $bulanNum) {
+                    $query->where('created_by', $csId)
+                        ->whereYear('updated_at', $tahun)
+                        ->whereMonth('updated_at', $bulanNum)
+                        ->where('status', 'sudah_transfer');
+                }])
+                ->get();
+        } else {
+            // Role Lain: Ambil kelas sesuai bulan berjalan
+            $kelasOmset = Kelas::whereYear('tanggal_mulai', $tahun)
+                ->whereMonth('tanggal_mulai', $bulanNum)
+                ->with(['salesplans' => function ($query) use ($csId, $tahun, $bulanNum) {
+                    $query->where('created_by', $csId)
+                        ->whereYear('updated_at', $tahun)
+                        ->whereMonth('updated_at', $bulanNum);
+                }])
+                ->get();
+        }
 
         $kelasOmsetFiltered = $kelasOmset->map(function ($kelas) {
             $omset = $kelas->salesplans->sum('nominal');
-            $target = 25000000;
+            $targetGlobal = \App\Models\Setting::where('key', 'target_omset')->value('value') ?? 50000000;
+            $target = $targetGlobal / 2;
 
             $komisiSementara = $omset * 0.01;
             $komisiTotal = $omset >= $target ? $komisiSementara + 300000 : $komisiSementara;
@@ -171,7 +185,7 @@ class HomeController extends Controller
     
     // OMSET
     $totalOmset = $kelasOmsetFiltered->sum('omset'); 
-    $targetBulananOmset = 50000000;
+    $targetBulananOmset = \App\Models\Setting::where('key', 'target_omset')->value('value') ?? 50000000;
     
     // 🔥 Pencapaian Omset untuk ditampilkan di tabel
     $pencapaianOmset = $totalOmset;

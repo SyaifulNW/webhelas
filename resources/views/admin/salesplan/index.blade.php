@@ -21,11 +21,17 @@
     }
     
 
-    th,
+    th {
+        font-size: 14px;
+        padding: 6px;
+        text-align: left;
+    }
+
     td {
         font-size: 14px;
         padding: 6px;
         text-align: left;
+        color: #000 !important;
     }
 
     @media only screen and (max-width: 768px) {
@@ -159,8 +165,8 @@
     $persentaseTotal = $totalTargetSemua > 0 ? round(($totalSeluruhCS / $totalTargetSemua) * 100, 1) : 0;
 @endphp
 
-<!-- Filter hanya administrator -->
-@if(auth()->id() == 1 || auth()->id() == 13)
+<!-- Filter hanya administrator, Manager area, dan CS SMI -->
+@if(auth()->id() == 1 || auth()->id() == 13 || strtolower(auth()->user()->role) == 'cs-smi' || in_array(auth()->user()->name, ['Tursia', 'Latifah']))
 <style>
     .filter-container {
         display: flex;
@@ -232,6 +238,7 @@
 </style>
 
 <form method="GET" action="{{ route('admin.salesplan.index') }}" class="filter-container">
+@if(auth()->id() == 1 || auth()->id() == 13)
 {{-- ✅ Filter CS --}}
 <div class="filter-group">
     <label for="cs_filter" class="filter-label"><i class="fas fa-user-tie text-primary"></i> CS:</label>
@@ -267,6 +274,7 @@
         @endforeach
     </select>
 </div>
+@endif
 
 {{-- ✅ Filter Status --}}
 <div class="filter-group">
@@ -1122,6 +1130,7 @@ $(document).on('change', '.status-dropdown', function() {
                 <th style="padding: 10px; border: 1px solid #ccc;">No</th>
                 <th style="padding: 10px; border: 1px solid #ccc;">Nama</th>
                 <th style="padding: 10px; border: 1px solid #ccc;">Nominal</th>
+                <th style="padding: 10px; border: 1px solid #ccc;">Nama CS</th>
             </tr>
         </thead>
    <tbody>
@@ -1133,11 +1142,14 @@ $(document).on('change', '.status-dropdown', function() {
             <td style="padding: 8px; border: 1px solid #ccc;">
                 Rp {{ number_format($p->nominal, 0, ',', '.') }}
             </td>
+            <td style="padding: 8px; border: 1px solid #ccc;">
+                {{ \App\Models\User::find($p->created_by)->name ?? '-' }}
+            </td>
         </tr>
         @php $totalNominal += $p->nominal; @endphp
     @empty
         <tr>
-            <td colspan="3" style="text-align: center; padding: 15px; color: #999;">
+            <td colspan="4" style="text-align: center; padding: 15px; color: #999;">
                 Salesplan belum ada
             </td>
         </tr>
@@ -1150,6 +1162,7 @@ $(document).on('change', '.status-dropdown', function() {
                 <td style="padding: 10px; border: 1px solid #ccc;">
                     Rp {{ number_format($totalNominal, 0, ',', '.') }}
                 </td>
+                <td style="padding: 10px; border: 1px solid #ccc;"></td>
             </tr>
 
             <!-- Target Omset -->
@@ -1158,6 +1171,7 @@ $(document).on('change', '.status-dropdown', function() {
                 <td style="padding: 10px; border: 1px solid #ccc;">
                     Rp 25.000.000
                 </td>
+                <td style="padding: 10px; border: 1px solid #ccc;"></td>
             </tr>
         </tfoot>
     </table>

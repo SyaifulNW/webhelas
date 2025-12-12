@@ -146,42 +146,70 @@
             <hr class="sidebar-divider my-0" />
 
             <!-- Nav Item - Dashboard -->
-            <li class="nav-item active">
-                @if(Auth::user()->role === 'administrator')
+            {{-- Nav Item - Dashboard --}}
+            @if(strtolower(Auth::user()->role) === 'administrator')
+                @if(\App\Models\Menu::isActive('dashboard_admin'))
+                <li class="nav-item active">
                     {{-- Dashboard untuk Administrator --}}
                     <a class="nav-link" href="{{ route('administrator') }}">
                         <i class="fas fa-fw fa-tachometer-alt"></i>
                         <span>DASHBOARD ADMIN</span>
                     </a>
-                @elseif(Auth::user()->role === 'marketing')
+                </li>
+                @endif
+            @elseif(strtolower(Auth::user()->role) === 'marketing')
+                @if(\App\Models\Menu::isActive('dashboard_marketing'))
+                <li class="nav-item active">
                     {{-- Dashboard untuk Marketing --}}
                     <a class="nav-link" href="{{ route('marketing') }}">
                         <i class="fas fa-fw fa-chart-line"></i>
                         <span>DASHBOARD</span>
                     </a>
-                @elseif(Auth::user()->role === 'manager')
+                </li>
+                @endif
+            @elseif(strtolower(Auth::user()->role) === 'manager')
+                @if(\App\Models\Menu::isActive('dashboard_manager'))
+                <li class="nav-item active">
                     {{-- Dashboard untuk Manager --}}
                     <a class="nav-link" href="#">
                         <i class="fas fa-fw fa-briefcase"></i>
                         <span>DASHBOARD MANAGER</span>
                     </a>
-                @elseif(Auth::user()->role === 'hrd')
+                </li>
+                @endif
+            @elseif(strtolower(Auth::user()->role) === 'hrd')
+                @if(\App\Models\Menu::isActive('dashboard_hr'))
+                <li class="nav-item active">
                     {{-- Dashboard untuk HRD --}}
                     <a class="nav-link" href="{{ route('hr') }}">
                         <i class="fas fa-fw fa-briefcase"></i>
                         <span>DASHBOARD HR</span>
                     </a>
-                @else
+                </li>
+                @endif
+            @elseif(strtolower(trim(Auth::user()->role)) === 'advertising')
+                <li class="nav-item active">
+                    {{-- Dashboard untuk Advertising --}}
+                    <a class="nav-link" href="{{ route('advertising') }}">
+                        <i class="fas fa-fw fa-bullhorn"></i>
+                        <span>DASHBOARD ADVERTISING</span>
+                    </a>
+                </li>
+            @else
+                @if(\App\Models\Menu::isActive('dashboard_general'))
+                <li class="nav-item active">
                     {{-- Dashboard default --}}
                     <a class="nav-link" href="{{ route('home') }}">
                         <i class="fas fa-fw fa-tachometer-alt"></i>
                         <span>DASHBOARD</span>
                     </a>
+                </li>
                 @endif
-            </li>
+            @endif
 
             {{-- Program Kerja & Ganchart untuk Marketing & Manager --}}
-            @if(in_array(Auth::user()->role, ['manager']))
+            @if(in_array(strtolower(Auth::user()->role), ['manager']))
+                @if(\App\Models\Menu::isActive('program_kerja'))
                 {{-- Program Kerja --}}
                 <li class="nav-item">
                     <a class="nav-link text-white" href="{{ route('programkerja.index') }}">
@@ -189,6 +217,8 @@
                         <span>Program Kerja</span>
                     </a>
                 </li>
+                @endif
+                @if(\App\Models\Menu::isActive('ganchart'))
                 {{-- Ganchart --}}
                 <li class="nav-item">
                     <a class="nav-link text-white" href="{{ route('gantt.index') }}">
@@ -196,11 +226,20 @@
                         <span>Ganchart</span>
                     </a>
                 </li>
+                @endif
+
+                {{-- Penilaian Karyawan --}}
+                <li class="nav-item">
+                    <a class="nav-link text-white" href="{{ route('manager.penilaian-cs.index') }}">
+                        <i class="fa-solid fa-list-user me-2"></i>
+                        <span>Penilaian Karyawan</span>
+                    </a>
+                </li>
             @endif
 
             {{-- Sidebar Marketing --}}
             @auth
-                @if(Auth::user()->role === 'marketing')
+                @if(strtolower(Auth::user()->role) === 'marketing')
                     {{-- <ul class="navbar-nav sidebar sidebar-dark" style="background-color: #0b198f;"> --}} 
                     <!-- Removed nested ul that was in original code as it might break layout, kept items inline or check if separate section needed. 
                          Original code started a NEW ul inside the sidebar ul which is invalid HTML structure. 
@@ -208,6 +247,7 @@
                     
                     <hr class="sidebar-divider my-0">
 
+                    @if(\App\Models\Menu::isActive('data_lead'))
                     {{-- Data Lead / Prospek --}}
                     <li class="nav-item">
                         <a class="nav-link text-white" href="{{ route('admin.database.database') }}">
@@ -215,7 +255,9 @@
                             <span>Data Lead / Prospek</span>
                         </a>
                     </li>
+                    @endif
 
+                    @if(\App\Models\Menu::isActive('program_kerja'))
                     {{-- Program Kerja --}}
                     <li class="nav-item">
                         <a class="nav-link text-white" href="{{ route('programkerja.index') }}">
@@ -223,7 +265,9 @@
                             <span>Program Kerja</span>
                         </a>
                     </li>
+                    @endif
 
+                    @if(\App\Models\Menu::isActive('ganchart'))
                     {{-- Ganchart --}}
                     <li class="nav-item">
                         <a class="nav-link text-white" href="{{ route('gantt.index') }}">
@@ -231,40 +275,49 @@
                             <span>Ganchart</span>
                         </a>
                     </li>
+                    @endif
                 @endif
             @endauth
 
-            {{-- Sidebar ini hanya tampil jika BUKAN administrator, marketing, manager, hrd --}}
-            @if(Auth::user()->role !== 'administrator' && Auth::user()->role !== 'marketing' && Auth::user()->role !== 'manager'  && Auth::user()->role !== 'hrd')
+            {{-- Sidebar ini hanya tampil jika BUKAN administrator, marketing, manager, hrd, advertising --}}
+            @if(!in_array(strtolower(trim(Auth::user()->role)), ['administrator', 'marketing', 'manager', 'hrd', 'advertising']))
+                @if(\App\Models\Menu::isActive('data_calon_peserta'))
                 <li class="nav-item">
                     <a class="nav-link" href="{{ route('admin.database.database') }}">
                         <i class="fas fa-fw fa-tachometer-alt"></i>
                         <span><strong>DATA CALON PESERTA</strong></span>
                     </a>
                 </li>
+                @endif
 
+                @if(\App\Models\Menu::isActive('daily_activity'))
                 <li class="nav-item active">
                     <a class="nav-link" href="{{ route('admin.dailyactivity.index') }}">
                         <i class="fas fa-fw fa-tachometer-alt"></i>
                         <span>DAILY ACTIVITY</span>
                     </a>
                 </li>
+                @endif
 
+                @if(\App\Models\Menu::isActive('penilaian_kinerja_saya'))
                 <li class="nav-item">
                     <a class="nav-link" href="{{ route('admin.penilaian.index') }}">
                         <i class="fas fa-fw fa-star"></i>
                         <span><strong>PENILAIAN KINERJA SAYA</strong></span>
                     </a>
                 </li>
+                @endif
             @endif
 
             @php
                 $userName = auth()->user()->name;
             @endphp
 
-            {{-- Tampilkan menu SALES PLAN hanya jika user BUKAN marketing & HRD --}}
-            @if(Auth::user()->role != 'marketing' && Auth::user()->role !== 'hrd')
-
+            @php
+                $userRole = strtolower(trim(Auth::user()->role));
+            @endphp
+            @if(!in_array($userRole, ['marketing', 'hrd', 'advertising']))
+                @if(\App\Models\Menu::isActive('sales_plan'))
                 {{-- Jika user adalah Fitra Jaya Saleh atau Agus Setyo --}}
                 @if($userName == 'Fitra Jaya Saleh' || $userName == 'Agus Setyo')
                     <li class="nav-item {{ request()->routeIs('admin.salesplan.index') && request('kelas') == null ? 'active' : '' }}">
@@ -314,17 +367,20 @@
                         </div>
                     </li>
                 @endif
+                @endif
             @endif
 
             {{-- Dropdown Semua Akun --}}
-            @if(auth()->user()->role === 'administrator')
+            @if(strtolower(auth()->user()->role) === 'administrator')
                 {{-- Administrator: langsung ke halaman utama Database CS --}}
+                @if(\App\Models\Menu::isActive('database_cs'))
                 <li class="nav-item">
                     <a class="nav-link" href="{{ route('admin.database.database') }}">
                         <i class="fas fa-fw fa-users"></i>
                         <span><strong>DATABASE CS</strong></span>
                     </a>
                 </li>
+                @endif
             @elseif(auth()->user()->name === 'Agus Setyo')
                 {{-- Agus Setyo: Hanya bisa lihat Tursia dan Latifah --}}
                 <li class="nav-item">
@@ -351,32 +407,48 @@
                 </li>
             @endif
 
-            @if(auth()->user()->role === 'administrator')
+            @if(strtolower(auth()->user()->role) === 'administrator')
+                @if(\App\Models\Menu::isActive('jadwal_kelas'))
                 <li class="nav-item">
                     <a class="nav-link" href="{{ route('admin.kelas.index') }}">
                         <strong><i class="fa-solid fa-chalkboard me-2"></i> JADWAL KELAS</strong> 
                     </a>
                 </li>
+                @endif
 
+                @if(\App\Models\Menu::isActive('activity_cs'))
                 <li class="nav-item">
                     <a class="nav-link" href="{{ route('admin.activity-cs.index') }}">
                         <strong><i class="fa-solid fa-list-check me-2"></i> ACTIVITY CS</strong> 
                     </a>
                 </li>
+                @endif
+                @if(\App\Models\Menu::isActive('penilaian_karyawan'))
                 <li class="nav-item">
                     <a class="nav-link" href="{{ route('admin.penilaian-cs.index') }}">
                         <strong><i class="fa-solid fa-list-user me-2"></i> PENILAIAN KARYAWAN</strong> 
                     </a>
                 </li>
+                @endif
 
+                @if(\App\Models\Menu::isActive('penjualan'))
                 <li class="nav-item">
                     <a class="nav-link" href="{{ route('penjualan.index') }}">
                         <strong><i class="fa-solid fa-cart-shopping me-2"></i> PENJUALAN</strong>
                     </a>
                 </li>
+                @endif
+
+                {{-- NEW SETTING MENU --}}
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ route('admin.settings.index') }}">
+                        <strong><i class="fa-solid fa-cogs me-2"></i> SETTING</strong>
+                    </a>
+                </li>
             @endif
 
             @if(in_array(Auth::user()->name, ['Linda', 'Yasmin']))
+                @if(\App\Models\Menu::isActive('program_kerja'))
                 {{-- Program Kerja --}}
                 <li class="nav-item">
                     <a class="nav-link text-white" href="{{ route('programkerja.index') }}">
@@ -384,6 +456,8 @@
                         <span>Program Kerja</span>
                     </a>
                 </li>
+                @endif
+                @if(\App\Models\Menu::isActive('ganchart'))
                 {{-- Ganchart --}}
                 <li class="nav-item">
                     <a class="nav-link text-white" href="{{ route('gantt.index') }}">
@@ -391,10 +465,11 @@
                         <span>Ganchart</span>
                     </a>
                 </li>
+                @endif
             @endif
 
             {{-- MENU HRD --}}
-            @if(auth()->user()->role === 'hrd')
+            @if(strtolower(auth()->user()->role) === 'hrd')
                 <li class="nav-item mt-3">
                     <span class="nav-link text-uppercase fw-bold fs-5" style="color: #a8c6ff;">
                         MENU HRD

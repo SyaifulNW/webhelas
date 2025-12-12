@@ -37,6 +37,9 @@ protected function authenticated(Request $request, $user)
         case 'human_resource': // opsional jika nama role berbeda
             return redirect('/hr'); // sesuaikan dengan route dashboard HR kamu
         
+        case 'advertising':
+            return redirect('/advertising');
+        
         default:
             return redirect('/home');
     }

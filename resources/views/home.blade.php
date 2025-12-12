@@ -227,7 +227,7 @@
 
     @php
     $totalOmset = $kelasOmsetFiltered->sum('omset');
-    $targetBulanan = 50000000; // 50 juta
+    $targetBulanan = \App\Models\Setting::where('key', 'target_omset')->value('value') ?? 50000000;
     $persenTercapai = $targetBulanan > 0 ? round(($totalOmset / $targetBulanan) * 100, 2) : 0;
 
     // 🔹 Logika Reward Bulanan (nilai numerik + teks)

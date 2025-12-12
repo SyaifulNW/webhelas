@@ -12,7 +12,7 @@
                 <h6 class="m-0 font-weight-bold text-primary">Filter Karyawan & Periode</h6>
             </div>
             <div class="card-body">
-                <form method="GET" action="{{ route('admin.penilaian-cs.index') }}">
+                <form method="GET" action="{{ route($routeAction ?? 'admin.penilaian-cs.index') }}">
                     <div class="form-group">
                         <label>Pilih CS:</label>
                         <select name="user_id" class="form-control">
