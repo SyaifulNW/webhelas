@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\SalesPlan;
+use App\Models\Data;
+use App\Models\PenilaianManual;
 use Carbon\Carbon;
 
 class PenilaianCsController extends Controller
@@ -51,9 +53,18 @@ class PenilaianCsController extends Controller
         $userTarget = User::find($userId);
         $namaUser = $userTarget->name ?? '';
 
+        // Initialize variables to prevent undefined error
+        $scoreOmset = 0;
+        $scoreClosingPaket = 0;
+        $scoreDatabase = 0;
+        $scoreManual = 0;
+        $grandTotal = 0;
+        $manualTotalSum = 0;
+        $closingPaketCount = 0; // Initialize this too
+
         // 1. TOTAL DATABASE (dari input Data baru bulan ini)
         // Asumsi: created_by di tabel 'data' menyimpan NAMA user
-        $totalDatabase = \App\Models\Data::where('created_by', $namaUser)
+        $totalDatabase = Data::where('created_by', $namaUser)
             ->whereYear('created_at', $tahun)
             ->whereMonth('created_at', $bulan)
             ->count();
@@ -80,27 +91,59 @@ class PenilaianCsController extends Controller
             ->sum('nominal');
         
         $targetOmset = 50000000; // 50 Juta
-        $nilaiOmset = round(($totalOmset / $targetOmset) * 100);
+        $nilaiOmset = $targetOmset > 0 ? min(100, round(($totalOmset / $targetOmset) * 100)) : 0;
+        
+        // --- SCORE CALCULATIONS ---
 
-        // Variabel lain untuk view (opsional, sesuaikan dg view)
+        // 1. Omset (Bobot 40%)
+        $scoreOmset = $targetOmset > 0 ? min(40, round(($totalOmset / $targetOmset) * 40)) : 0;
+
+        // 2. Closing Paket (Bobot 20%)
+        $closingPaketCount = SalesPlan::where('created_by', $userId)
+            ->whereYear('updated_at', $tahun)
+            ->whereMonth('updated_at', $bulan)
+            ->where('closing_paket', 1)
+            ->count();
+        $targetClosingPaket = 1;
+        $scoreClosingPaket = min(20, $closingPaketCount * 20);
+
+        // 3. Database Baru (Bobot 20%)
+        $targetDatabase = 50;
+        $scoreDatabase = $targetDatabase > 0 ? min(20, round(($totalDatabase / $targetDatabase) * 20)) : 0;
+
+        // 4. Manual (Bobot 20%)
+        // $scoreManual initialized to 0 above
+        // $manualTotalSum initialized to 0 above
+        
+        // Query Data Penilaian Manual
+        $manual = PenilaianManual::where('user_id', $userId)
+                ->where('bulan', $bulan)
+                ->where('tahun', $tahun)
+                ->first();
+
+        if ($manual) {
+             $scoreManual = round(($manual->total_nilai / 100) * 20);
+             $manualTotalSum = $manual->kerajinan + $manual->kerjasama + $manual->tanggung_jawab + $manual->inisiatif + $manual->komunikasi;
+        }
+
+        // TOTAL SCORE
+        $grandTotal = $scoreOmset + $scoreClosingPaket + $scoreDatabase + $scoreManual;
+
+        // Variabel lain untuk view
         $countTertarik      = SalesPlan::where('created_by', $userId)->whereYear('updated_at', $tahun)->whereMonth('updated_at', $bulan)->where('status', 'tertarik')->count();
         $countMauTransfer   = SalesPlan::where('created_by', $userId)->whereYear('updated_at', $tahun)->whereMonth('updated_at', $bulan)->where('status', 'mau_transfer')->count();
         $countSudahTransfer = $totalClosing;
         $countNo            = SalesPlan::where('created_by', $userId)->whereYear('updated_at', $tahun)->whereMonth('updated_at', $bulan)->where('status', 'no')->count();
         $countCold          = SalesPlan::where('created_by', $userId)->whereYear('updated_at', $tahun)->whereMonth('updated_at', $bulan)->where('status', 'cold')->count();
 
-        // Query Data Penilaian Manual
-        $manual = \App\Models\PenilaianManual::where('user_id', $userId)
-                ->where('bulan', $bulan)
-                ->where('tahun', $tahun)
-                ->first();
-
         return view('admin.penilaian-cs.index', compact(
-            'bulan','tahun','userId','daftarCs',
+            'bulan','tahun','userId','daftarCs', 'namaUser',
             'totalDatabase','totalClosing',
             'persenClosing','closingTarget','totalOmset','nilaiOmset','targetOmset',
             'countTertarik','countMauTransfer','countSudahTransfer','countNo','countCold',
-            'manual', 'routeAction'
+            'manual', 'routeAction',
+            'scoreOmset', 'scoreClosingPaket', 'scoreDatabase', 'scoreManual', 'grandTotal',
+            'closingPaketCount', 'targetClosingPaket', 'targetDatabase', 'manualTotalSum'
         ));
     }
 
