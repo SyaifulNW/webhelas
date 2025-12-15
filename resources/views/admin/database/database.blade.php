@@ -359,12 +359,10 @@ $(document).ready(function() {
                                 Sumber Leads <br>
                                 <select id="filterSumber" class="form-control form-control-sm">
                                     <option value="">-- Semua Sumber --</option>
-                                    <option value="Instagram">Instagram</option>
-                                    <option value="Facebook">Facebook</option>
-                                    <option value="Alumni">Alumni</option>
                                     <option value="Iklan">Iklan</option>
-                                    <option value="Marketing">Marketing</option>
-                                    <option value="Lain-Lain">Lain-Lain</option>
+                                    <option value="Marketing">Marketing (IG,FB,Event)</option>
+                                    <option value="Alumni">Alumni</option>
+                                    <option value="Lain-lain">Lain-lain</option>
                                 </select>
                             </th>
 
@@ -448,16 +446,11 @@ $(document).ready(function() {
                          <select class="form-control form-control-sm select-sumber" data-id="{{ $item->id }}">
     <option value="">- Pilih Sumber Leads -</option>
 
-    <option value="Instagram" {{ $item->leads == 'Instagram' ? 'selected' : '' }}>Instagram</option>
-    <option value="Facebook" {{ $item->leads == 'Facebook' ? 'selected' : '' }}>Facebook</option>
-    <option value="Iklan" {{ $item->leads == 'Iklan' ? 'selected' : '' }}>Iklan</option>
-    <option value="Marketing" {{ $item->leads == 'Marketing' ? 'selected' : '' }}>Marketing</option>
-
-    <!-- Tambahan Baru -->
-    <option value="Alumni" {{ $item->leads == 'Alumni' ? 'selected' : '' }}>Alumni</option>
-
-    <option value="Lain-Lain" {{ $item->leads == 'Lain-Lain' ? 'selected' : '' }}>Lain-Lain</option>
-</select>
+                                    <option value="Iklan" {{ $item->leads == 'Iklan' ? 'selected' : '' }}>Iklan</option>
+                                    <option value="Marketing" {{ $item->leads == 'Marketing' ? 'selected' : '' }}>Marketing</option>
+                                    <option value="Alumni" {{ $item->leads == 'Alumni' ? 'selected' : '' }}>Alumni</option>
+                                    <option value="Lain-lain" {{ $item->leads == 'Lain-lain' ? 'selected' : '' }}>Lain-lain</option>
+                                </select>
 
 
                             </td>
@@ -654,7 +647,7 @@ $(document).ready(function() {
                         });
 
                         $('.editable').on('blur', function() {
-                            let $this = $(this);
+                               let $this = $(this);
                             let value = $this.text();
                             let field = $this.data('field');
                             let id = $this.closest('tr').data('id');
@@ -821,12 +814,9 @@ $(document).ready(function() {
                         <label for="leads">Sumber Leads</label>
                         <select name="leads" id="leads" class="form-control">
                             <option value="Iklan">Iklan</option>
-                            <option value="Instagram">Instagram</option>
-                            <option value="Facebook">Facebook</option>
-                            <option value="Tiktok">Tiktok</option>
-                            <option value="Alumni">Alumni</option>
                             <option value="Marketing">Marketing</option>
-                            <option value="Lain-Lain">Lain-Lain</option>
+                            <option value="Alumni">Alumni</option>
+                            <option value="Lain-lain">Lain-lain</option>
                         </select>
                         <input type="text" name="leads_custom" class="form-control mt-2" placeholder="Isi jika Lain-Lain">
                     </div>

@@ -16,7 +16,7 @@ class CreateDataTable extends Migration
         Schema::create('data', function (Blueprint $table) {
             $table->id();
              $table->string('nama');
-            $table->enum('leads', ['Iklan', 'Instagram', 'Facebook', 'Tiktok', 'Lain-Lain' ])->default('Iklan');
+            $table->enum('leads', ['Iklan', 'Marketing', 'Alumni', 'Lain-lain'])->default('Iklan');
             $table->string('leads_custom')->nullable();
             //  Tambahkan field untuk wilayah:
             $table->string('provinsi_id');

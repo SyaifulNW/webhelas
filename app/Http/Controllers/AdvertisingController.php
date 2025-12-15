@@ -43,9 +43,13 @@ class AdvertisingController extends Controller
         // 1. ROAS (Return on Advertising Spend) - Target 10X
         // Asumsi: ROAS = Total Omset / Biaya Iklan
         // Untuk demo, kita gunakan data dari salesplan
-        $totalOmset = SalesPlan::whereYear('updated_at', $tahun)
+        $totalOmset = SalesPlan::with('data')
+            ->whereYear('updated_at', $tahun)
             ->whereMonth('updated_at', $bulanNum)
             ->where('status', 'sudah_transfer')
+            ->whereHas('data', function($q) {
+                $q->where('leads', 'LIKE', '%Iklan%');
+            })
             ->sum('nominal');
         
         // Asumsi biaya iklan (bisa diambil dari tabel lain atau setting)
@@ -59,14 +63,16 @@ class AdvertisingController extends Controller
         $bobotRoas = 30; // Bobot 30%
         $nilaiAkhirRoas = round(($nilaiRoas / 100) * $bobotRoas, 2);
 
+        // List CS
+        $csSMI = ['Latifah', 'Tursia'];
+        $csMBC = ['Administrator', 'Linda', 'Yasmin', 'Shafa', 'Arifa', 'Qiyya'];
+
         // 2. Jumlah Leads (MBC) - Target 300/bulan
-        // Menggunakan LIKE untuk menangkap variasi nama jenis bisnis
+        // Logic: Sumber Leads (kolom 'leads') berisi "Iklan", Created By CS MBC
         $leadsMBC = Data::whereYear('created_at', $tahun)
             ->whereMonth('created_at', $bulanNum)
-            ->where(function($query) {
-                $query->where('jenisbisnis', 'LIKE', '%MBC%')
-                      ->orWhere('jenisbisnis', 'LIKE', '%Muslim Bisnis Coaching%');
-            })
+            ->where('leads', 'LIKE', '%Iklan%')
+            ->whereIn('created_by', $csMBC)
             ->count();
         
         $targetLeadsMBC = 300;
@@ -76,12 +82,11 @@ class AdvertisingController extends Controller
         $nilaiAkhirLeadsMBC = round(($nilaiLeadsMBC / 100) * $bobotLeadsMBC, 2);
 
         // 3. Jumlah Leads (SMI) - Target 100/bulan
+        // Logic: Sumber Leads (kolom 'leads') berisi "Iklan", Created By CS SMI
         $leadsSMI = Data::whereYear('created_at', $tahun)
             ->whereMonth('created_at', $bulanNum)
-            ->where(function($query) {
-                $query->where('jenisbisnis', 'LIKE', '%SMI%')
-                      ->orWhere('jenisbisnis', 'LIKE', '%Start-Up Muda Indonesia%');
-            })
+            ->where('leads', 'LIKE', '%Iklan%')
+            ->whereIn('created_by', $csSMI)
             ->count();
         
         $targetLeadsSMI = 100;
@@ -182,20 +187,22 @@ class AdvertisingController extends Controller
                 
                 // --- PENGHITUNGAN REALISASI ---
                 
-                // 1. Realisasi Leads
-                // Ambil data yang dibuat pada bulan terpilih, dengan relation ke kelas ini
+                // 1. Realisasi Leads (Khusus Iklan)
                 $realisasiLeads = Data::whereYear('created_at', $tahun)
                     ->whereMonth('created_at', $bulanNum)
+                    ->where('leads', 'LIKE', '%Iklan%') // Filter Iklan
                     ->whereHas('kelas', function($q) use ($kelas) {
                         $q->where('id', $kelas->id);
                     })
                     ->count();
 
-                // 2. Realisasi Closing
-                // Ambil SalesPlan 'sudah_transfer' pada bulan terpilih, relation ke kelas ini
+                // 2. Realisasi Closing (Khusus Iklan)
                 $realisasiClosing = SalesPlan::where('status', 'sudah_transfer')
                     ->whereYear('updated_at', $tahun)
                     ->whereMonth('updated_at', $bulanNum)
+                    ->whereHas('data', function($q) {
+                        $q->where('leads', 'LIKE', '%Iklan%');
+                    })
                     ->whereHas('kelas', function($q) use ($kelas) {
                         $q->where('id', $kelas->id);
                     })
@@ -242,9 +249,13 @@ class AdvertisingController extends Controller
         $historyNilai = [];
         for ($m = 1; $m <= 12; $m++) {
             // 1. ROAS
-            $omsetBulan = SalesPlan::whereYear('updated_at', $tahun)
+            $omsetBulan = SalesPlan::with('data')
+                ->whereYear('updated_at', $tahun)
                 ->whereMonth('updated_at', $m)
                 ->where('status', 'sudah_transfer')
+                ->whereHas('data', function($q) {
+                    $q->where('leads', 'LIKE', '%Iklan%');
+                })
                 ->sum('nominal');
             
             $roasBulan = $biayaIklan > 0 ? round($omsetBulan / $biayaIklan, 2) : 0;
@@ -254,10 +265,8 @@ class AdvertisingController extends Controller
             // 2. Leads MBC
             $leadsMBCBulan = Data::whereYear('created_at', $tahun)
                 ->whereMonth('created_at', $m)
-                ->where(function($query) {
-                    $query->where('jenisbisnis', 'LIKE', '%MBC%')
-                          ->orWhere('jenisbisnis', 'LIKE', '%Muslim Bisnis Coaching%');
-                })
+                ->where('leads', 'LIKE', '%Iklan%')
+                ->whereIn('created_by', $csMBC)
                 ->count();
             $nilaiMBCBulan = min(100, $targetLeadsMBC > 0 ? round(($leadsMBCBulan / $targetLeadsMBC) * 100, 2) : 0);
             $akhirMBCBulan = round(($nilaiMBCBulan / 100) * $bobotLeadsMBC, 2);
@@ -265,10 +274,8 @@ class AdvertisingController extends Controller
             // 3. Leads SMI
             $leadsSMIBulan = Data::whereYear('created_at', $tahun)
                 ->whereMonth('created_at', $m)
-                ->where(function($query) {
-                    $query->where('jenisbisnis', 'LIKE', '%SMI%')
-                          ->orWhere('jenisbisnis', 'LIKE', '%Start-Up Muda Indonesia%');
-                })
+                ->where('leads', 'LIKE', '%Iklan%')
+                ->whereIn('created_by', $csSMI)
                 ->count();
             $nilaiSMIBulan = min(100, $targetLeadsSMI > 0 ? round(($leadsSMIBulan / $targetLeadsSMI) * 100, 2) : 0);
             $akhirSMIBulan = round(($nilaiSMIBulan / 100) * $bobotLeadsSMI, 2);

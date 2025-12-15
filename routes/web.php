@@ -357,3 +357,10 @@ Route::post('/gantt/inisiatif/{id}/done', [GanttChartController::class, 'markDon
 Route::get('/marketing/gantt-chart', [GanttChartController::class, 'index'])
      ->name('gantt.index')
      ->middleware('auth');
+
+use App\Http\Controllers\Marketing\PenilaianController as MarketingPenilaianController;
+
+Route::prefix('marketing')->name('marketing.')->middleware(['auth'])->group(function () {
+    Route::get('penilaian', [MarketingPenilaianController::class, 'index'])->name('penilaian.index');
+    Route::get('penilaian/export-pdf', [MarketingPenilaianController::class, 'exportPdf'])->name('penilaian.exportPdf');
+});

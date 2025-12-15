@@ -276,6 +276,14 @@
                         </a>
                     </li>
                     @endif
+
+                    {{-- Penilaian Kinerja --}}
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="{{ route('marketing.penilaian.index') }}">
+                            <i class="fas fa-fw fa-star me-2"></i>
+                            <span>Penilaian Kinerja</span>
+                        </a>
+                    </li>
                 @endif
             @endauth
 
