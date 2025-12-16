@@ -455,7 +455,7 @@
                 </li>
             @endif
 
-            @if(in_array(Auth::user()->name, ['Linda', 'Yasmin', 'Agus']))
+            @if(in_array(Auth::user()->name, ['Linda', 'Yasmin', 'Agus', 'Agus Setyo']))
                 @if(\App\Models\Menu::isActive('program_kerja'))
                 {{-- Program Kerja --}}
                 <li class="nav-item">
@@ -486,6 +486,14 @@
                     <a class="nav-link text-white" href="{{ route($routePenilaian) }}">
                         <i class="fa-solid fa-list-user me-2"></i>
                         <span>Penilaian Karyawan</span>
+                    </a>
+                </li>
+
+                {{-- Activity CS --}}
+                <li class="nav-item">
+                    <a class="nav-link text-white" href="{{ route('admin.activity-cs.index') }}">
+                        <i class="fa-solid fa-list-check me-2"></i>
+                        <span>Monitoring Daily Activity</span>
                     </a>
                 </li>
             @endif

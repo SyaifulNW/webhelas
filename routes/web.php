@@ -308,6 +308,10 @@ Route::prefix('admin')->middleware(['auth','role:administrator'])->group(functio
     Route::post('/settings/target', [App\Http\Controllers\Admin\SettingController::class, 'updateTarget'])->name('admin.settings.target.update');
     Route::post('/settings/menus/toggle', [App\Http\Controllers\Admin\SettingController::class, 'toggleMenu'])->name('admin.settings.menus.toggle');
 
+});
+
+// Activity CS (Accessible by Admin, Manager, etc. - controller handles logic)
+Route::prefix('admin')->middleware(['auth'])->group(function () {
     Route::get('/activity-cs', [AdminActivityController::class, 'index'])->name('admin.activity-cs.index');
     Route::get('/activity-cs/view-pdf-bulanan', [AdminActivityController::class, 'viewPdfBulanan'])->name('admin.activity-cs.viewPdfBulanan');
 });

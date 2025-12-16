@@ -11,49 +11,122 @@ use Barryvdh\DomPDF\Facade\Pdf;
 
 class AdminActivityController extends Controller
 {
-   public function index(Request $request)
-{
-    $bulan = $request->input('bulan', now()->format('Y-m'));
-    $csId = $request->input('cs_id');
-    $user = auth()->user();
+    public function index(Request $request)
+    {
+        $tanggal = $request->input('tanggal', now()->toDateString());
+        $csId = $request->input('cs_id');
+        $user = auth()->user();
 
-    // ==============================
-    // 🔹 1. Tentukan daftar CS yang bisa dilihat
-    // ==============================
-    $csQuery = User::query();
+        // ==============================
+        // 🔹 1. Tentukan daftar CS yang bisa dilihat
+        // ==============================
+        $csQuery = User::query();
 
-    if ($user->role === 'administrator') {
-        $csQuery->where('role', 'cs-mbc');
-    } elseif ($user->name === 'Agus Setyo') {
-        $csQuery->whereIn('name', ['Tursia', 'Latifah']);
-    } else {
-        // CS biasa hanya bisa melihat dirinya sendiri
-        $csQuery->where('id', $user->id);
+        if ($user->role === 'administrator' || in_array($user->name, ['Linda', 'Yasmin'])) {
+            $csQuery->where('role', 'cs-mbc');
+        } elseif ($user->name === 'Agus Setyo') {
+            $csQuery->whereIn('name', ['Tursia', 'Latifah']);
+        } else {
+            // CS biasa hanya bisa melihat dirinya sendiri
+            $csQuery->where('id', $user->id);
+        }
+
+        $csList = $csQuery->orderBy('name')->get();
+        if (!$csId && $csList->isNotEmpty()) {
+             $csId = $csList->first()->id;
+        }
+
+        // ==============================
+        // 🔹 2. Ambil Master Activity & Realisasi Harian
+        // ==============================
+        
+        // Ambil master aktivitas
+        $activities = Activity::with('kategori')->orderBy('categories_id')->get()->groupBy('categories_id');
+
+        // Ambil realisasi user untuk TANGGAL yang dipilih
+        $daily = [];
+        if ($csId) {
+            $daily = DailyActiviti::where('user_id', $csId)
+                ->whereDate('tanggal', $tanggal)
+                ->pluck('realisasi', 'activity_id');
+        }
+
+        // ==============================
+        // 🔹 3. Hitung KPI Bulanan (Optional, untuk kelengkapan data view)
+        // ==============================
+        $carbon = Carbon::parse($tanggal);
+        $bulan   = $carbon->month;
+        $tahun   = $carbon->year;
+        
+        $kpiData = [];
+        $totalNilai = 0;
+        $totalBobot = 0;
+
+        if ($csId) {
+             // Hari kerja
+            $daysInMonth = $carbon->daysInMonth;
+            $hariKerja = 0;
+            for ($d = 1; $d <= $daysInMonth; $d++) {
+                $day = Carbon::create($tahun, $bulan, $d);
+                if ($day->dayOfWeek != Carbon::SUNDAY) {
+                    $hariKerja++;
+                }
+            }
+
+            $categoryKpiWeights = [
+                'Aktivitas Pribadi' => 10,
+                'Aktivitas Mencari Leads' => 20,
+                'Aktivitas Memprospek' => 20,
+                'Aktivitas Closing' => 40,
+                'Aktivitas Merawat Customer' => 10,
+            ];
+
+            foreach ($activities as $kategoriId => $list) {
+                $categoryName = $list->first()->kategori->nama ?? ("Kategori " . $kategoriId);
+                $activityPercents = [];
+
+                foreach ($list as $act) {
+                    $targetDaily = (float) ($act->target_daily ?? 0);
+                    $targetBulanan = $targetDaily * $hariKerja;
+
+                    $totalRealisasi = (float) DailyActiviti::where('user_id', $csId)
+                        ->where('activity_id', $act->id)
+                        ->whereMonth('tanggal', $bulan)
+                        ->whereYear('tanggal', $tahun)
+                        ->sum('realisasi');
+
+                    $percent = 0;
+                    if ($targetBulanan > 0) {
+                        $percent = ($totalRealisasi / $targetBulanan) * 100;
+                        if ($percent > 100) $percent = 100;
+                    }
+                    $activityPercents[] = $percent;
+                }
+
+                $skorKategori = count($activityPercents) ? (array_sum($activityPercents) / count($activityPercents)) : 0;
+                $bobotKategori = $categoryKpiWeights[$categoryName] ?? 0;
+                $nilaiKategori = ($skorKategori / 100) * $bobotKategori;
+
+                $kpiData[] = [
+                    'categories_id' => $kategoriId,
+                    'nama'        => $categoryName,
+                    'target'      => '100%',
+                    'bobot'       => $bobotKategori,
+                    'persentase'  => round($skorKategori, 2),
+                    'nilai'       => round($nilaiKategori, 2),
+                ];
+
+                $totalNilai += $nilaiKategori;
+                $totalBobot += $bobotKategori;
+            }
+        }
+
+        return view('admin.activity-cs.index', compact(
+            'csList', 'csId', 'tanggal', 
+            'activities', 'daily', 
+            'kpiData', 'totalNilai', 'totalBobot'
+        ));
     }
-
-    $csList = $csQuery->orderBy('name')->get();
-
-    // ==============================
-    // 🔹 2. Ambil data aktivitas sesuai bulan dan CS
-    // ==============================
-    $query = DailyActiviti::with(['activity', 'user'])
-        ->whereMonth('tanggal', Carbon::parse($bulan)->month)
-        ->whereYear('tanggal', Carbon::parse($bulan)->year);
-
-    if ($csId) {
-        $query->where('user_id', $csId);
-    }
-
-    $dailyData = $query->get();
-    $dataPerCs = $dailyData->groupBy('user_id');
-
-    // ==============================
-    // 🔹 3. Kirim ke view
-    // ==============================
-    
-    
-    return view('admin.activity-cs.index', compact('bulan', 'csList', 'dataPerCs', 'csId'));
-}
 
     public function viewPdfBulanan(Request $request)
     {
