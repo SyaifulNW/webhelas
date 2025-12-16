@@ -22,9 +22,11 @@ class AdminActivityController extends Controller
         // ==============================
         $csQuery = User::query();
 
-        if ($user->role === 'administrator' || in_array($user->name, ['Linda', 'Yasmin'])) {
+        $userName = trim($user->name);
+
+        if ($user->role === 'administrator' || in_array($userName, ['Linda', 'Yasmin'])) {
             $csQuery->where('role', 'cs-mbc');
-        } elseif ($user->name === 'Agus Setyo') {
+        } elseif (in_array($userName, ['Agus', 'Agus Setyo'])) {
             $csQuery->whereIn('name', ['Tursia', 'Latifah']);
         } else {
             // CS biasa hanya bisa melihat dirinya sendiri

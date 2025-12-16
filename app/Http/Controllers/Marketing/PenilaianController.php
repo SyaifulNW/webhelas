@@ -42,7 +42,7 @@ class PenilaianController extends Controller
             ->whereIn('created_by', $csMBC)
             ->count();
 
-        $targetLeadsMBC = 150;
+        $targetLeadsMBC = 75;
         $persenLeadsMBC = $targetLeadsMBC > 0 ? min(($leadsMBC / $targetLeadsMBC) * 100, 100) : 0;
         $bobotLeadsMBC = 45;
         $nilaiLeadsMBC = round(($persenLeadsMBC / 100) * $bobotLeadsMBC, 2);
@@ -58,7 +58,7 @@ class PenilaianController extends Controller
             ->whereIn('created_by', $csSMI)
             ->count();
 
-        $targetLeadsSMI = 100;
+        $targetLeadsSMI = 50;
         $persenLeadsSMI = $targetLeadsSMI > 0 ? min(($leadsSMI / $targetLeadsSMI) * 100, 100) : 0;
         $bobotLeadsSMI = 45;
         $nilaiLeadsSMI = round(($persenLeadsSMI / 100) * $bobotLeadsSMI, 2);

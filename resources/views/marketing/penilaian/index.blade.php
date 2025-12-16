@@ -43,313 +43,335 @@
     }
 </style>
 
-<div class="container-fluid px-4">
+<div class="row">
 
-    @php
-        $bulanDipilih = request('bulan') ?? date('m');
-        $tahunDipilih = request('tahun') ?? date('Y');
-        $namaBulan = \Carbon\Carbon::createFromFormat('m', $bulanDipilih)->translatedFormat('F');
-    @endphp
+    <!-- Kolom Kiri: Filter & Input Atasan -->
+    <div class="col-lg-6 mb-4">
 
-    {{-- Header Dashboard --}}
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card shadow-sm border-0">
-                <div class="card-body">
-                    <h3 class="mb-3"><i class="fas fa-chart-line me-2 text-primary"></i>Penilaian Kinerja Marketing - {{ auth()->user()->name }}</h3>
-                    <form method="GET" action="{{ route('marketing.penilaian.index') }}" class="row g-3 align-items-end">
-                        <div class="col-md-4">
-                            <label for="bulan" class="form-label fw-semibold">📅 Pilih Bulan:</label>
-                            <select name="bulan" class="form-select">
-                                @foreach(['01'=>'Januari','02'=>'Februari','03'=>'Maret','04'=>'April','05'=>'Mei','06'=>'Juni','07'=>'Juli','08'=>'Agustus','09'=>'September','10'=>'Oktober','11'=>'November','12'=>'Desember'] as $k => $v)
-                                    <option value="{{ $k }}" {{ $bulanDipilih == $k ? 'selected' : '' }}>{{ $v }}</option>
+        <!-- Card Filter -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">Filter Karyawan & Periode</h6>
+            </div>
+            <div class="card-body">
+                <form method="GET" action="{{ route($routeAction ?? 'marketing.penilaian.index') }}">
+                    
+                    @if(isset($daftarCs) && count($daftarCs) > 0)
+                        <div class="form-group mb-3">
+                            <label class="font-weight-bold">Pilih CS:</label>
+                            <select name="user_id" class="form-control" onchange="this.form.submit()">
+                                @foreach($daftarCs as $cs)
+                                    <option value="{{ $cs->id }}" {{ (isset($userId) && $userId == $cs->id) ? 'selected' : '' }}>
+                                        {{ $cs->name }}
+                                    </option>
                                 @endforeach
                             </select>
                         </div>
-                        <div class="col-md-4">
-                            <label for="tahun" class="form-label fw-semibold">📅 Pilih Tahun:</label>
-                            <select name="tahun" class="form-select">
+                    @elseif(isset($userId))
+                        <input type="hidden" name="user_id" value="{{ $userId }}">
+                         <div class="form-group mb-3">
+                            <label class="font-weight-bold">CS:</label>
+                            <input type="text" class="form-control" value="{{ $targetUser->name ?? auth()->user()->name }}" readonly disabled>
+                        </div>
+                    @endif
+
+                    <div class="row mb-3">
+                        <div class="col">
+                            <label class="font-weight-bold">Bulan</label>
+                            <select name="bulan" class="form-control">
+                                @foreach(['01'=>'Januari','02'=>'Februari','03'=>'Maret','04'=>'April','05'=>'Mei','06'=>'Juni','07'=>'Juli','08'=>'Agustus','09'=>'September','10'=>'Oktober','11'=>'November','12'=>'Desember'] as $k => $v)
+                                    <option value="{{ $k }}" {{ (request('bulan') ?? date('m')) == $k ? 'selected' : '' }}>{{ $v }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col">
+                            <label class="font-weight-bold">Tahun</label>
+                            <select name="tahun" class="form-control">
                                 @for($t = date('Y'); $t >= 2023; $t--)
-                                    <option value="{{ $t }}" {{ $tahunDipilih == $t ? 'selected' : '' }}>{{ $t }}</option>
+                                    <option value="{{ $t }}" {{ (request('tahun') ?? date('Y')) == $t ? 'selected' : '' }}>{{ $t }}</option>
                                 @endfor
                             </select>
                         </div>
-                        <div class="col-md-4 text-end">
-                            <button type="submit" class="btn btn-primary px-4">
-                                <i class="fas fa-search me-1"></i> Tampilkan
-                            </button>
-                            <!-- <a href="{{ route('marketing.penilaian.exportPdf', ['bulan' => $bulanDipilih, 'tahun' => $tahunDipilih]) }}" class="btn btn-danger px-4 ms-2">
-                                <i class="fas fa-file-pdf me-1"></i> PDF
-                            </a> -->
-                        </div>
-                    </form>
-                </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block w-100">
+                        <i class="fas fa-search"></i> Tampilkan Data
+                    </button>
+                </form>
             </div>
         </div>
-    </div>
 
-    {{-- ================== CARD STATISTIK (3 KARTU) ================== --}}
-    <div class="row g-4 mb-4">
-        {{-- Card 1: Leads MBC --}}
-        <div class="col-12 col-md-4">
-            <div class="card shadow-lg border-0 h-100 card-hover">
-                <div class="card-header bg-success text-white fw-bold py-2">
-                    <i class="fas fa-users me-2"></i> LEADS MBC
-                </div>
-                <div class="card-body text-center">
-                    <h2 class="fw-bold text-success mb-2" style="font-size: 3rem;">{{ $leadsMBC }}</h2>
-                    <p class="text-muted mb-1">Target: {{ $targetLeadsMBC }}/bulan</p>
-                    <div class="progress mb-2" style="height: 18px; border-radius: 10px;">
-                        <div class="progress-bar bg-success fw-bold text-white" role="progressbar" style="width: {{ $persenLeadsMBC }}%">
-                            {{ number_format($persenLeadsMBC, 0) }}%
+        <!-- Card Input Penilaian Atasan -->
+        @if(isset($routeAction))
+        <div class="card shadow mb-4 border-left-danger">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-danger">Input Penilaian Atasan</h6>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ route('admin.penilaian-cs.store') }}">
+                    @csrf
+                    <input type="hidden" name="user_id" value="{{ $userId }}">
+                    <input type="hidden" name="bulan" value="{{ request('bulan') ?? date('m') }}">
+                    <input type="hidden" name="tahun" value="{{ request('tahun') ?? date('Y') }}">
+
+                    <div class="mb-3 row">
+                        <label class="col-sm-4 col-form-label">Kerajinan (0-100)</label>
+                        <div class="col-sm-8">
+                            <input type="number" name="kerajinan" class="form-control" required min="0" max="100" value="{{ $manual->kerajinan ?? 0 }}">
                         </div>
                     </div>
-                    <span class="badge bg-success text-white px-3 py-2">Periode: {{ $namaBulan }} {{ $tahunDipilih }}</span>
-                </div>
-            </div>
-        </div>
-
-        {{-- Card 2: Leads SMI --}}
-        <div class="col-12 col-md-4">
-            <div class="card shadow-lg border-0 h-100 card-hover">
-                <div class="card-header bg-warning text-white fw-bold py-2" style="color: white !important;">
-                    <i class="fas fa-user-graduate me-2"></i> LEADS SMI
-                </div>
-                <div class="card-body text-center">
-                    <h2 class="fw-bold text-warning mb-2" style="font-size: 3rem;">{{ $leadsSMI }}</h2>
-                    <p class="text-muted mb-1">Target: {{ $targetLeadsSMI }}/bulan</p>
-                    <div class="progress mb-2" style="height: 18px; border-radius: 10px;">
-                        <div class="progress-bar bg-warning fw-bold text-white" role="progressbar" style="width: {{ $persenLeadsSMI }}%">
-                            {{ number_format($persenLeadsSMI, 0) }}%
+                    <div class="mb-3 row">
+                        <label class="col-sm-4 col-form-label">Kerjasama (0-100)</label>
+                        <div class="col-sm-8">
+                            <input type="number" name="kerjasama" class="form-control" required min="0" max="100" value="{{ $manual->kerjasama ?? 0 }}">
                         </div>
                     </div>
-                    <span class="badge bg-warning text-white px-3 py-2">Periode: {{ $namaBulan }} {{ $tahunDipilih }}</span>
-                </div>
-            </div>
-        </div>
-
-        {{-- Card 3: Penilaian Atasan --}}
-        <div class="col-12 col-md-4">
-            <div class="card shadow-lg border-0 h-100 card-hover">
-                <div class="card-header bg-info text-white fw-bold py-2">
-                    <i class="fas fa-star me-2"></i> PENILAIAN ATASAN
-                </div>
-                <div class="card-body text-center">
-                    <h2 class="fw-bold text-info mb-2" style="font-size: 3rem;">{{ $persenManual }}%</h2>
-                    <p class="text-muted mb-1">Input Oleh Atasan</p>
-                    <div class="progress mb-2" style="height: 18px; border-radius: 10px;">
-                        <div class="progress-bar bg-info fw-bold text-white" role="progressbar" style="width: {{ $persenManual }}%">
-                            {{ number_format($persenManual, 0) }}%
+                    <div class="mb-3 row">
+                        <label class="col-sm-4 col-form-label">Tanggung Jawab (0-100)</label>
+                        <div class="col-sm-8">
+                            <input type="number" name="tanggung_jawab" class="form-control" required min="0" max="100" value="{{ $manual->tanggung_jawab ?? 0 }}">
                         </div>
                     </div>
-                    <span class="badge bg-info text-white px-3 py-2">Bobot: 10%</span>
+                    <div class="mb-3 row">
+                        <label class="col-sm-4 col-form-label">Inisiatif (0-100)</label>
+                        <div class="col-sm-8">
+                            <input type="number" name="inisiatif" class="form-control" required min="0" max="100" value="{{ $manual->inisiatif ?? 0 }}">
+                        </div>
+                    </div>
+                    <div class="mb-3 row">
+                        <label class="col-sm-4 col-form-label">Komunikasi (0-100)</label>
+                        <div class="col-sm-8">
+                            <input type="number" name="komunikasi" class="form-control" required min="0" max="100" value="{{ $manual->komunikasi ?? 0 }}">
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label>Catatan Tambahan</label>
+                        <textarea name="catatan" class="form-control" rows="3">{{ $manual->catatan ?? '' }}</textarea>
+                    </div>
+
+                    <button type="submit" class="btn btn-danger btn-block w-100">💾 Simpan Penilaian</button>
+                </form>
+            </div>
+        </div>
+        @endif
+
+    </div>
+
+    <!-- Kolom Kanan: Statistik System -->
+    <div class="col-lg-6">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-success">Statistik Sistem (Otomatis)</h6>
+            </div>
+            <div class="card-body">
+                @php 
+                    $colClass = isset($roas) ? 'col-md-6' : 'col-md-4'; 
+                @endphp
+                
+                <div class="row g-3">
+                    @if(isset($roas))
+                    {{-- Card ROAS (Only for Eko Sulis) --}}
+                    <div class="col-12 {{ $colClass }}">
+                        <div class="card shadow-sm border-0 h-100 card-hover">
+                            <div class="card-header bg-primary text-white fw-bold py-2">
+                                <i class="fas fa-chart-line me-2"></i> ROAS
+                            </div>
+                            <div class="card-body text-center p-2">
+                                <h3 class="fw-bold text-primary mb-1">{{ $roas }}X</h3>
+                                <p class="text-muted small mb-1">Target: {{ $targetRoas }}X</p>
+                                <div class="progress mb-1" style="height: 10px;">
+                                    <div class="progress-bar bg-primary" role="progressbar" style="width: {{ $persenRoas }}%"></div>
+                                </div>
+                                <span class="badge bg-primary text-white">Score: {{ $nilaiAkhirRoas }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    @endif
+
+                    {{-- Card 1: Leads MBC --}}
+                    <div class="col-12 {{ $colClass }}">
+                        <div class="card shadow-sm border-0 h-100 card-hover">
+                            <div class="card-header bg-success text-white fw-bold py-2">
+                                <i class="fas fa-users me-2"></i> LEADS MBC
+                            </div>
+                            <div class="card-body text-center p-2">
+                                <h3 class="fw-bold text-success mb-1">{{ $leadsMBC }}</h3>
+                                <p class="text-muted small mb-1">Target: {{ $targetLeadsMBC }}</p>
+                                <div class="progress mb-1" style="height: 10px;">
+                                    <div class="progress-bar bg-success" role="progressbar" style="width: {{ $persenLeadsMBC }}%"></div>
+                                </div>
+                                <span class="badge bg-success text-white">Score: {{ $nilaiLeadsMBC }}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Card 2: Leads SMI --}}
+                    <div class="col-12 {{ $colClass }}">
+                        <div class="card shadow-sm border-0 h-100 card-hover">
+                            <div class="card-header bg-warning text-white fw-bold py-2">
+                                <i class="fas fa-user-graduate me-2"></i> LEADS SMI
+                            </div>
+                            <div class="card-body text-center p-2">
+                                <h3 class="fw-bold text-warning mb-1">{{ $leadsSMI }}</h3>
+                                <p class="text-muted small mb-1">Target: {{ $targetLeadsSMI }}</p>
+                                <div class="progress mb-1" style="height: 10px;">
+                                    <div class="progress-bar bg-warning" role="progressbar" style="width: {{ $persenLeadsSMI }}%"></div>
+                                </div>
+                                <span class="badge bg-warning text-white">Score: {{ $nilaiLeadsSMI }}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Card 3: Penilaian Atasan --}}
+                    <div class="col-12 {{ $colClass }}">
+                        <div class="card shadow-sm border-0 h-100 card-hover">
+                            <div class="card-header bg-info text-white fw-bold py-2">
+                                <i class="fas fa-star me-2"></i> ATASAN
+                            </div>
+                            <div class="card-body text-center p-2">
+                                <h3 class="fw-bold text-info mb-1">{{ $persenManual }}%</h3>
+                                <p class="text-muted small mb-1">Manual</p>
+                                <div class="progress mb-1" style="height: 10px;">
+                                    <div class="progress-bar bg-info" role="progressbar" style="width: {{ $persenManual }}%"></div>
+                                </div>
+                                <span class="badge bg-info text-white">Score: {{ $nilaiManualPart }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Card Tabel Penilaian Hasil -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 bg-gradient-primary text-white" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                 <h6 class="m-0 font-weight-bold text-white text-center">PENILAIAN HASIL (MARKETING {{ strtoupper($targetUser->name ?? auth()->user()->name) }})</h6>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-bordered mb-0 table-striped">
+                        <thead class="bg-warning text-dark">
+                            <tr>
+                                <th>No</th>
+                                <th>Aspek Kinerja</th>
+                                <th>Indikator</th>
+                                <th>Bobot</th>
+                                <th>Pencapaian</th>
+                                <th>Nilai</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if(isset($roas))
+                            <tr>
+                                <td>1</td>
+                                <td>ROAS</td>
+                                <td>Target {{ $targetRoas }}X</td>
+                                <td>30%</td>
+                                <td>{{ $roas }}X</td>
+                                <td>{{ $nilaiAkhirRoas }}</td>
+                            </tr>
+                            <tr>
+                                <td>2</td>
+                                <td>Leads MBC</td>
+                                <td>Target {{ $targetLeadsMBC }}/bulan</td>
+                                <td>30%</td>
+                                <td>{{ $leadsMBC }}</td>
+                                <td>{{ $nilaiLeadsMBC }}</td>
+                            </tr>
+                            <tr>
+                                <td>3</td>
+                                <td>Leads SMI</td>
+                                <td>Target {{ $targetLeadsSMI }}/bulan</td>
+                                <td>30%</td>
+                                <td>{{ $leadsSMI }}</td>
+                                <td>{{ $nilaiLeadsSMI }}</td>
+                            </tr>
+                            @else
+                            {{-- FELMI / NISA --}}
+                            <tr>
+                                <td>1</td>
+                                <td>Leads MBC</td>
+                                <td>Target {{ $targetLeadsMBC }}/bulan</td>
+                                <td>45%</td>
+                                <td>{{ $leadsMBC }}</td>
+                                <td>{{ $nilaiLeadsMBC }}</td>
+                            </tr>
+                            <tr>
+                                <td>2</td>
+                                <td>Leads SMI</td>
+                                <td>Target {{ $targetLeadsSMI }}/bulan</td>
+                                <td>45%</td>
+                                <td>{{ $leadsSMI }}</td>
+                                <td>{{ $nilaiLeadsSMI }}</td>
+                            </tr>
+                            @endif
+
+                            <tr>
+                                <td>{{ isset($roas) ? 4 : 3 }}</td>
+                                <td>Penilaian Atasan</td>
+                                <td>Input Oleh Atasan</td>
+                                <td>10%</td>
+                                <td>{{ $persenManual }}%</td>
+                                <td>{{ $nilaiManualPart }}</td>
+                            </tr>
+                        </tbody>
+                        <tfoot class="bg-light font-weight-bold">
+                             <tr style="background-color: #d1f7d6;">
+                                 <td colspan="5" class="text-right">TOTAL NILAI AKHIR</td>
+                                 <td>{{ $totalNilai }}</td>
+                             </tr>
+                        </tfoot>
+                    </table>
                 </div>
             </div>
         </div>
-    </div>
 
-
-    {{-- ================== TABEL KPI MARKETING ================== --}}
-    <div class="card shadow-lg border-0 mb-4">
-        <div class="card-header text-white text-center fw-bold fs-5" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
-            📊 DETAIL PENILAIAN KINERJA - {{ strtoupper($namaBulan) }} {{ $tahunDipilih }}
-        </div>
-        <div class="card-body p-0">
-            <table class="table table-bordered table-striped table-hover mb-0 text-center align-middle">
-                <thead style="background-color: #FFFF00;">
-                    <tr>
-                        <th>No</th>
-                        <th>Aspek Kinerja</th>
-                        <th>Indikator</th>
-                        <th>Bobot</th>
-                        <th>Pencapaian</th>
-                        <th>Nilai (Points)</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {{-- 1. Leads MBC --}}
-                    <tr>
-                        <td class="fw-bold">1</td>
-                        <td class="text-start fw-bold">Leads MBC</td>
-                        <td>Target {{ $targetLeadsMBC }}/bulan</td>
-                        <td class="fw-bold">45%</td>
-                        <td class="fw-bold">{{ $leadsMBC }}</td>
-                        <td class="fw-bold">{{ $nilaiLeadsMBC }}</td>
-                    </tr>
-                    
-                    {{-- 2. Leads SMI --}}
-                    <tr>
-                        <td class="fw-bold">2</td>
-                        <td class="text-start fw-bold">Leads SMI</td>
-                        <td>Target {{ $targetLeadsSMI }}/bulan</td>
-                        <td class="fw-bold">45%</td>
-                        <td class="fw-bold">{{ $leadsSMI }}</td>
-                        <td class="fw-bold">{{ $nilaiLeadsSMI }}</td>
-                    </tr>
-
-                    {{-- 3. Penilaian Atasan --}}
-                    <tr>
-                        <td class="fw-bold">3</td>
-                        <td class="text-start fw-bold">Penilaian Atasan</td>
-                        <td>Input Oleh Atasan</td>
-                        <td class="fw-bold">10%</td>
-                        <td class="fw-bold">{{ $persenManual }}%</td>
-                        <td class="fw-bold">{{ $nilaiManualPart }}</td>
-                    </tr>
-
-                    {{-- TOTAL --}}
-                    <tr class="table-success fw-bold fs-5">
-                        <td colspan="5" class="text-end text-dark">TOTAL NILAI AKHIR</td>
-                        <td class="text-dark">{{ $totalNilai }}</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
-
-    {{-- ================== KETERANGAN SKALA NILAI & HISTORY (REUSED) ================== --}}
-    
-    <div class="nilai-wrapper" style="
-        background:#fff;
-        border:1px solid #e3e8f3;
-        border-radius:16px;
-        padding:25px;
-        margin-top:30px;
-        box-shadow:0 6px 14px rgba(0,0,0,0.06);
-    ">
-
-        <!-- ===== BOX TOTAL NILAI (otomatis berubah warna via JS) ===== -->
-        <div id="kategoriBox" style="
-            padding:18px;
-            border-radius:14px;
-            font-size:22px;
-            font-weight:800;
-            text-align:center;
-            margin-bottom:22px;
-            background:#f7f9fc;
-            border:1px solid #d7dcec;
-            color:#333;
-            transition:0.3s ease;
-        ">
-            Belum dihitung
+        <!-- Footer Alert -->
+        <div class="card shadow mb-4">
+             <div class="card-body {{ ($totalNilai ?? 0) < 70 ? 'bg-danger' : 'bg-success' }} text-white text-center">
+                <h3 class="font-weight-bold m-0">{{ ($totalNilai ?? 0) < 70 ? 'Underperformance' : 'Good Performance' }} ({{ $totalNilai ?? 0 }})</h3>
+                <p class="m-0 mt-2 font-italic small">
+                    @if($totalNilai >= 100)
+                        "Luar biasa!"
+                    @elseif($totalNilai >= 80)
+                        "Kerja bagus!"
+                    @elseif($totalNilai >= 60)
+                        "Cukup baik."
+                    @elseif($totalNilai >= 40)
+                        "Ayo bangkit!"
+                    @else
+                        "Jangan patah semangat."
+                    @endif
+                </p>
+            </div>
         </div>
 
-        <!-- ===== MOTIVASI ===== -->
-        <div id="motivasiBox" style="
-            margin-top:10px;
-            margin-bottom:25px;
-            font-size:17px;
-            font-weight:500;
-            color:#444;
-        "></div>
+        <!-- History -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                 <h6 class="m-0 font-weight-bold text-primary">History Kinerja Per Bulan</h6>
+            </div>
+            <div class="card-body">
+                <div style="display:flex; gap:10px; overflow-x:auto; white-space:nowrap; padding-bottom:10px;">
+                    @foreach(range(1,12) as $m)
+                        @php
+                            $nilai = $historyNilai[$m] ?? 0;
+                            $warna = $nilai > 100 ? "#009300" : ($nilai >= 80 ? "#22b122" : ($nilai >= 60 ? "#ffe75c" : ($nilai >= 40 ? "#ff9933" : "#e53935")));
+                            if($nilai == 0) $warna = "#e5e7eb";
+                        @endphp
 
-        <!-- JUDUL -->
-        <h4 class="fw-bold mt-3" style="margin-bottom:14px; color:#2b2b2b;"> Keterangan Skala Nilai</h4>
-
-        <!-- ===== TABEL KONVERSI ===== -->
-        <table style="
-            width:100%;
-            border-collapse:collapse;
-            overflow:hidden;
-            border-radius:12px;
-            font-size:16px;
-            font-weight:600;
-            text-align:center;
-            box-shadow:0 3px 10px rgba(0,0,0,0.05);
-        ">
-            <thead>
-                <tr style="background:#2f3b52; color:white;">
-                    <th style="padding:12px;">Rentang Nilai</th>
-                    <th style="padding:12px;">Keterangan</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr style="background:#009300; color:white;"><td style="padding:14px;">&gt; 100</td><td style="padding:14px;">Sangat Baik</td></tr>
-                <tr style="background:#22b122; color:white;"><td style="padding:14px;">80 – 99</td><td style="padding:14px;">Baik</td></tr>
-                <tr style="background:#ffe75c;"><td style="padding:14px;">60 – 79</td><td style="padding:14px;">Cukup</td></tr>
-                <tr style="background:#ff9933; color:#222;"><td style="padding:14px;">40 – 59</td><td style="padding:14px;">Pembinaan</td></tr>
-                <tr style="background:#e53935; color:white;"><td style="padding:14px;">&lt; 40</td><td style="padding:14px;">Underperformance</td></tr>
-            </tbody>
-        </table>
-
-    </div>
-
-    <style>
-    #kategoriBox.pulse {
-        animation: pulseBox 1.2s infinite;
-    }
-
-    @keyframes pulseBox {
-        0% { transform: scale(1); }
-        50% { transform: scale(1.04); }
-        100% { transform: scale(1); }
-    }
-    </style>
-
-
-    <h2 style="margin-top:40px; font-weight:bold;">G. HISTORY KINERJA PER BULAN</h2>
-    <div style="margin-top:20px; display:flex; gap:10px; overflow-x:auto; white-space:nowrap; padding-bottom:10px;">
-        @foreach(range(1,12) as $m)
-            @php
-                $nilai = $historyNilai[$m] ?? 0;
-                if($nilai > 100) $warna = "#009300";
-                elseif($nilai >= 80) $warna = "#22b122";
-                elseif($nilai >= 60) $warna = "#ffe75c";
-                elseif($nilai >= 40) $warna = "#ff9933";
-                elseif($nilai > 0) $warna = "#e53935";
-                else $warna = "#e5e7eb";
-            @endphp
-
-            <div style="width:90px; padding:8px 10px; border:1px solid #e5e7eb; border-radius:10px; background:#ffffff; box-shadow:0 1px 3px rgba(0,0,0,0.05); flex:none; text-align:center;">
-                <div style="font-weight:700; font-size:14px; margin-bottom:6px;">
-                    {{ DateTime::createFromFormat('!m', $m)->format('M') }}
-                </div>
-                <div style="width:100%; height:10px; background:#e5e7eb; border-radius:5px;">
-                    <div style="width:100%; height:100%; background:{{ $warna }}; border-radius:5px;"></div>
-                </div>
-                <div style="font-size:13px; margin-top:4px; font-weight:600;">
-                    {{ $nilai }}
+                        <div style="width:70px; padding:5px; border:1px solid #e5e7eb; border-radius:5px; background:#fff; text-align:center;">
+                            <div style="font-weight:700; font-size:12px;">{{ DateTime::createFromFormat('!m', $m)->format('M') }}</div>
+                            <div style="height:5px; background:{{ $warna }}; margin:5px 0; border-radius:3px;"></div>
+                            <div style="font-size:11px;">{{ $nilai }}</div>
+                        </div>
+                    @endforeach
                 </div>
             </div>
-        @endforeach
-    </div>
+        </div>
 
-    <br><br>
+    </div>
 </div>
-
-<script>
-document.addEventListener("DOMContentLoaded", function() {
-    let totalNilai = {{ $totalNilai ?? 0 }};
-    const box = document.getElementById("kategoriBox");
-    const motivasi = document.getElementById("motivasiBox");
-
-    if (!box || !motivasi) return;
-
-    const kategori = [
-        { min: 100, label: "Sangat Baik", bg: "#009300", border: "#007a00", color: "#ffffff", motivasi: ["Luar biasa!"] },
-        { min: 80, label: "Baik", bg: "#22b122", border: "#1a8a1a", color: "#ffffff", motivasi: ["Kerja bagus!"] },
-        { min: 60, label: "Cukup", bg: "#ffe75c", border: "#e6d053", color: "#333333", motivasi: ["Cukup baik."] },
-        { min: 40, label: "Pembinaan", bg: "#ff9933", border: "#e68a2e", color: "#000000", motivasi: ["Ayo bangkit!"] },
-        { min: 0, label: "Underperformance", bg: "#e53935", border: "#c62828", color: "#ffffff", motivasi: ["Jangan patah semangat."] }
-    ];
-
-    let hasil = kategori.find(k => totalNilai >= k.min);
-
-    box.style.background = hasil.bg;
-    box.style.borderColor = hasil.border;
-    box.style.color = hasil.color;
-    box.innerHTML = `${hasil.label} (${totalNilai})`;
-
-    if (hasil.label === "Pembinaan" || hasil.label === "Underperformance") {
-        box.classList.add("pulse");
-    }
-
-    motivasi.innerHTML = `
-        <p style="padding:12px; border-left:5px solid ${hasil.color}">
-            💬 <em>${hasil.motivasi[0]}</em>
-        </p>
-    `;
-});
-</script>
 
 @endsection

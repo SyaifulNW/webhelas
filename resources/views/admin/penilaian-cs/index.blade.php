@@ -39,6 +39,7 @@
                             <select name="tahun" class="form-control">
                                 <option value="2024" {{ $tahun == '2024' ? 'selected' : '' }}>2024</option>
                                 <option value="2025" {{ $tahun == '2025' ? 'selected' : '' }}>2025</option>
+                                <option value="2026" {{ $tahun == '2026' ? 'selected' : '' }}>2026</option>
                             </select>
                         </div>
                     </div>

@@ -477,15 +477,9 @@
 
                 {{-- Penilaian Karyawan --}}
                 <li class="nav-item">
-                    @php
-                        $routePenilaian = 'manager.penilaian-cs.index';
-                        if (in_array(Auth::user()->name, ['Linda', 'Yasmin'])) {
-                            $routePenilaian = 'admin.penilaian-cs.index';
-                        }
-                    @endphp
-                    <a class="nav-link text-white" href="{{ route($routePenilaian) }}">
+                    <a class="nav-link text-white" href="{{ route('manager.penilaian-cs.index') }}">
                         <i class="fa-solid fa-list-user me-2"></i>
-                        <span>Penilaian Karyawan</span>
+                        <span>Penilaian Kinerja Tim</span>
                     </a>
                 </li>
 
