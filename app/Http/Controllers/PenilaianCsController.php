@@ -8,6 +8,8 @@ use App\Models\User;
 use App\Models\SalesPlan;
 use App\Models\Data;
 use App\Models\PenilaianManual;
+use App\Models\Activity;
+use App\Models\DailyActiviti;
 use Carbon\Carbon;
 
 class PenilaianCsController extends Controller
@@ -20,9 +22,25 @@ class PenilaianCsController extends Controller
 
     public function managerIndex(Request $request)
     {
-        // Filter karyawan hanya Tursia dan Latifah
-        $daftarCs = User::whereIn('name', ['Tursia', 'Latifah'])->orderBy('name')->get();
-        return $this->getPenilaianData($request, $daftarCs, 'manager.penilaian-cs.index');
+        $userName = auth()->user()->name;
+
+        // Custom Logic untuk Dropdown User
+        $routeView = 'manager.penilaian-cs.index'; // Default view for manager
+        
+        if (in_array($userName, ['Linda', 'Yasmin'])) {
+            // Linda & Yasmin bisa melihat SEMUA user
+            $daftarCs = User::orderBy('name')->get();
+            // Use admin route for Linda and Yasmin
+            $routeView = 'admin.penilaian-cs.index';
+        } elseif ($userName === 'Agus Setyo') {
+            // Agus Setyo hanya Tursia dan Latifah
+            $daftarCs = User::whereIn('name', ['Tursia', 'Latifah'])->orderBy('name')->get();
+        } else {
+            // Default Fallback (jika ada manager lain) -> Filter Tursia & Latifah
+            $daftarCs = User::whereIn('name', ['Tursia', 'Latifah'])->orderBy('name')->get();
+        }
+
+        return $this->getPenilaianData($request, $daftarCs, $routeView);
     }
 
     private function getPenilaianData(Request $request, $daftarCs, $routeAction)
@@ -60,8 +78,8 @@ class PenilaianCsController extends Controller
         $scoreManual = 0;
         $grandTotal = 0;
         $manualTotalSum = 0;
-        $closingPaketCount = 0; // Initialize this too
-
+        $closingPaketCount = 0; 
+        
         // 1. TOTAL DATABASE (dari input Data baru bulan ini)
         // Asumsi: created_by di tabel 'data' menyimpan NAMA user
         $totalDatabase = Data::where('created_by', $namaUser)
@@ -112,11 +130,11 @@ class PenilaianCsController extends Controller
         $scoreDatabase = $targetDatabase > 0 ? min(20, round(($totalDatabase / $targetDatabase) * 20)) : 0;
 
         // 4. Manual (Bobot 20%)
-        // $scoreManual initialized to 0 above
-        // $manualTotalSum initialized to 0 above
+        $scoreManual = 0;
+        $manualTotalSum = 0;
         
         // Query Data Penilaian Manual
-        $manual = PenilaianManual::where('user_id', $userId)
+        $manual = \App\Models\PenilaianManual::where('user_id', $userId)
                 ->where('bulan', $bulan)
                 ->where('tahun', $tahun)
                 ->first();
@@ -124,6 +142,61 @@ class PenilaianCsController extends Controller
         if ($manual) {
              $scoreManual = round(($manual->total_nilai / 100) * 20);
              $manualTotalSum = $manual->kerajinan + $manual->kerjasama + $manual->tanggung_jawab + $manual->inisiatif + $manual->komunikasi;
+        }
+
+        // 5. Daily Activity Score Logic (Reused from DailyController)
+        $daysInMonth = Carbon::create($tahun, $bulan, 1)->daysInMonth;
+        $hariKerja = 0;
+        for ($d = 1; $d <= $daysInMonth; $d++) {
+            $day = Carbon::create($tahun, $bulan, $d);
+            if ($day->dayOfWeek != Carbon::SUNDAY) {
+                $hariKerja++;
+            }
+        }
+
+        // Ambil aktivitas dan hitung KPI
+        $activities = Activity::with('kategori')->orderBy('categories_id')->get()->groupBy('categories_id');
+        $categoryKpiWeights = [
+            'Aktivitas Pribadi' => 10,
+            'Aktivitas Mencari Leads' => 20,
+            'Aktivitas Memprospek' => 20,
+            'Aktivitas Closing' => 40,
+            'Aktivitas Merawat Customer' => 10,
+        ];
+        
+        $dailyTotalKpi = 0;
+        
+        foreach ($activities as $kategoriId => $list) {
+            $categoryName = $list->first()->kategori->nama ?? ("Kategori " . $kategoriId);
+            $activityPercents = []; // tiap aktivitas -> persentase cap 100%
+
+            foreach ($list as $act) {
+                $targetDaily = (float) ($act->target_daily ?? 0);
+                $targetBulanan = $targetDaily * $hariKerja;
+
+                // total realisasi bulan ini untuk aktivitas ini (user spesifik)
+                $totalRealisasi = (float) DailyActiviti::where('user_id', $userId)
+                    ->where('activity_id', $act->id)
+                    ->whereMonth('tanggal', $bulan)
+                    ->whereYear('tanggal', $tahun)
+                    ->sum('realisasi');
+
+                $percent = 0;
+                if ($targetBulanan > 0) {
+                    $percent = ($totalRealisasi / $targetBulanan) * 100;
+                    if ($percent > 100) $percent = 100;
+                }
+                $activityPercents[] = $percent;
+            }
+
+            // skor kategori = rata-rata persentase aktivitas di kategori
+            $skorKategori = count($activityPercents) ? (array_sum($activityPercents) / count($activityPercents)) : 0;
+            // ambil bobot kategori dari mapping
+            $bobotKategori = $categoryKpiWeights[$categoryName] ?? 0;
+            // nilai kategori = (skorKategori% / 100) * bobotKategori
+            $nilaiKategori = ($skorKategori / 100) * $bobotKategori;
+            
+            $dailyTotalKpi += $nilaiKategori;
         }
 
         // TOTAL SCORE
@@ -143,7 +216,8 @@ class PenilaianCsController extends Controller
             'countTertarik','countMauTransfer','countSudahTransfer','countNo','countCold',
             'manual', 'routeAction',
             'scoreOmset', 'scoreClosingPaket', 'scoreDatabase', 'scoreManual', 'grandTotal',
-            'closingPaketCount', 'targetClosingPaket', 'targetDatabase', 'manualTotalSum'
+            'closingPaketCount', 'targetClosingPaket', 'targetDatabase', 'manualTotalSum',
+            'dailyTotalKpi'
         ));
     }
 

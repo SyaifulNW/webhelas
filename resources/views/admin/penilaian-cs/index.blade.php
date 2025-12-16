@@ -241,6 +241,14 @@
                                  <td>{{ $manualTotalSum ?? 0 }}</td>
                                  <td>{{ $scoreManual ?? 0 }}</td>
                             </tr>
+                            <tr>
+                                <td>5</td>
+                                <td>Daily Activity</td>
+                                <td>Pencapaian KPI Harian</td>
+                                <td>(Ref)</td>
+                                 <td>{{ number_format($dailyTotalKpi ?? 0, 2) }}%</td>
+                                 <td>{{ number_format($dailyTotalKpi ?? 0, 2) }}</td>
+                            </tr>
                         </tbody>
                         <tfoot class="bg-light font-weight-bold">
                              <tr style="background-color: #d1f7d6;">

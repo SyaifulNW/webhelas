@@ -455,7 +455,7 @@
                 </li>
             @endif
 
-            @if(in_array(Auth::user()->name, ['Linda', 'Yasmin']))
+            @if(in_array(Auth::user()->name, ['Linda', 'Yasmin', 'Agus']))
                 @if(\App\Models\Menu::isActive('program_kerja'))
                 {{-- Program Kerja --}}
                 <li class="nav-item">
@@ -474,6 +474,20 @@
                     </a>
                 </li>
                 @endif
+
+                {{-- Penilaian Karyawan --}}
+                <li class="nav-item">
+                    @php
+                        $routePenilaian = 'manager.penilaian-cs.index';
+                        if (in_array(Auth::user()->name, ['Linda', 'Yasmin'])) {
+                            $routePenilaian = 'admin.penilaian-cs.index';
+                        }
+                    @endphp
+                    <a class="nav-link text-white" href="{{ route($routePenilaian) }}">
+                        <i class="fa-solid fa-list-user me-2"></i>
+                        <span>Penilaian Karyawan</span>
+                    </a>
+                </li>
             @endif
 
             {{-- MENU HRD --}}
