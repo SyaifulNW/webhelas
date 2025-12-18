@@ -48,9 +48,9 @@
                     </button>
                 </form>
                  <br>
-                                    <a href="{{ route('admin.activity-cs.index', ['cs_id' => $userId, 'tanggal' => $tahun . '-' . $bulan . '-01']) }}" class="badge badge-primary p-2 mt-1" target="_blank">
-                                        Lihat Detail <i class="fas fa-external-link-alt ml-1"></i>
-                                    </a>
+                 <a href="{{ route('admin.activity-cs.viewPdfBulanan', ['cs_id' => $userId, 'bulan' => $tahun . '-' . $bulan]) }}" class="btn btn-danger btn-block" target="_blank">
+                    <i class="fas fa-file-pdf mr-1"></i> Export PDF Daily Activity
+                 </a>
             </div>
         </div>
 
