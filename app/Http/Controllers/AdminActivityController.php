@@ -24,8 +24,14 @@ class AdminActivityController extends Controller
 
         $userName = trim($user->name);
 
-        if ($user->role === 'administrator' || in_array($userName, ['Linda', 'Yasmin'])) {
-            $csQuery->where('role', 'cs-mbc');
+        if ($user->role === 'administrator') {
+             $csQuery->where('role', 'cs-mbc');
+        } elseif (in_array($userName, ['Linda', 'Yasmin'])) {
+             // Linda & Yasmin bisa lihat CS MBC + Team Mereka (Arifa, Felmi, Nisa, dll)
+             $csQuery->where(function($q) {
+                 $q->where('role', 'cs-mbc')
+                   ->orWhereIn('name', ['Arifa', 'Felmi', 'Nisa', 'Eko Sulis', 'Shafa', 'Qiyya']);
+             });
         } elseif (in_array($userName, ['Agus', 'Agus Setyo'])) {
             $csQuery->whereIn('name', ['Tursia', 'Latifah']);
         } else {

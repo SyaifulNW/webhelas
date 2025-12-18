@@ -47,6 +47,10 @@
                         <i class="fas fa-search"></i> Tampilkan Data
                     </button>
                 </form>
+                 <br>
+                                    <a href="{{ route('admin.activity-cs.index', ['cs_id' => $userId, 'tanggal' => $tahun . '-' . $bulan . '-01']) }}" class="badge badge-primary p-2 mt-1" target="_blank">
+                                        Lihat Detail <i class="fas fa-external-link-alt ml-1"></i>
+                                    </a>
             </div>
         </div>
 
@@ -244,7 +248,8 @@
                             </tr>
                             <tr>
                                 <td>5</td>
-                                <td>Daily Activity</td>
+                                <td>Daily Activity
+                                </td>
                                 <td>Pencapaian KPI Harian</td>
                                 <td>(Ref)</td>
                                  <td>{{ number_format($dailyTotalKpi ?? 0, 2) }}%</td>

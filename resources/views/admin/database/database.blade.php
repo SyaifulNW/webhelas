@@ -197,19 +197,19 @@ $kurang = max($target - $databaseBaru, 0);
 
             &nbsp;
             <!-- Badge Statistik -->
-            <span class="badge bg-info px-3 py-2 text-white">
+            <span id="badge-database-baru" class="badge bg-info px-3 py-2 text-white">
                 Database Baru ({{ $bulanLabel }}): {{ $databaseBaru }}
             </span>
             &nbsp;
-            <span class="badge bg-primary px-3 py-2 text-white">
+            <span id="badge-total" class="badge bg-primary px-3 py-2 text-white">
                 Total Database: {{ $totalDatabase }}
             </span>
             &nbsp;
-            <span class="badge bg-warning px-3 py-2 text-white">
+            <span id="badge-target" class="badge bg-warning px-3 py-2 text-white">
                 Target: {{ $target }}
             </span>
             &nbsp;
-            <span class="badge bg-danger px-3 py-2 text-white">
+            <span id="badge-kurang" class="badge bg-danger px-3 py-2 text-white">
                 Kurang: {{ $kurang }}
             </span>
         </div>
@@ -297,52 +297,88 @@ function getStatistik(user) {
 <!-- ðŸ”¹ Script Filter -->
 <script>
 $(document).ready(function() {
-
     function applyFilters() {
-        let userRole = "{{ strtolower(auth()->user()->role) }}";
-        let user = $('#filterUser').val() ? $('#filterUser').val().toLowerCase() : "";
-        let selectedBulan = $('#filterBulan').val();
-        let search = $('#tableSearch').val().toLowerCase();
+        var userRole = "{{ strtolower(auth()->user()->role) }}";
+        
+        // Get values
+        var fUser = $('#filterUser').val() ? $('#filterUser').val().toLowerCase() : '';
+        var fBulan = $('#filterBulan').val();
+        var fSumber = $('#filterSumber').val();
+        var fKelas = $('#filterKelas').val();
+        var search = $('#tableSearch').val() ? $('#tableSearch').val().toLowerCase() : '';
 
         $('#myTable tbody tr').each(function() {
-            let createdBy = $(this).data('created-by');
-            let bulan = $(this).data('bulan');
-            let text = $(this).text().toLowerCase();
-
-            let matchUser = (user === "" || createdBy === user);
-            let matchBulan = (selectedBulan === "" || bulan == selectedBulan);
-            let matchSearch = (text.includes(search));
-
-            // Admin filter by CS, CS filter by bulan
-            let visible = false;
-            if (userRole === "administrator" || userRole === "manager") {
-                visible = matchUser && matchSearch;
-            } else {
-                visible = matchBulan && matchSearch;
+            var $tr = $(this);
+            var trUser = $tr.data('created-by'); // assume lowercase in data attr
+            var trBulan = $tr.data('bulan');
+            var trText = $tr.text().toLowerCase();
+            
+            // Get dynamic values from row inputs
+            var trSumber = $tr.find('.select-sumber').val();
+            // For kelas, get text of selected option to match filter which uses text
+            var trKelas = '';
+            var $kelasSelect = $tr.find('.select-potensi');
+            if ($kelasSelect.length > 0) {
+                trKelas = $kelasSelect.find('option:selected').text().trim();
             }
+            
+            var trYear = $tr.data('year'); // Get year from data attribute
+            var currentYear = new Date().getFullYear();
+            
+            var show = true;
 
-            $(this).toggle(visible);
+            // Filter User (Admin/Manager only typically)
+            if (fUser && trUser !== fUser) show = false;
+            
+            // Filter Bulan
+            if (show && fBulan) {
+                // Check Month
+                if (trBulan != fBulan) {
+                    show = false;
+                }
+                // Also Check Year (Match Current Year to align with 'Database Baru' badge)
+                // Use loose equality in case types differ
+                else if (trYear != currentYear) {
+                    show = false;
+                }
+            }
+            
+            // Filter Sumber
+            if (show && fSumber && trSumber !== fSumber) show = false;
+            
+            // Filter Kelas
+            if (show && fKelas && trKelas !== fKelas) show = false;
+            
+            // Search
+            if (show && search && !trText.includes(search)) show = false;
+            
+            $tr.toggle(show);
         });
 
-        // ðŸ”¹ Jika admin ganti filter CS â†’ update statistik via AJAX
-        if (userRole === "administrator" || userRole === "manager") {
-            let selectedUser = $('#filterUser').val();
-
-            $.ajax({
-                url: "{{ route('admin.database.statistik') }}",
+        // Admin Stats Update
+        if ((userRole === "administrator" || userRole === "manager")) {
+             // If we want detailed stats update based on filterUser
+             var statUser = fUser || '';
+             $.ajax({
+                url: "{{ route('admin.database.statistik') }}", // Ensure this route exists and returns JSON
                 type: "GET",
-                data: { user: selectedUser },
+                data: { user: statUser },
                 success: function(res) {
-                    $('.badge-info').text(`Database Baru (${res.bulanLabel}): ${res.databaseBaru}`);
-                    $('.badge-primary').text(`Total Database: ${res.totalDatabase}`);
-                    $('.badge-warning').text(`Target: ${res.target}`);
-                    $('.badge-danger').text(`Kurang: ${res.kurang}`);
+                    $('#badge-database-baru').text(`Database Baru (${res.bulanLabel}): ${res.databaseBaru}`);
+                    $('#badge-total').text(`Total Database: ${res.totalDatabase}`);
+                    $('#badge-target').text(`Target: ${res.target}`);
+                    $('#badge-kurang').text(`Kurang: ${res.kurang}`);
                 }
             });
         }
     }
 
-    $('#filterUser, #filterBulan, #tableSearch').on('change keyup', applyFilters);
+    // Bind Events
+    $('#filterUser, #filterBulan, #filterSumber, #filterKelas').on('change', applyFilters);
+    $('#tableSearch').on('keyup input', applyFilters);
+
+    // Run on load
+    applyFilters();
 });
 </script>
 
@@ -359,39 +395,15 @@ $(document).ready(function() {
                                 Sumber Leads <br>
                                 <select id="filterSumber" class="form-control form-control-sm">
                                     <option value="">-- Semua Sumber --</option>
+                                    <option value="Marketing">Marketing</option>
                                     <option value="Iklan">Iklan</option>
-                                    <option value="Marketing">Marketing (IG,FB,Event)</option>
                                     <option value="Alumni">Alumni</option>
-                                    <option value="Lain-lain">Lain-lain</option>
+                                    <option value="Mandiri">Mandiri</option>
                                 </select>
                             </th>
 
                             <script>
-                                $(document).ready(function() {
-                                    // Pencarian global tetap jalan
-                                    $('#tableSearch').on('keyup', function() {
-                                        let filter = $(this).val().toLowerCase();
-                                        $('#myTable tbody tr').each(function() {
-                                            let text = $(this).text().toLowerCase();
-                                            $(this).toggle(text.includes(filter));
-                                        });
-                                    });
-
-                                    // Filter Sumber Leads
-                                    $('#filterSumber').on('change', function() {
-                                        let selected = $(this).val().toLowerCase();
-                                        $('#myTable tbody tr').each(function() {
-                                            let sumber = $(this).find('td:eq(2) select option:selected').text().toLowerCase();
-                                            // kolom ke-2 (No=0, Nama=1, Leads=2)
-
-                                            if (selected === "" || sumber === selected) {
-                                                $(this).show();
-                                            } else {
-                                                $(this).hide();
-                                            }
-                                        });
-                                    });
-                                });
+                                // Script filter dipindahkan ke master filter di atas
                             </script>
 
                             @if(strtolower(auth()->user()->role) !== 'administrator')
@@ -438,18 +450,18 @@ $(document).ready(function() {
    <tr 
     data-created-by="{{ strtolower($item->created_by) }}"
     data-bulan="{{ \Carbon\Carbon::parse($item->created_at)->month }}"
+    data-year="{{ \Carbon\Carbon::parse($item->created_at)->year }}"
 >
 
                             <td>{{ $loop->iteration }}</td>
                             <td contenteditable="true" class="editable" data-field="nama">{{ $item->nama }}</td>
                      <td>
                          <select class="form-control form-control-sm select-sumber" data-id="{{ $item->id }}">
-    <option value="">- Pilih Sumber Leads -</option>
-
-                                    <option value="Iklan" {{ $item->leads == 'Iklan' ? 'selected' : '' }}>Iklan</option>
+                                    <option value="">- Pilih Sumber Leads -</option>
                                     <option value="Marketing" {{ $item->leads == 'Marketing' ? 'selected' : '' }}>Marketing</option>
+                                    <option value="Iklan" {{ $item->leads == 'Iklan' ? 'selected' : '' }}>Iklan</option>
                                     <option value="Alumni" {{ $item->leads == 'Alumni' ? 'selected' : '' }}>Alumni</option>
-                                    <option value="Lain-lain" {{ $item->leads == 'Lain-lain' ? 'selected' : '' }}>Lain-lain</option>
+                                    <option value="Mandiri" {{ $item->leads == 'Mandiri' ? 'selected' : '' }}>Mandiri</option>
                                 </select>
 
 
@@ -813,12 +825,11 @@ $(document).ready(function() {
                     <div class="form-group">
                         <label for="leads">Sumber Leads</label>
                         <select name="leads" id="leads" class="form-control">
-                            <option value="Iklan">Iklan</option>
                             <option value="Marketing">Marketing</option>
+                            <option value="Iklan">Iklan</option>
                             <option value="Alumni">Alumni</option>
-                            <option value="Lain-lain">Lain-lain</option>
+                            <option value="Mandiri">Mandiri</option>
                         </select>
-                        <input type="text" name="leads_custom" class="form-control mt-2" placeholder="Isi jika Lain-Lain">
                     </div>
 
                     {{-- Provinsi --}}
@@ -941,33 +952,7 @@ $(document).ready(function() {
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
-    $(document).ready(function() {
-        // Event listener untuk dropdown filter kelas
-        $('#filterKelas').on('change', function() {
-            // Ambil nama kelas yang dipilih dari dropdown filter
-            let selectedKelas = $(this).val();
-
-            // Loop melalui setiap baris (tr) di dalam tbody tabel
-            $('#myTable tbody tr').each(function() {
-                let row = $(this);
-
-                // Jika tidak ada kelas yang dipilih (opsi "-- Semua --"), tampilkan semua baris
-                if (selectedKelas === "") {
-                    row.show();
-                } else {
-                    // Ambil teks dari opsi yang terpilih di dropdown 'Potensi Kelas' dalam baris ini
-                    let kelasDiBaris = row.find('.select-potensi option:selected').text().trim();
-
-                    // Bandingkan dan tampilkan/sembunyikan baris
-                    if (kelasDiBaris === selectedKelas) {
-                        row.show(); // Tampilkan baris jika kelasnya cocok
-                    } else {
-                        row.hide(); // Sembunyikan baris jika tidak cocok
-                    }
-                }
-            });
-        });
-    });
+    // Logic filter kelas sudah digabung di applyFilters()
 </script>
 
 

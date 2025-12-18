@@ -17,8 +17,18 @@ public function index()
     $role = $user->role;
 
     // === ADMIN BISA LIHAT SEMUA ===
-    if ($role === 'admin') {
+    if ($role === 'admin' || $role === 'administrator') {
         $programs = ProgramKerja::with('inisiatifs')->get();
+    } elseif ($user->name === 'Linda') {
+        // Linda bisa lihat punya sendiri + Felmi + Nisa
+        $programs = ProgramKerja::with('inisiatifs')
+            ->where(function ($q) use ($user) {
+                $q->where('created_by', $user->id)
+                  ->orWhereHas('user', function($subQ) {
+                      $subQ->whereIn('name', ['Felmi', 'Nisa', 'Eko Sulis', 'Arifa']);
+                  });
+            })
+            ->get();
     } else {
         // Selain admin → hanya lihat miliknya sendiri
         $programs = ProgramKerja::with('inisiatifs')

@@ -96,6 +96,10 @@
                     <button type="submit" class="btn btn-primary btn-block w-100">
                         <i class="fas fa-search"></i> Tampilkan Data
                     </button>
+                    
+                    <a href="{{ route('gantt.index') }}" class="btn btn-info btn-block w-100 mt-2">
+                        <i class="fas fa-project-diagram"></i> Monitoring Gantt Chart
+                    </a>
                 </form>
             </div>
         </div>
