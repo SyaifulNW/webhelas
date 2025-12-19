@@ -475,19 +475,21 @@
                 </li>
                 @endif
 
+                @if(\App\Models\Menu::isActive('jadwal_kelas'))
+                {{-- Jadwal Kelas --}}
+                <li class="nav-item">
+                    <a class="nav-link text-white" href="{{ route('admin.kelas.index') }}">
+                        <i class="fa-solid fa-chalkboard me-2"></i>
+                        <span>JADWAL KELAS</span>
+                    </a>
+                </li>
+                @endif
+
                 {{-- Penilaian Karyawan --}}
                 <li class="nav-item">
                     <a class="nav-link text-white" href="{{ route('manager.penilaian-cs.index') }}">
                         <i class="fa-solid fa-list-user me-2"></i>
                         <span>Penilaian Kinerja Tim</span>
-                    </a>
-                </li>
-
-                {{-- Activity CS --}}
-                <li class="nav-item">
-                    <a class="nav-link text-white" href="{{ route('admin.activity-cs.index') }}">
-                        <i class="fa-solid fa-list-check me-2"></i>
-                        <span>Monitoring Daily Activity</span>
                     </a>
                 </li>
             @endif
