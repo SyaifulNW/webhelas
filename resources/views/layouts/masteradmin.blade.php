@@ -315,6 +315,15 @@
                     </a>
                 </li>
                 @endif
+
+                @if(\App\Models\Menu::isActive('settings'))
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ route('admin.settings.index') }}">
+                        <i class="fas fa-fw fa-cog"></i>
+                        <span><strong>SETTINGS</strong></span>
+                    </a>
+                </li>
+                @endif
             @endif
 
             @php
