@@ -278,7 +278,7 @@ td[contenteditable="true"]:hover {
                     <select class="form-select form-select-sm" data-field="pic">
                         @foreach([
                             'Rofi','Felmi','Rida','Nisa','Linda','Yasmin','Shafa','Qiyya',
-                            'Eko','Tursia','Latifah','Agus','Syaiful','Fitra Jaya Saleh'
+                            'Eko','Tursia','Latifah','Agus','Syaiful'
                         ] as $name)
                             <option value="{{ $name }}" {{ $inisiatif->pic == $name ? 'selected' : '' }}>
                                 {{ $name }}
@@ -477,7 +477,7 @@ document.addEventListener('DOMContentLoaded', function () {
           <td contenteditable="true" data-field="judul">Inisiatif Baru</td>
           <td>
             <select class="form-select form-select-sm" data-field="pic">
-              ${['Rofi','Felmi','Rida','Nisa','Linda','Yasmin','Shafa','Qiyya','Eko','Tursia','Latifah','Agus','Syaiful','Fitra Jaya Saleh']
+              ${['Rofi','Felmi','Rida','Nisa','Linda','Yasmin','Shafa','Qiyya','Eko','Tursia','Latifah','Agus','Syaiful']
                 .map(n => `<option value="${n}">${n}</option>`).join('')}
             </select>
           </td>

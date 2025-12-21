@@ -315,6 +315,15 @@
                     </a>
                 </li>
                 @endif
+
+                @if(\App\Models\Menu::isActive('settings'))
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ route('admin.settings.index') }}">
+                        <i class="fas fa-fw fa-cog"></i>
+                        <span><strong>SETTINGS</strong></span>
+                    </a>
+                </li>
+                @endif
             @endif
 
             @php
@@ -488,6 +497,7 @@
                     </a>
                 </li>
                 @endif
+<<<<<<< HEAD
                     
                     
             @if(strtolower(auth()->user()->name) === 'Yasmin')
@@ -500,6 +510,8 @@
             @endif
 
 
+=======
+>>>>>>> 9f16cfae0e0d9ee2bf9e1ad543073ecd6288413d
 
                 {{-- Penilaian Karyawan --}}
                 <li class="nav-item">

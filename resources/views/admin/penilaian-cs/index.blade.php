@@ -14,7 +14,7 @@
             <div class="card-body">
                 <form method="GET" action="{{ route($routeAction ?? 'admin.penilaian-cs.index') }}">
                     <div class="form-group">
-                        <label>Pilih CS:</label>
+                        <label>Pilih Nama Tim:</label>
                         <select name="user_id" class="form-control">
                             @foreach($daftarCs as $cs)
                                 <option value="{{ $cs->id }}" {{ $userId == $cs->id ? 'selected' : '' }}>

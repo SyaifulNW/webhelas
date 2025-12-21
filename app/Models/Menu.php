@@ -13,6 +13,13 @@ class Menu extends Model
     // Helper to check if active
     public static function isActive($name) {
         $menu = self::where('name', $name)->first();
-        return $menu ? $menu->is_active : true; // Default true if not found, or false? Let's say default true to avoid breaking if not seeded.
+        if ($menu) {
+            // Special case for settings menu for Yasmin
+            if ($name === 'settings' && auth()->check() && auth()->user()->name === 'Yasmin') {
+                return true;
+            }
+            return $menu->is_active;
+        }
+        return true; // Default true if not found
     }
 }
