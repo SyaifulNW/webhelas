@@ -208,7 +208,7 @@
             @endif
 
             {{-- Program Kerja & Ganchart untuk Marketing & Manager --}}
-            @if(in_array(strtolower(Auth::user()->role), ['manager']))
+            @if(in_array(strtolower(Auth::user()->role), ['advertising']))
                 @if(\App\Models\Menu::isActive('program_kerja'))
                 {{-- Program Kerja --}}
                 <li class="nav-item">
@@ -229,12 +229,12 @@
                 @endif
 
                 {{-- Penilaian Karyawan --}}
-                <li class="nav-item">
-                    <a class="nav-link text-white" href="{{ route('manager.penilaian-cs.index') }}">
-                        <i class="fa-solid fa-list-user me-2"></i>
-                        <span>Penilaian Karyawan</span>
-                    </a>
-                </li>
+                <!--<li class="nav-item">-->
+                <!--    <a class="nav-link text-white" href="{{ route('manager.penilaian-cs.index') }}">-->
+                <!--        <i class="fa-solid fa-list-user me-2"></i>-->
+                <!--        <span>Penilaian Karyawan</span>-->
+                <!--    </a>-->
+                <!--</li>-->
             @endif
 
             {{-- Sidebar Marketing --}}
@@ -354,16 +354,16 @@
                                     </a>
 
                                 {{-- Jika Tursia atau Latifah, hanya bisa Start-Up --}}
-                                @elseif(in_array($userName, ['Tursia', 'Latifah', 'Agus Setyo']))
-                                    <a class="collapse-item {{ request('kelas') == 'Start-Up Muda Indonesia' ? 'active' : '' }}"
-                                       href="{{ route('admin.salesplan.index', ['kelas' => 'Start-Up Muda Indonesia']) }}">
-                                       Start-Up Muda Indonesia
-                                    </a>
+                        @elseif(auth()->user()->role === 'cs-smi')
+    <a class="collapse-item {{ request('kelas') == 'Start-Up Muslim Indonesia' ? 'active' : '' }}"
+       href="{{ route('admin.salesplan.index', ['kelas' => 'Start-Up Muslim Indonesia']) }}">
+        Start-Up Muda Indonesia
+    </a>
 
                                 {{-- Selain itu, tampilkan semua kelas kecuali Sekolah Kaya & Start-Up --}}
                                 @else
                                     @foreach ($kelas as $item)
-                                        @if($item->nama_kelas != 'Sekolah Kaya' && $item->nama_kelas != 'Start-Up Muda Indonesia')
+                                        @if($item->nama_kelas != 'Sekolah Kaya' )
                                             <a class="collapse-item {{ request('kelas') == $item->nama_kelas ? 'active' : '' }}"
                                                href="{{ route('admin.salesplan.index', ['kelas' => $item->nama_kelas]) }}">
                                                {{ $item->nama_kelas }}
@@ -454,8 +454,12 @@
                     </a>
                 </li>
             @endif
+            
+            
+   
+            
 
-            @if(in_array(Auth::user()->name, ['Linda', 'Yasmin', 'Agus', 'Agus Setyo']))
+            @if(in_array(Auth::user()->name, ['Linda', 'Yasmin', 'Agus Setyo']))
                 @if(\App\Models\Menu::isActive('program_kerja'))
                 {{-- Program Kerja --}}
                 <li class="nav-item">
@@ -475,19 +479,33 @@
                 </li>
                 @endif
 
+                @if(\App\Models\Menu::isActive('jadwal_kelas'))
+                {{-- Jadwal Kelas --}}
+                <li class="nav-item">
+                    <a class="nav-link text-white" href="{{ route('admin.kelas.index') }}">
+                        <i class="fa-solid fa-chalkboard me-2"></i>
+                        <span>JADWAL KELAS</span>
+                    </a>
+                </li>
+                @endif
+                    
+                    
+            @if(strtolower(auth()->user()->name) === 'Yasmin')
+             <li class="nav-item">
+                    <a class="nav-link" href="{{ route('admin.settings.index') }}">
+                        <strong><i class="fa-solid fa-cogs me-2"></i> SETTING</strong>
+                    </a>
+                </li>
+            
+            @endif
+
+
+
                 {{-- Penilaian Karyawan --}}
                 <li class="nav-item">
                     <a class="nav-link text-white" href="{{ route('manager.penilaian-cs.index') }}">
                         <i class="fa-solid fa-list-user me-2"></i>
                         <span>Penilaian Kinerja Tim</span>
-                    </a>
-                </li>
-
-                {{-- Activity CS --}}
-                <li class="nav-item">
-                    <a class="nav-link text-white" href="{{ route('admin.activity-cs.index') }}">
-                        <i class="fa-solid fa-list-check me-2"></i>
-                        <span>Monitoring Daily Activity</span>
                     </a>
                 </li>
             @endif

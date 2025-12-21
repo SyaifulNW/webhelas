@@ -43,10 +43,12 @@ class Data extends Model
     {
         return ucfirst($value);
     }
+    /*
     public function jenisBisnis()
     {
         return $this->belongsTo('App\Models\jenisbisnis', 'jenis_bisnis');
     }
+    */
     public function salesplan()
     {
         return $this->hasMany('App\Models\SalesPlan', 'data_id');

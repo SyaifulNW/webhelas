@@ -165,8 +165,8 @@
     $persentaseTotal = $totalTargetSemua > 0 ? round(($totalSeluruhCS / $totalTargetSemua) * 100, 1) : 0;
 @endphp
 
-<!-- Filter hanya administrator, Manager area, dan CS SMI -->
-@if(auth()->id() == 1 || auth()->id() == 13 || strtolower(auth()->user()->role) == 'cs-smi' || in_array(auth()->user()->name, ['Tursia', 'Latifah']))
+<!-- Filter hanya administrator, Manager area, dan CS SMI dan Agus Setyo -->
+@if(auth()->id() == 1 || auth()->id() == 13 || strtolower(auth()->user()->role) == 'cs-smi' || in_array(auth()->user()->name, ['Tursia', 'Latifah']) || auth()->user()->name == 'Agus Setyo')
 <style>
     .filter-container {
         display: flex;
@@ -238,7 +238,7 @@
 </style>
 
 <form method="GET" action="{{ route('admin.salesplan.index') }}" class="filter-container">
-@if(auth()->id() == 1 || auth()->id() == 13)
+@if(auth()->id() == 1 || auth()->id() == 13 || auth()->user()->name == 'Agus Setyo')
 {{-- ✅ Filter CS --}}
 <div class="filter-group">
     <label for="cs_filter" class="filter-label"><i class="fas fa-user-tie text-primary"></i> CS:</label>
@@ -247,7 +247,8 @@
         @foreach($csList as $cs)
             @if(
                 (auth()->id() == 1 && !in_array($cs->name, ['Latifah', 'Tursia'])) ||
-                (auth()->id() == 13 && in_array($cs->name, ['Latifah', 'Tursia']))
+                (auth()->id() == 13 && in_array($cs->name, ['Latifah', 'Tursia'])) ||
+                (auth()->user()->name == 'Agus Setyo')
             )
                 <option value="{{ $cs->id }}" {{ request('created_by') == $cs->id ? 'selected' : '' }}>
                     {{ $cs->name }}

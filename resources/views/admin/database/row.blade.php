@@ -7,7 +7,7 @@
     <td>{{ $item->kota_nama }}</td>
     <td>{{ $item->nama_bisnis }}</td>
     <td>{{ $item->jenisbisnis }}</td>
-    <td>{{ $item->no_wa }}</td>
+    <td>{{ $item->no_wa }}</td> 
     <td>{{ $item->situasi_bisnis }}</td>
     <td>{{ $item->kendala }}</td>
 

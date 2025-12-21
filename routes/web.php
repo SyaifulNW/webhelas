@@ -141,6 +141,8 @@ Route::get('/admin/database/{id}', [App\Http\Controllers\DataController::class, 
 
 Route::post('/admin/database/update-potensi/{id}', [DataController::class, 'updatePotensi']);
 
+Route::post('/admin/database/create-draft', [DataController::class, 'createDraft'])->name('admin.database.createDraft');
+
 
 
 // Routes baru + Alumni

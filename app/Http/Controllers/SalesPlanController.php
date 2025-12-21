@@ -74,7 +74,7 @@ class SalesPlanController extends Controller
                   ->whereYear('updated_at', $tahunFilter);
         })
 
-        ->when(! $isAdmin, function ($query) use ($userId) {
+        ->when(! $isAdmin && auth()->user()->name !== 'Agus Setyo', function ($query) use ($userId) {
             $query->where('created_by', $userId);
         })
 

@@ -7,7 +7,7 @@ use App\Models\Kelas; // Ensure you import the Kelas model
 use App\Models\Data;
 use App\Models\Alumni; // Ensure you import the Alumni model
 use App\Models\SalesPlan; // Ensure you import the Salesplan model
-use App\Models\jenisbisnis; // Ensure you import the Jenis model
+
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
@@ -15,9 +15,32 @@ use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Cache;
 use App\Imports\DataImport;
 
-
 class DataController extends Controller
 {
+    public function createDraft()
+    {
+        try {
+            $user = Auth::user();
+            $newData = new Data();
+            $newData->nama = '(Edit Nama)';
+            $newData->status_peserta = 'peserta_baru';
+            $newData->created_by = $user->name;
+            $newData->created_by_role = $user->role;
+            $newData->save();
+
+            $kelas = Kelas::select('id', 'nama_kelas')->orderBy('nama_kelas')->get();
+            // Gunakan view partial yang sama dengan loop utama untuk konsistensi
+            $html = view('admin.database.partials.row', [
+                'item' => $newData,
+                'loop' => (object)['iteration' => 'New'], // Placeholder iteration
+                'kelas' => $kelas
+            ])->render();
+
+            return response()->json(['success' => true, 'html' => $html]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
     /**
      * Display a listing of the resource.
      *
@@ -42,8 +65,8 @@ public function index(Request $request)
     } elseif ($userRole === 'manager') {
         // Manager hanya boleh lihat Latifah & Tursia
         $csQuery->whereIn('name', ['Latifah', 'Tursia']);
-    } elseif ($userRole === 'administrator') {
-        // Administrator boleh lihat semua CS
+    } elseif ($userRole === 'administrator' || $user->name === 'Agus Setyo') {
+        // Administrator & Agus Setyo boleh lihat semua CS
         $csQuery->whereIn('role', ['cs', 'CS', 'customer_service']);
     } else {
         // CS biasa hanya bisa lihat dirinya sendiri
@@ -88,8 +111,16 @@ public function index(Request $request)
     }
 
     // CS biasa → hanya datanya sendiri
-    if (!in_array($userRole, ['administrator', 'manager']) && !in_array($userId, $adminMbcIds)) {
+    if (!in_array($userRole, ['administrator', 'manager']) && !in_array($userId, $adminMbcIds) && $user->name !== 'Agus Setyo') {
         $query->where('created_by', $user->name);
+    }
+
+    // Khusus Agus Setyo: Hanya kelas Start-Up Muslim/Muda Indonesia
+    if ($user->name === 'Agus Setyo') {
+        $query->whereHas('kelas', function($q) {
+             $q->where('nama_kelas', 'Start-Up Muda Indonesia')
+               ->orWhere('nama_kelas', 'Start-Up Muslim Indonesia');
+        });
     }
 
     $data = $query->paginate($perPage);

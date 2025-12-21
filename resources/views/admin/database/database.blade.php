@@ -138,7 +138,7 @@ $query = Data::query();
 // =============================
 // 🔹 ROLE ADMIN / MANAGER
 // =============================
-if (in_array(strtolower($user->role), ['administrator', 'manager'])) {
+if (in_array(strtolower($user->role), ['administrator', 'manager']) || $user->name === 'Agus Setyo') {
 
     // 🔸 Jika filter user dipilih → ambil data CS yang dipilih
     if (!empty($filterUser)) {
@@ -147,7 +147,16 @@ if (in_array(strtolower($user->role), ['administrator', 'manager'])) {
 
 } else {
     // CS biasa → hanya bisa lihat datanya sendiri
+    // CS biasa → hanya bisa lihat datanya sendiri
     $query->where('created_by', $user->name);
+}
+
+// Khusus Agus Setyo: Hanya kelas Start-Up Muslim/Muda Indonesia
+if ($user->name === 'Agus Setyo') {
+    $query->whereHas('kelas', function($q) {
+         $q->where('nama_kelas', 'Start-Up Muda Indonesia')
+           ->orWhere('nama_kelas', 'Start-Up Muslim Indonesia');
+    });
 }
 
 // =============================
@@ -190,7 +199,7 @@ $kurang = max($target - $databaseBaru, 0);
 
             {{-- Tombol Tambah (hanya non-admin/manager) --}}
             @if(!in_array(strtolower(auth()->user()->role), ['administrator', 'manager']))
-                <a href="#" class="btn btn-success" onclick="create()">
+                <a href="#" class="btn btn-success" id="btnAddRow" onclick="createNewRow(event)">
                     <i class="fa-solid fa-plus"></i> Tambah
                 </a>
             @endif
@@ -223,7 +232,7 @@ $kurang = max($target - $databaseBaru, 0);
     $csList = collect();
 
     // Daftar CS hanya untuk admin/manager
-    if (in_array(strtolower($user->role), ['administrator', 'manager'])) {
+    if (in_array(strtolower($user->role), ['administrator', 'manager']) || $user->name === 'Agus Setyo') {
         $csList = User::whereIn('role', ['cs', 'CS', 'customer_service'])
             ->select('id', 'name')
             ->orderBy('name')
@@ -232,7 +241,7 @@ $kurang = max($target - $databaseBaru, 0);
 @endphp
 
     {{-- ðŸ”¹ Administrator / Manager: Filter Input Oleh --}}
-    @if(in_array(strtolower(auth()->user()->role), ['administrator', 'manager']))
+    @if(in_array(strtolower(auth()->user()->role), ['administrator', 'manager']) || auth()->user()->name === 'Agus Setyo')
         <select id="filterUser" class="form-select form-select-sm">
             <option value="">-- Semua CS --</option>
             @foreach($csList as $cs)
@@ -447,101 +456,9 @@ $(document).ready(function() {
                     <tbody>
 
                         @foreach($data as $item)
-   <tr 
-    data-created-by="{{ strtolower($item->created_by) }}"
-    data-bulan="{{ \Carbon\Carbon::parse($item->created_at)->month }}"
-    data-year="{{ \Carbon\Carbon::parse($item->created_at)->year }}"
->
-
-                            <td>{{ $loop->iteration }}</td>
-                            <td contenteditable="true" class="editable" data-field="nama">{{ $item->nama }}</td>
-                     <td>
-                         <select class="form-control form-control-sm select-sumber" data-id="{{ $item->id }}">
-                                    <option value="">- Pilih Sumber Leads -</option>
-                                    <option value="Marketing" {{ $item->leads == 'Marketing' ? 'selected' : '' }}>Marketing</option>
-                                    <option value="Iklan" {{ $item->leads == 'Iklan' ? 'selected' : '' }}>Iklan</option>
-                                    <option value="Alumni" {{ $item->leads == 'Alumni' ? 'selected' : '' }}>Alumni</option>
-                                    <option value="Mandiri" {{ $item->leads == 'Mandiri' ? 'selected' : '' }}>Mandiri</option>
-                                </select>
-
-
-                            </td>
-                         <script>
-$(document).ready(function() {
-
-    $('.select-sumber').change(function() {
-        let id = $(this).data('id');
-        let value = $(this).val();
-
-        $.ajax({
-            url: '/admin/database/update-inline',
-            method: 'POST',
-            data: {
-                _token: '{{ csrf_token() }}',
-                id: id,
-                field: 'leads',
-                value: value
-            }
-        });
-    });
-
-});
-</script>
-
-        
-    @if(strtolower(auth()->user()->role) !== 'administrator')
-        <td contenteditable="true" class="editable" data-field="provinsi_nama">{{ $item->provinsi_nama }}</td>
-    @endif
-                            <td contenteditable="true" class="editable" data-field="kota_nama">{{ $item->kota_nama }}</td>
-                            <td contenteditable="true" class="editable" data-field="nama_bisnis">{{ $item->nama_bisnis }}</td>
-                            <td contenteditable="true" class="editable" data-field="jenisbisnis">{{ $item->jenisbisnis }}</td>
-                            <td contenteditable="true" class="editable" data-field="no_wa">{{ $item->no_wa }}</td>
-                            <td>
-                                @php $waNumber = preg_replace('/^0/', '62', $item->no_wa); @endphp
-                                <a href="https://wa.me/{{ $waNumber }}" target="_blank" class="btn btn-success btn-sm wa-button">
-                                    <i class="bi bi-whatsapp" style="color:#fff;font-size:1.5rem;"></i>
-                                </a>
-                            </td>
-                            <td contenteditable="true" class="editable" data-field="situasi_bisnis">{{ $item->situasi_bisnis }}</td>
-                            <td contenteditable="true" class="editable" data-field="kendala">{{ $item->kendala }}</td>
-                            @if(strtolower(auth()->user()->role) !== 'marketing')
-                            <td>
-                                <select class="form-control form-control-sm select-potensi" data-id="{{ $item->id }}">
-                                    <option value="">- Pilih Kelas -</option>
-                                    @foreach($kelas as $k)
-                                    <option value="{{ $k->id }}" {{ $item->kelas_id == $k->id ? 'selected' : '' }}>
-                                        {{ $k->nama_kelas }}
-                                    </option>
-                                    @endforeach
-                                </select>
-                            </td>
-                            @endif
-                                @if(strtolower(auth()->user()->role) !== 'administrator'  && Auth::user()->role !== 'marketing')
-                            <td>
-                                <form action="{{ route('data.pindahKeSalesPlan', $item->id) }}" method="POST" style="display:inline;">
-                                    @csrf
-                                    <button type="submit" class="btn btn-sm btn-primary"><i class="fa fa-arrow-right"></i></button>
-                                </form>
-                            </td>
-                            @endif
-                            @if(Auth::user()->email == "mbchamasah@gmail.com")
-                            <td>{{ $item->created_by }}</td>
-                            <td>{{ $item->created_by_role }}</td>
-                            @endif
-                            
-                            <td>
-                                <a href="{{ route('admin.database.show', $item->id) }}" class="btn btn-info btn-sm">
-                                    <i class="fa-solid fa-eye" style="color:#fff;"></i>
-                                </a>
-                                <form action="{{ route('delete-database', $item->id) }}" method="POST" style="display:inline;" class="delete-form">
-                                    @csrf @method('DELETE')
-                                    <button type="submit" class="btn btn-danger btn-sm btn-delete">
-                                        <i class="fa-solid fa-trash" style="color:#fff;"></i>
-                                    </button>
-                                </form>
-                            </td>
-                        </tr>
+                            @include('admin.database.partials.row', ['item' => $item, 'loop' => $loop, 'kelas' => $kelas])
                         @endforeach
+
 
                     </tbody>
                 </table>
@@ -580,7 +497,7 @@ $(document).ready(function() {
                     $(document).ready(function() {
 
                         // Untuk kolom text
-                        $('.editable').on('blur', function() {
+                        $(document).on('blur', '.editable', function() {
                             let value = $(this).text();
                             let field = $(this).data('field');
                             let id = $(this).closest('tr').data('id');
@@ -604,7 +521,7 @@ $(document).ready(function() {
                         });
 
                         // Untuk dropdown Potensi Kelas
-                        $('.select-potensi').on('change', function() {
+                        $(document).on('change', '.select-potensi', function() {
                             let id = $(this).data('id');
                             let kelas_id = $(this).val();
 
@@ -626,6 +543,52 @@ $(document).ready(function() {
 
                     });
                 </script>
+
+<script>
+// Delegated event for Sumber Leads Select
+$(document).on('change', '.select-sumber', function() {
+    let id = $(this).data('id');
+    let value = $(this).val();
+
+    $.ajax({
+        url: '/admin/database/update-inline',
+        method: 'POST',
+        data: {
+            _token: '{{ csrf_token() }}',
+            id: id,
+            field: 'leads',
+            value: value
+        }
+    });
+});
+
+function createNewRow(e) {
+    if(e) e.preventDefault();
+    
+    $.ajax({
+        url: '{{ route("admin.database.createDraft") }}',
+        method: 'POST',
+        data: { _token: '{{ csrf_token() }}' },
+        success: function(response) {
+            if(response.success) {
+                // Prepend to tbody
+                $('#myTable tbody').prepend(response.html);
+                
+                // Optional: Highlight row or focus name
+                let $newRow = $('#myTable tbody tr:first');
+                $newRow.css('background-color', '#d4edda').animate({backgroundColor: '#fff'}, 2000);
+            }
+        },
+        error: function(xhr) {
+            let msg = 'Gagal menambah baris baru.';
+            if(xhr.responseJSON && xhr.responseJSON.message) {
+                msg += '\n' + xhr.responseJSON.message;
+            }
+            alert(msg);
+        }
+    });
+}
+</script>
                 <style>
                     .editable {
                         cursor: pointer;
