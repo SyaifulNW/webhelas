@@ -202,7 +202,7 @@ document.addEventListener('DOMContentLoaded', function(){
                     t.status=="progress" ? "yellow" : "red"
                 );
 
-                bar.style.width = `${(end-st art+1) * (cell.offsetWidth||28)}px`;
+                bar.style.width = `${(end-start+1) * (cell.offsetWidth||28)}px`;
                 cell.appendChild(bar);
             },10);
         });

@@ -7,17 +7,18 @@
     }
     
     .table-scroll {
-    max-height: calc(100vh - 50px);
-    overflow-y: auto;
+        max-height: calc(100vh - 50px);
+        overflow-y: auto;
+        position: relative; /* Ensure relative positioning for child absolute/sticky */
     }
     
-    
-    thead {
-        background-color: #25799E;
-        color: white;
+    thead th {
         position: sticky;
         top: 0;
-        z-index: 1;
+        background-color: #25799E !important; /* Force background color to avoid transparency */
+        color: white;
+        z-index: 10;
+        box-shadow: 0 1px 1px rgba(0,0,0,0.1);
     }
     
 
@@ -218,8 +219,12 @@
         border-radius: 8px;
     }
 
-    .btn-reset i {
-        font-size: 0.9rem;
+    .table-scroll {
+        max-height: calc(100vh - 100px); /* Adjust height slightly to ensure it fits in viewport */
+        overflow-y: auto;
+        position: relative;
+        z-index: 1; /* New Stacking Context */
+        border-bottom: 2px solid #25799E;
     }
 
     @media (max-width: 576px) {
@@ -705,37 +710,37 @@ $(document).ready(function() {
 
 
                         <tr>
-                            <th rowspan="3">No</th>
-                            <th rowspan="3">Nama</th>
-                            <th rowspan="3">Sumber Leads</th>
-                         <th rowspan="3">
+                            <th rowspan="3" style="top: 0;">No</th>
+                            <th rowspan="3" style="top: 0;">Nama</th>
+                            <th rowspan="3" style="top: 0;">Sumber Leads</th>
+                         <th rowspan="3" style="top: 0;">
     {{ $kelasFilter == 'Start-Up Muda Indonesia' ? 'Situasi Anak' : 'Situasi Bisnis' }}
 </th>
-                            <th rowspan="3">Kendala</th>
+                            <th rowspan="3" style="top: 0;">Kendala</th>
 
                             {{-- Header grup untuk FU --}}
-                            <th colspan="10" class="text-center">Follow Up</th>
+                            <th colspan="10" class="text-center" style="top: 0;">Follow Up</th>
 
-                            <th rowspan="3">Potensi</th>
-                            <th rowspan="3">Closing Paket</th>
-                            <th rowspan="5">Status</th>
+                            <th rowspan="3" style="top: 0;">Potensi</th>
+                            <th rowspan="3" style="top: 0;">Closing Paket</th>
+                            <th rowspan="5" style="top: 0;">Status</th>
                         
                             @if(Auth::user()->email == "mbchamasah@gmail.com")
-                            <th rowspan="3">Input Oleh</th>
+                            <th rowspan="3" style="top: 0;">Input Oleh</th>
                             @endif
-                            <th rowspan="3">Aksi</th>
+                            <th rowspan="3" style="top: 0;">Aksi</th>
                         </tr>
                         <tr>
                             {{-- Header FU 1 - 5 --}}
                             @for ($i = 1; $i <= 5; $i++)
-                                <th colspan="2" class="text-center">FU {{ $i }}</th>
+                                <th colspan="2" class="text-center" style="top: 36px;">FU {{ $i }}</th>
                                 @endfor
                         </tr>
                         <tr>
                             {{-- Sub kolom Hasil & Tindak Lanjut --}}
                             @for ($i = 1; $i <= 5; $i++)
-                                <th>Hasil</th>
-                                <th>Tindak Lanjut</th>
+                                <th style="top: 72px;">Hasil</th>
+                                <th style="top: 72px;">Tindak Lanjut</th>
                                 @endfor
                         </tr>
                     </thead>
@@ -1277,6 +1282,74 @@ $(document).on('change', '.status-dropdown', function() {
     });
 </script>
 
+@section('scripts')
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        function adjustStickyHeader() {
+            const table = document.querySelector(".table-scroll table");
+            const thead = table ? table.querySelector("thead") : null;
+            
+            if (!thead) return;
+
+            const rows = thead.querySelectorAll("tr");
+            if (rows.length < 3) return;
+
+            // Row 0 is the main row ("No", "Nama", "Follow Up"...)
+            // The "Follow Up" cell in Row 0 is what we care about for stacking height
+            // But we can't easily select "Follow Up" specifically without class. 
+            // However, we know "Follow Up" is in the first row. 
+            // Let's assume the height of the first row (excluding rowspans) is roughly the height of "Follow Up".
+            // Actually, querying the 'th' that has visible content in the row is safer.
+
+            const row0 = rows[0];
+            const row1 = rows[1];
+            const row2 = rows[2];
+
+            // Get height of first row's content (e.g. "Follow Up" header)
+            // We can check the height of a non-rowspan cell in row 0? 
+            // "Follow Up" is the 6th cell (index 5) roughly.
+            // Let's just use the bounding rect of the "Follow Up" cell.
+            // It is the cell with "Follow Up" text.
+            let h1 = 0;
+            const followUpCell = Array.from(row0.children).find(td => td.innerText.trim() === "Follow Up");
+            if (followUpCell) {
+                h1 = followUpCell.offsetHeight;
+            } else {
+                h1 = row0.offsetHeight; // Fallback
+            }
+
+            // Get height of second row (FU 1..5)
+            let h2 = 0;
+            // The cells in row 1 are just the "FU x" headers
+            if (row1.children.length > 0) {
+                h2 = row1.children[0].offsetHeight;
+            } else {
+                h2 = row1.offsetHeight;
+            }
+
+            // Apply tops
+            // Row 0 cells already have top: 0 via inline/css
+            
+            // Row 1 cells:
+            Array.from(row1.children).forEach(th => {
+                th.style.top = h1 + "px";
+            });
+
+            // Row 2 cells:
+            Array.from(row2.children).forEach(th => {
+                th.style.top = (h1 + h2) + "px";
+            });
+        }
+
+        // Run on load and resize
+        adjustStickyHeader();
+        window.addEventListener("resize", adjustStickyHeader);
+        
+        // Also run after a short delay in case of font loading
+        setTimeout(adjustStickyHeader, 500);
+    });
+</script>
+@endsection
 @endsection
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.datatables.net/1.10.21/js/jquery.dataTables.min.js"></script>

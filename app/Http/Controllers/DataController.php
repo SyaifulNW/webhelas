@@ -67,7 +67,7 @@ public function index(Request $request)
         $csQuery->whereIn('name', ['Latifah', 'Tursia']);
     } elseif ($userRole === 'administrator' || $user->name === 'Agus Setyo') {
         // Administrator & Agus Setyo boleh lihat semua CS
-        $csQuery->whereIn('role', ['cs', 'CS', 'customer_service']);
+        $csQuery->whereIn('role', ['cs', 'CS', 'customer_service', 'cs-mbc', 'cs-smi']);
     } else {
         // CS biasa hanya bisa lihat dirinya sendiri
         $csQuery->where('id', $userId);
@@ -351,7 +351,7 @@ public function index(Request $request)
 private function filterKelasByUser($user)
 {
     // Jika Administrator atau Fitra Jaya Saleh: tampil semua
-    if ($user->role == 'Administrator' || $user->name == 'Fitra Jaya Saleh') {
+    if (strtolower($user->role) == 'administrator' || $user->name == 'Fitra Jaya Saleh') {
         return Kelas::all();
     }
 

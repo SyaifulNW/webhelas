@@ -233,7 +233,7 @@ $kurang = max($target - $databaseBaru, 0);
 
     // Daftar CS hanya untuk admin/manager
     if (in_array(strtolower($user->role), ['administrator', 'manager']) || $user->name === 'Agus Setyo') {
-        $csList = User::whereIn('role', ['cs', 'CS', 'customer_service'])
+        $csList = User::whereIn('role', ['cs', 'CS', 'customer_service', 'cs-mbc', 'cs-smi'])
             ->select('id', 'name')
             ->orderBy('name')
             ->get();
@@ -460,14 +460,26 @@ $(document).ready(function() {
                                 @endif
                             @if(in_array(strtolower(auth()->user()->role), ['administrator', 'manager']) || auth()->user()->name === 'Agus Setyo')
                             <th>
-                                <a href="{{ request()->fullUrlWithQuery(['sort_by' => 'created_by', 'order' => (request('sort_by') == 'created_by' && request('order') == 'asc') ? 'desc' : 'asc']) }}" class="text-white text-decoration-none">
-                                    Input Oleh
-                                    @if(request('sort_by') == 'created_by')
-                                        <i class="fas fa-sort-{{ request('order') == 'asc' ? 'up' : 'down' }}"></i>
-                                    @else
-                                        <i class="fas fa-sort text-white-50"></i>
-                                    @endif
-                                </a>
+                                <div class="d-flex flex-column">
+                                    <a href="{{ request()->fullUrlWithQuery(['sort_by' => 'created_by', 'order' => (request('sort_by') == 'created_by' && request('order') == 'asc') ? 'desc' : 'asc']) }}" class="text-white text-decoration-none d-flex align-items-center justify-content-between mb-1">
+                                        <span>Input Oleh</span>
+                                        <span>
+                                            @if(request('sort_by') == 'created_by')
+                                                <i class="fas fa-sort-{{ request('order') == 'asc' ? 'up' : 'down' }}"></i>
+                                            @else
+                                                <i class="fas fa-sort text-white-50"></i>
+                                            @endif
+                                        </span>
+                                    </a>
+                                    <select class="form-control form-control-sm text-dark" onchange="updateFilterUser(this.value)" style="min-width: 100px;">
+                                        <option value="">-- Semua --</option>
+                                        @foreach($csList as $cs)
+                                            <option value="{{ $cs->name }}" {{ request('cs_name') == $cs->name ? 'selected' : '' }}>
+                                                {{ $cs->name }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
                             </th>
 
                             <th>Role</th>
@@ -757,14 +769,14 @@ function createNewRow(e) {
         $('#createPesertaModal').modal('hide');
     });
 </script>
-<script>
-    $(document).ready(function() {
-        $('#myTable').DataTable({
-            responsive: true,
-            autoWidth: false,
+{{--    <script>
+        $(document).ready(function() {
+            $('#myTable').DataTable({
+                responsive: true,
+                autoWidth: false,
+            });
         });
-    });
-</script>
+    </script> --}}
 
 
 
