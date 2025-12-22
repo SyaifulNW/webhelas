@@ -21,10 +21,10 @@ class PenilaianCsController extends Controller
         if ($userName === 'Linda') {
              $daftarCs = User::whereIn('name', ['Felmi', 'Eko Sulis', 'Arifa', 'Nisa'])->orderBy('name')->get();
         } elseif ($userName === 'Agus Setyo') {
-             $daftarCs = User::whereIn('name', ['Tursia', 'Latifah'])->orderBy('name')->get();
+             $daftarCs = User::whereIn('name', ['Puput'])->orderBy('name')->get();
         } else {
              // Default behavior (Admin & Others) -> All Users
-             $daftarCs = User::orderBy('name')->get();
+             $daftarCs = User::where('name', '!=', 'Fitra Jaya Saleh')->orderBy('name')->get();
         }
 
         return $this->getPenilaianData($request, $daftarCs, 'admin.penilaian-cs.index');
@@ -43,11 +43,11 @@ class PenilaianCsController extends Controller
              $routeView = 'admin.penilaian-cs.index'; // Tetap gunakan view admin jika diperlukan
         } elseif ($userName === 'Yasmin') {
             // Yasmin bisa melihat SEMUA user
-            $daftarCs = User::orderBy('name')->get();
+            $daftarCs = User::where('name', '!=', 'Fitra Jaya Saleh')->orderBy('name')->get();
             $routeView = 'admin.penilaian-cs.index';
         } elseif ($userName === 'Agus Setyo') {
-            // Agus Setyo hanya Tursia dan Latifah
-            $daftarCs = User::whereIn('name', ['Tursia', 'Latifah'])->orderBy('name')->get();
+            // Agus Setyo hanya Puput
+            $daftarCs = User::whereIn('name', ['Puput'])->orderBy('name')->get();
         } else {
             // Default Fallback (jika ada manager lain) -> Filter Tursia & Latifah
             $daftarCs = User::whereIn('name', ['Tursia', 'Latifah'])->orderBy('name')->get();

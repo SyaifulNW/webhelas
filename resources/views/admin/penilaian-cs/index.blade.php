@@ -17,9 +17,11 @@
                         <label>Pilih Nama Tim:</label>
                         <select name="user_id" class="form-control">
                             @foreach($daftarCs as $cs)
+                                @if($cs->id != 1)
                                 <option value="{{ $cs->id }}" {{ $userId == $cs->id ? 'selected' : '' }}>
                                     {{ $cs->name }}
                                 </option>
+                                @endif
                             @endforeach
                         </select>
                     </div>

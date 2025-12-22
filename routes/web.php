@@ -69,6 +69,13 @@ Route::get('/manager', [App\Http\Controllers\DashboardManagerController::class, 
     ->middleware('auth')
     ->name('manager');
 
+// Activity CS (Accessible by Admin, Manager, etc. - controller handles logic)
+// Moved here to prevent accidental role:administrator inheritance
+Route::prefix('admin')->middleware(['auth'])->group(function () {
+    Route::get('/activity-cs', [AdminActivityController::class, 'index'])->name('admin.activity-cs.index');
+    Route::get('/activity-cs/export-pdf-bulanan', [AdminActivityController::class, 'viewPdfBulanan'])->name('admin.activity-cs.viewPdfBulanan');
+});
+
 Route::get('/manager/penilaian-cs', [App\Http\Controllers\PenilaianCsController::class, 'managerIndex'])
     ->middleware('auth')
     ->name('manager.penilaian-cs.index');
@@ -250,10 +257,10 @@ use App\Http\Controllers\AdminController;
 Route::get('/administrator', [AdminController::class, 'index'])->name('administrator');
 
 Route::get('/admin/cs/{id}', [AdminController::class, 'detailCS'])->name('admin.cs.detail');
-Route::prefix('admin/cs')->group(function () {
-    Route::get('{id}/salesplan', [App\Http\Controllers\Admin\CSController::class, 'salesplan'])->name('admin.cs.salesplan');
-    Route::get('{id}/database', [App\Http\Controllers\Admin\CSController::class, 'database'])->name('admin.cs.database');
-});
+// Route::prefix('admin/cs')->group(function () {
+//     Route::get('{id}/salesplan', [App\Http\Controllers\Admin\CSController::class, 'salesplan'])->name('admin.cs.salesplan');
+//     Route::get('{id}/database', [App\Http\Controllers\Admin\CSController::class, 'database'])->name('admin.cs.database');
+// });
 
 // Route untuk admin lihat database CS
 Route::get('/koordinasi/{id}', [App\Http\Controllers\KoordinasiController::class, 'show'])
@@ -265,7 +272,7 @@ Route::middleware(['auth', 'role:administrator'])->group(function () {
 });
 
     
-Route::get('/user/{id}', [UserController::class, 'show'])->name('user.show');
+// Route::get('/user/{id}', [UserController::class, 'show'])->name('user.show');
 
 // Manajemen kelas
 use App\Http\Controllers\KelasController;
@@ -312,11 +319,11 @@ Route::prefix('admin')->middleware(['auth','role:administrator'])->group(functio
 
 });
 
-// Activity CS (Accessible by Admin, Manager, etc. - controller handles logic)
-Route::prefix('admin')->middleware(['auth'])->group(function () {
-    Route::get('/activity-cs', [AdminActivityController::class, 'index'])->name('admin.activity-cs.index');
-    Route::get('/activity-cs/view-pdf-bulanan', [AdminActivityController::class, 'viewPdfBulanan'])->name('admin.activity-cs.viewPdfBulanan');
-});
+// Activity CS routes moved to top 
+// Route::prefix('admin')->middleware(['auth'])->group(function () {
+//     Route::get('/activity-cs', [AdminActivityController::class, 'index'])->name('admin.activity-cs.index');
+//     Route::get('/activity-cs/export-pdf-bulanan', [AdminActivityController::class, 'viewPdfBulanan'])->name('admin.activity-cs.viewPdfBulanan');
+// });
 
 
 Route::get('/chat/{id}', [App\Http\Controllers\ChatController::class, 'show'])->name('chat.show');
@@ -332,7 +339,8 @@ Route::prefix('admin')->name('admin.')->middleware(['auth'])->group(function () 
 });
 
 // routes/web.php
-Route::get('/admin/database/statistik', [DatabaseController::class, 'getStatistik'])
+// routes/web.php
+Route::get('/admin/database/statistik', [DataController::class, 'getStatistik'])
     ->name('admin.database.statistik');
 
 use App\Http\Controllers\ProgramKerjaController;

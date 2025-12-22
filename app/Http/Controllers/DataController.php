@@ -391,4 +391,51 @@ private function filterKelasByUser($user)
             ->with('success', 'Peserta berhasil dipindahkan ke Sales Plan.');
         
     }
+    public function getStatistik(Request $request)
+    {
+        $user = Auth::user();
+        $userRole = strtolower($user->role);
+        $filterUser = $request->input('user');
+        
+        $query = Data::query();
+
+        // Admin & Manager Logic
+        if (in_array($userRole, ['administrator', 'manager']) || $user->name === 'Agus Setyo') {
+            if (!empty($filterUser)) {
+                $query->where('created_by', $filterUser);
+            }
+        } else {
+            // CS Biasa
+            $query->where('created_by', $user->name);
+        }
+
+        // Agus Setyo Filter
+        if ($user->name === 'Agus Setyo') {
+            $query->whereHas('kelas', function($q) {
+                 $q->where('nama_kelas', 'Start-Up Muda Indonesia')
+                   ->orWhere('nama_kelas', 'Start-Up Muslim Indonesia');
+            });
+        }
+
+        // Calculate Stats
+        $now = \Carbon\Carbon::now();
+        $bulanLabel = $now->isoFormat('MMMM YYYY');
+        
+        $databaseBaru = (clone $query)
+            ->whereYear('created_at', $now->year)
+            ->whereMonth('created_at', $now->month)
+            ->count();
+            
+        $totalDatabase = $query->count();
+        $target = 50;
+        $kurang = max($target - $databaseBaru, 0);
+
+        return response()->json([
+            'bulanLabel' => $bulanLabel,
+            'databaseBaru' => $databaseBaru,
+            'totalDatabase' => $totalDatabase,
+            'target' => $target,
+            'kurang' => $kurang
+        ]);
+    }
 }

@@ -31,7 +31,7 @@ class AdminActivityController extends Controller
                    ->orWhereIn('name', ['Arifa', 'Felmi', 'Nisa', 'Eko Sulis', 'Shafa', 'Qiyya']);
              });
         } elseif (in_array($userName, ['Agus', 'Agus Setyo'])) {
-            $csQuery->whereIn('name', ['Tursia', 'Latifah']);
+            $csQuery->whereIn('name', ['Puput']);
         } else {
             // CS biasa hanya bisa melihat dirinya sendiri
             $csQuery->where('id', $user->id);
@@ -136,6 +136,7 @@ class AdminActivityController extends Controller
 
     public function viewPdfBulanan(Request $request)
     {
+        // dd('Reached Controller: ' . auth()->user()->name);
         $bulan = $request->input('bulan');
         $csId = $request->input('cs_id');
         $carbonBulan = Carbon::createFromFormat('Y-m', $bulan);
