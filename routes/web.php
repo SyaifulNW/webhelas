@@ -347,6 +347,7 @@ use App\Http\Controllers\ProgramKerjaController;
 
 Route::get('/programkerja', [ProgramKerjaController::class, 'index'])->name('programkerja.index');
 Route::post('/programkerja', [ProgramKerjaController::class, 'store'])->name('programkerja.store');
+Route::delete('/programkerja/{id}', [ProgramKerjaController::class, 'destroy'])->name('programkerja.destroy');
 
 // inisiatif CRUD tetap di controller yang sama
 Route::post('/inisiatif', [ProgramKerjaController::class, 'storeInisiatif'])->name('inisiatif.store');

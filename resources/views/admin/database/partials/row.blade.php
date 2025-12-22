@@ -55,7 +55,7 @@
                                 </form>
                             </td>
                             @endif
-                            @if(Auth::user()->email == "mbchamasah@gmail.com")
+                            @if(in_array(strtolower(auth()->user()->role), ['administrator', 'manager']) || auth()->user()->name === 'Agus Setyo')
                             <td>{{ $item->created_by }}</td>
                             <td>{{ $item->created_by_role }}</td>
                             @endif

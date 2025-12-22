@@ -82,7 +82,16 @@ public function index(Request $request)
     $perPage     = $request->get('per_page', 100);
 
     // --- Query utama ---
-    $query = \App\Models\Data::orderBy('created_at', 'desc');
+    $sortByParam = $request->input('sort_by', 'created_at');
+    $sortOrderParam = $request->input('order', 'desc');
+    
+    // Whitelist columns
+    $allowedSorts = ['created_at', 'created_by', 'nama', 'status_peserta']; 
+    if (!in_array($sortByParam, $allowedSorts)) {
+        $sortByParam = 'created_at';
+    }
+    
+    $query = \App\Models\Data::orderBy($sortByParam, $sortOrderParam);
 
     // Jika admin MBC → hanya 6 CS tertentu
     if (in_array($userId, $adminMbcIds)) {
@@ -94,10 +103,8 @@ public function index(Request $request)
         $query->whereIn('created_by', ['Latifah', 'Tursia']);
     }
 
-    // Jika belum pilih CS → jangan tampilkan data
-    if (empty($csFilter)) {
-        $query->whereNull('id');
-    } else {
+    // Filter User
+    if (!empty($csFilter)) {
         $query->where('created_by', $csFilter);
     }
 

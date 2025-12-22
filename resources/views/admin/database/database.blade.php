@@ -242,12 +242,25 @@ $kurang = max($target - $databaseBaru, 0);
 
     {{-- ðŸ”¹ Administrator / Manager: Filter Input Oleh --}}
     @if(in_array(strtolower(auth()->user()->role), ['administrator', 'manager']) || auth()->user()->name === 'Agus Setyo')
-        <select id="filterUser" class="form-select form-select-sm">
-            <option value="">-- Semua CS --</option>
+        <select id="filterUser" class="form-select form-select-sm" onchange="updateFilterUser(this.value)">
+            {{-- Option Semua CS removed as requested --}}
+            <option value="" disabled selected>-- Pilih CS --</option>
             @foreach($csList as $cs)
-                  <option value="{{ $cs->name }}">{{ $cs->name }}</option>
+                  <option value="{{ $cs->name }}" {{ request('cs_name') == $cs->name ? 'selected' : '' }}>{{ $cs->name }}</option>
             @endforeach
         </select>
+        <script>
+            function updateFilterUser(val) {
+                var url = new URL(window.location.href);
+                if (val) {
+                    url.searchParams.set('cs_name', val);
+                } else {
+                    url.searchParams.delete('cs_name'); 
+                }
+                url.searchParams.delete('page'); // Reset pagination
+                window.location.href = url.toString();
+            }
+        </script>
     @endif
     &nbsp;
     {{-- ðŸ”¹ CS Biasa: Filter Bulan --}}
@@ -445,8 +458,17 @@ $(document).ready(function() {
                                   @if(Auth::user()->email !== "mbchamasah@gmail.com"  && Auth::user()->role !== 'marketing')    
                             <th>Sales Plan</th>
                                 @endif
-                            @if(Auth::user()->email == "mbchamasah@gmail.com")
-                            <th>Input Oleh</th>
+                            @if(in_array(strtolower(auth()->user()->role), ['administrator', 'manager']) || auth()->user()->name === 'Agus Setyo')
+                            <th>
+                                <a href="{{ request()->fullUrlWithQuery(['sort_by' => 'created_by', 'order' => (request('sort_by') == 'created_by' && request('order') == 'asc') ? 'desc' : 'asc']) }}" class="text-white text-decoration-none">
+                                    Input Oleh
+                                    @if(request('sort_by') == 'created_by')
+                                        <i class="fas fa-sort-{{ request('order') == 'asc' ? 'up' : 'down' }}"></i>
+                                    @else
+                                        <i class="fas fa-sort text-white-50"></i>
+                                    @endif
+                                </a>
+                            </th>
 
                             <th>Role</th>
                             @endif

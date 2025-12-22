@@ -141,8 +141,33 @@ document.addEventListener('DOMContentLoaded', function(){
         });
 
         ganttBody.innerHTML = '';
+        
+        let lastProgram = null;
+        let globalIndex = 0;
 
         filtered.forEach((t,i)=>{
+            
+            // Cek jika Program Berubah -> Print Header
+            if (t.program !== lastProgram) {
+                const headerTr = document.createElement('tr');
+                headerTr.style.background = '#e7f1ff'; 
+                
+                headerTr.innerHTML = `
+                    <td style="font-weight:bold;"></td>
+                    <td colspan="3" style="font-weight:bold; color:#0d6efd; text-align:left; padding-left:10px;">
+                        📂 ${t.program}
+                    </td>
+                `;
+                // Isi sisa kolom hari dengan sel kosong (opsional, agar garis vertikal tetap ada/tidak)
+                // Disini kita colspan saja agar bersih
+                headerTr.innerHTML += `<td colspan="${daysInMonth}"></td>`;
+                
+                ganttBody.appendChild(headerTr);
+                lastProgram = t.program;
+            }
+
+            globalIndex++; // Nomor urut lanjut terus atau reset? Biasanya lanjut terus atau reset per grup. Kita lanjut terus sesuai gambar (8)
+
             const tr = document.createElement('tr');
 
             const statusBtn =
@@ -151,8 +176,8 @@ document.addEventListener('DOMContentLoaded', function(){
                 : `<button data-id="${t.id}" class="btn btn-primary btn-sm done-btn">Done</button>`;
 
             tr.innerHTML = `
-                <td style="color:#000; font-weight:600;">${i+1}</td>
-                <td class="text-start" style="color:#000; font-weight:600;">${t.name}</td>
+                <td style="color:#000; font-weight:600;">${globalIndex}</td>
+                <td class="text-start" style="color:#000; font-weight:600; padding-left: 20px;">${t.name}</td>
                 <td style="color:#000; font-weight:600;">${t.pic || '-'}</td>
                 <td style="color:#000; font-weight:600;">${statusBtn}</td>
             `;
@@ -168,7 +193,8 @@ document.addEventListener('DOMContentLoaded', function(){
             const end = Math.min(daysInMonth, e.getMonth()==m ? e.getDate() : daysInMonth);
 
             setTimeout(()=>{
-                const cell = tr.children[start+3];
+                const cell = tr.children[start+3]; // +3 karena ada 4 kolom tetap (index 0,1,2,3) -> Start Date masuk ke kolom index 4 (tanggal 1)
+                
                 const bar = document.createElement('div');
 
                 bar.className = "gantt-bar " + (
@@ -176,7 +202,7 @@ document.addEventListener('DOMContentLoaded', function(){
                     t.status=="progress" ? "yellow" : "red"
                 );
 
-                bar.style.width = `${(end-start+1) * (cell.offsetWidth||28)}px`;
+                bar.style.width = `${(end-st art+1) * (cell.offsetWidth||28)}px`;
                 cell.appendChild(bar);
             },10);
         });

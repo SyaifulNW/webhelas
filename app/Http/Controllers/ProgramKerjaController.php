@@ -242,4 +242,28 @@ public function destroyInisiatif(Request $request)
 }
 
 
+
+    /**
+     * Hapus program kerja
+     */
+    public function destroy($id)
+    {
+        try {
+            $programKerja = ProgramKerja::findOrFail($id);
+            
+            // Opsional: Cek hak akses jika perlu
+            // if (Auth::user()->role !== 'administrator' && Auth::user()->id !== $programKerja->created_by) {
+            //      return redirect()->back()->with('error', 'Unauthorized Action');
+            // }
+
+            // Hapus inisiatif terkait
+            $programKerja->inisiatifs()->delete();
+            $programKerja->delete();
+
+            return redirect()->route('programkerja.index')->with('success', 'Program Kerja berhasil dihapus!');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Gagal menghapus Program Kerja: ' . $e->getMessage());
+        }
+    }
+
 }
