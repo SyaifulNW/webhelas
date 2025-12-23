@@ -733,11 +733,92 @@ $(document).ready(function() {
 
 </div>
 
+            @if($kelasFilter == 'Start-Up Muda Indonesia' || $kelasFilter == 'Start-Up Muslim Indonesia')
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-white py-3 border-bottom-0">
+                    <h5 class="m-0 font-weight-bold text-primary">Data Peserta SMI</h5>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0 text-nowrap">
+                        <thead class="bg-light text-dark fw-bold" style="border-top: 2px solid #36b9cc;">
+                            <tr>
+                                <th class="py-3 ps-3 text-center">No</th>
+                                <th class="py-3">Nama Peserta</th>
+                                <th class="py-3">Jenis Kelamin</th>
+                                <th class="py-3">Usia</th>
+                                <th class="py-3">No WA</th>
+                                <th class="py-3">Alamat</th>
+                                <th class="py-3">Bisnis Saat Ini</th>
+                                <th class="py-3">CS yang Closing</th>
+                                <th class="py-3">Periode</th>
+                                <th class="py-3 text-center">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @php $currentMonth = null; @endphp
+                            @forelse ($salesplans as $plan)
+                                @if($plan->created_at)
+                                    @php
+                                        $planMonth = \Carbon\Carbon::parse($plan->created_at)->locale('id')->isoFormat('MMMM Y');
+                                    @endphp
+                                    @if($currentMonth !== $planMonth)
+                                        <tr class="table-secondary">
+                                            <td colspan="10" class="fw-bold ps-4 py-2">
+                                                🗓️ {{ $planMonth }}
+                                            </td>
+                                        </tr>
+                                        @php $currentMonth = $planMonth; @endphp
+                                    @endif
+                                @endif
+                                <tr>
+                                    <td class="text-center">{{ $loop->iteration }}</td>
+                                    <td class="fw-bold text-dark">{{ $plan->nama ?? '-' }}</td>
+                                    <td>{{ $plan->data->jenis_kelamin ?? '-' }}</td>
+                                    <td>{{ $plan->data->usia ?? '-' }} Tahun</td>
+                                    <td>
+                                        @if(isset($plan->data->no_wa) && $plan->data->no_wa)
+                                            <a href="https://wa.me/{{ preg_replace('/^0/', '62', $plan->data->no_wa) }}" target="_blank" class="btn btn-sm btn-success rounded-pill px-3">
+                                                <i class="fab fa-whatsapp"></i> {{ $plan->data->no_wa }}
+                                            </a>
+                                        @else - @endif
+                                    </td>
+                                    <td>{{ $plan->data->kota_nama ?? '-' }}</td>
+                                    <td>{{ $plan->data->nama_bisnis ?? '-' }}</td>
+                                    <td><span class="badge bg-primary">{{ $plan->createdBy->name ?? '-' }}</span></td>
+                                    <td>{{ $plan->created_at ? $plan->created_at->format('d M Y') : '-' }}</td>
+                                    <td class="text-center">
+                                       <form id="delete-form-{{ $plan->id }}" action="{{ route('admin.salesplan.destroy', $plan->id) }}" method="POST" style="display:inline;">
+                                            @csrf @method('DELETE')
+                                            <button type="button" class="btn btn-outline-danger btn-sm btn-delete rounded-circle" data-id="{{ $plan->id }}">
+                                                <i class="fas fa-trash-alt"></i>
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr><td colspan="10" class="text-center py-4">Data Kosong</td></tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            @else
             <div class="table-responsive table-scroll">
                 <table class="table table-bordered table-hover align-middle">
                     <thead class="text-white" style="background-color:#25799E;">
-
-
+                        @if($kelasFilter == 'Start-Up Muda Indonesia' || $kelasFilter == 'Start-Up Muslim Indonesia')
+                        <tr>
+                            <th>No</th>
+                            <th>Nama Peserta</th>
+                            <th>Jenis Kelamin</th>
+                            <th>Usia (Tahun)</th>
+                            <th>No WA</th>
+                            <th>Alamat</th>
+                            <th>Bisnis Saat Ini</th>
+                            <th>CS yang Closing</th>
+                            <th>Periode</th>
+                        </tr>
+                        @else
                         <tr>
                             <th rowspan="3">No</th>
                             <th rowspan="3">Nama</th>
@@ -774,6 +855,7 @@ $(document).ready(function() {
                                 <th>Tindak Lanjut</th>
                                 @endfor
                         </tr>
+                        @endif
                     </thead>
 
 
@@ -781,7 +863,7 @@ $(document).ready(function() {
                     <tbody>
                         @php $currentMonth = null; @endphp
                         @forelse ($salesplans as $plan)
-                        @if($kelasFilter == 'Start-Up Muda Indonesia' && $plan->created_at)
+                        @if(($kelasFilter == 'Start-Up Muda Indonesia' || $kelasFilter == 'Start-Up Muslim Indonesia') && $plan->created_at)
                             @php
                                 $planMonth = \Carbon\Carbon::parse($plan->created_at)->locale('id')->isoFormat('MMMM Y');
                             @endphp
@@ -811,67 +893,79 @@ $(document).ready(function() {
                         @endphp
 
                         <tr class="{{ $rowClass }}">
-                            <td class="text-center">{{ $loop->iteration }}</td>
-                            <td>{{ $plan->nama ?? '-' }}</td>
-                                @php
-                                $leadSource = $plan->data->leads ?? ($dataMap[$plan->nama]->leads ?? '-');
-                                $leadLower = strtolower($leadSource);
-                                $badgeClass = 'badge-leads-lain'; // Default abu-abu
-
-                                if (str_contains($leadLower, 'iklan')) {
-                                    $badgeClass = 'badge-leads-iklan';
-                                } elseif (str_contains($leadLower, 'instagram') || str_contains($leadLower, 'ig')) {
-                                    $badgeClass = 'badge-leads-instagram';
-                                } elseif (str_contains($leadLower, 'facebook') || str_contains($leadLower, 'fb')) {
-                                    $badgeClass = 'badge-leads-facebook';
-                                } elseif (str_contains($leadLower, 'alumni')) {
-                                    $badgeClass = 'badge-leads-alumni';
-                                } elseif (str_contains($leadLower, 'marketing')) {
-                                    $badgeClass = 'badge-leads-marketing';
-                                }
-                            @endphp
-                            <td>
-                                <span class="badge {{ $badgeClass }}">
-                                    {{ $leadSource }}
-                                </span>
-                            </td>
-                            <td>{{ $plan->situasi_bisnis ?? '-' }}</td>
-                            <td>{{ $plan->kendala ?? '-' }}</td>
-
-
-                            @for ($i = 1; $i <= 5; $i++)
-                                <td contenteditable="true" class="editable bg-light"
-                                data-id="{{ $plan->id }}"
-                                data-field="fu{{ $i }}_hasil">
-                                {{ $plan->{'fu'.$i.'_hasil'} ?? '-' }}
+                            @if($kelasFilter == 'Start-Up Muda Indonesia' || $kelasFilter == 'Start-Up Muslim Indonesia')
+                                <td class="text-center">{{ $loop->iteration }}</td>
+                                <td>{{ $plan->nama ?? '-' }}</td>
+                                <td>{{ $plan->data->jenis_kelamin ?? '-' }}</td>
+                                <td>{{ $plan->data->usia ?? '-' }}</td>
+                                <td>{{ $plan->data->no_wa ?? '-' }}</td>
+                                <td>{{ $plan->data->kota_nama ?? '-' }}</td>
+                                <td>{{ $plan->data->nama_bisnis ?? '-' }}</td>
+                                <td>{{ $plan->createdBy->name ?? '-' }}</td>
+                                <td>{{ $plan->created_at ? $plan->created_at->format('d M Y') : '-' }}</td>
+                            @else
+                                <td class="text-center">{{ $loop->iteration }}</td>
+                                <td>{{ $plan->nama ?? '-' }}</td>
+                                    @php
+                                    $leadSource = $plan->data->leads ?? ($dataMap[$plan->nama]->leads ?? '-');
+                                    $leadLower = strtolower($leadSource);
+                                    $badgeClass = 'badge-leads-lain'; // Default abu-abu
+    
+                                    if (str_contains($leadLower, 'iklan')) {
+                                        $badgeClass = 'badge-leads-iklan';
+                                    } elseif (str_contains($leadLower, 'instagram') || str_contains($leadLower, 'ig')) {
+                                        $badgeClass = 'badge-leads-instagram';
+                                    } elseif (str_contains($leadLower, 'facebook') || str_contains($leadLower, 'fb')) {
+                                        $badgeClass = 'badge-leads-facebook';
+                                    } elseif (str_contains($leadLower, 'alumni')) {
+                                        $badgeClass = 'badge-leads-alumni';
+                                    } elseif (str_contains($leadLower, 'marketing')) {
+                                        $badgeClass = 'badge-leads-marketing';
+                                    }
+                                @endphp
+                                <td>
+                                    <span class="badge {{ $badgeClass }}">
+                                        {{ $leadSource }}
+                                    </span>
                                 </td>
-
-                                <td contenteditable="true" class="editable text-dark"
+                                <td>{{ $plan->situasi_bisnis ?? '-' }}</td>
+                                <td>{{ $plan->kendala ?? '-' }}</td>
+    
+    
+                                @for ($i = 1; $i <= 5; $i++)
+                                    <td contenteditable="true" class="editable bg-light"
                                     data-id="{{ $plan->id }}"
-                                    data-field="fu{{ $i }}_tindak_lanjut">
-                                    {{ $plan->{'fu'.$i.'_tindak_lanjut'} ?? '-' }}
-                                </td>
-                                @endfor
-
-                                <td contenteditable="true" class="editable fw-bold text-dark text-bold"
-                                    data-id="{{ $plan->id }}"
-                                    data-field="nominal">
-                                    {{ number_format($plan->nominal, 0, ',', '.') }}
-                                </td>
-
-                         <td class="text-center">
-    <button class="btn btn-sm btn-checklist"
-        data-id="{{ $plan->id }}"
-        data-field="keterangan"
-        data-value="{{ $plan->keterangan == 'done' ? 'done' : 'pending' }}"
-        style="font-size:18px;">
-        @if($plan->keterangan == 'done')
-            ✔
-        @else
-            ☐
+                                    data-field="fu{{ $i }}_hasil">
+                                    {{ $plan->{'fu'.$i.'_hasil'} ?? '-' }}
+                                    </td>
+    
+                                    <td contenteditable="true" class="editable text-dark"
+                                        data-id="{{ $plan->id }}"
+                                        data-field="fu{{ $i }}_tindak_lanjut">
+                                        {{ $plan->{'fu'.$i.'_tindak_lanjut'} ?? '-' }}
+                                    </td>
+                                    @endfor
+    
+                                    <td contenteditable="true" class="editable fw-bold text-dark text-bold"
+                                        data-id="{{ $plan->id }}"
+                                        data-field="nominal">
+                                        {{ number_format($plan->nominal, 0, ',', '.') }}
+                                    </td>
+    
+                                <td class="text-center">
+            <button class="btn btn-sm btn-checklist"
+                data-id="{{ $plan->id }}"
+                data-field="keterangan"
+                data-value="{{ $plan->keterangan == 'done' ? 'done' : 'pending' }}"
+                style="font-size:18px;">
+                @if($plan->keterangan == 'done')
+                    ✔
+                @else
+                    ☐
+                @endif
+            </button>
+        </td>
         @endif
-    </button>
-</td>
 
 <style>
 .btn-checklist {
@@ -1102,6 +1196,7 @@ $(document).on('change', '.status-dropdown', function() {
                 </table>
 
             </div>
+            @endif
             <div class="d-flex justify-content-center mt-3">
     @if(method_exists($salesplans, 'links'))
     {{ $salesplans->links() }}

@@ -378,6 +378,16 @@
                 @endif
             @endif
 
+            {{-- Menu Khusus CS MBC & CS SMI --}}
+            @if(in_array(strtolower(trim(Auth::user()->role)), ['cs-mbc', 'cs-smi']))
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ route('admin.salesplan.index', ['kelas' => 'Start-Up Muda Indonesia']) }}">
+                        <i class="fas fa-fw fa-users"></i>
+                        <span><strong>Data Peserta SMI</strong></span>
+                    </a>
+                </li>
+            @endif
+
             {{-- Dropdown Semua Akun --}}
             @if(strtolower(auth()->user()->role) === 'administrator')
                 {{-- Administrator: langsung ke halaman utama Database CS --}}
