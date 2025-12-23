@@ -608,9 +608,36 @@
 
 
 
-        <form method="GET" class="d-flex">
-
+        <form method="GET" class="d-flex gap-2">
+            
             <input type="hidden" name="kelas" value="{{ request('kelas') }}">
+            @if(request('created_by'))
+            <input type="hidden" name="created_by" value="{{ request('created_by') }}">
+            @endif
+
+            <select name="bulan" id="bulan_filter_cs"
+                class="form-select filter-select"
+                onchange="this.form.submit()">
+                <option value="">📅 Semua Bulan</option>
+                @foreach([
+                    '01' => 'Januari',
+                    '02' => 'Februari',
+                    '03' => 'Maret',
+                    '04' => 'April',
+                    '05' => 'Mei',
+                    '06' => 'Juni',
+                    '07' => 'Juli',
+                    '08' => 'Agustus',
+                    '09' => 'September',
+                    '10' => 'Oktober',
+                    '11' => 'November',
+                    '12' => 'Desember'
+                ] as $num => $name)
+                    <option value="{{ $num }}" {{ request('bulan') == $num ? 'selected' : '' }}>
+                        {{ $name }}
+                    </option>
+                @endforeach
+            </select>
 
             <select name="status" id="status_filter"
                 class="form-select filter-select"
