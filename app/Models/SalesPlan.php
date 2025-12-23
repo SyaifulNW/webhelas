@@ -31,7 +31,8 @@ class SalesPlan extends Model
         'fu8_tindak_lanjut',
         'keterangan',
         'nominal',
-        'created_by'
+        'created_by',
+        'komentar_atasan'
     ];
     protected $casts = [
         'status' => 'string', // Cast status to string

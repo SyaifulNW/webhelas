@@ -15,6 +15,21 @@ class SalesPlanController extends Controller
     {
         $kelasFilter  = $request->input('kelas');
         $csFilter     = $request->input('created_by');
+
+        // ======================================
+        // 🔥 AUTO UPDATE STATUS
+        // Jika status 'tertarik' sudah > 5 hari tidak berubah -> ubah jadi 'no'
+        // ======================================
+        $cutoffDate = now()->subDays(5);
+        $updatedCount = SalesPlan::where('status', 'tertarik')
+            ->where('updated_at', '<', $cutoffDate)
+            ->update(['status' => 'no']);
+
+        if ($updatedCount > 0) {
+            $dateString = $cutoffDate->format('d M Y H:i');
+            session()->flash('warning', "$updatedCount data peserta dengan status 'Tertarik' telah otomatis diubah menjadi 'No' (Tidak ada update sejak $dateString).");
+        }
+
         $statusFilter = $request->input('status');
         $bulanFilter  = $request->input('bulan');
         $tahunFilter  = $request->input('tahun', date('Y')); // Default tahun ini
@@ -78,6 +93,7 @@ class SalesPlanController extends Controller
             $query->where('created_by', $userId);
         })
 
+        ->orderBy('created_at', 'desc')
         ->paginate($perPage);
 
 
@@ -188,7 +204,7 @@ class SalesPlanController extends Controller
             'fu3_hasil','fu3_tindak_lanjut',
             'fu4_hasil','fu4_tindak_lanjut',
             'fu5_hasil','fu5_tindak_lanjut',
-            'nominal','keterangan'
+            'nominal','keterangan', 'komentar_atasan'
         ];
 
         if (!in_array($request->field, $allowedFields)) {
