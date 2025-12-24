@@ -21,9 +21,17 @@
      
         
     @if(strtolower(auth()->user()->role) !== 'administrator')
-        <td contenteditable="true" class="editable" data-field="provinsi_nama">{{ $item->provinsi_nama }}</td>
+        <td>
+            <select class="form-control form-control-sm select-provinsi" data-id="{{ $item->id }}" data-nama="{{ $item->provinsi_nama }}">
+                <option value="">{{ $item->provinsi_nama ?: '-- Pilih Provinsi --' }}</option>
+            </select>
+        </td>
     @endif
-                            <td contenteditable="true" class="editable" data-field="kota_nama">{{ $item->kota_nama }}</td>
+    <td>
+        <select class="form-control form-control-sm select-kota" data-id="{{ $item->id }}" data-prov-id="{{ $item->provinsi_id }}" data-nama="{{ $item->kota_nama }}">
+             <option value="">{{ $item->kota_nama ?: '-- Pilih Kota --' }}</option>
+        </select>
+    </td>
                             <td contenteditable="true" class="editable" data-field="nama_bisnis">{{ $item->nama_bisnis }}</td>
                             <td contenteditable="true" class="editable" data-field="jenis_bisnis">{{ $item->jenis_bisnis }}</td>
                             <td contenteditable="true" class="editable" data-field="no_wa">{{ $item->no_wa }}</td>

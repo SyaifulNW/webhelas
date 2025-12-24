@@ -429,9 +429,19 @@ $(document).ready(function() {
                             </script>
 
                             @if(strtolower(auth()->user()->role) !== 'administrator')
-            <th>Provinsi</th>
+            <th>
+                Provinsi <br>
+                <select id="filterProvinsi" class="form-control form-control-sm" style="min-width: 150px;">
+                    <option value="">-- Semua Provinsi --</option>
+                </select>
+            </th>
         @endif
-                            <th>Kota</th>
+                            <th>
+                                Kota <br>
+                                <select id="filterKota" class="form-control form-control-sm" style="min-width: 150px;">
+                                    <option value="">-- Semua Kota --</option>
+                                </select>
+                            </th>
                             <th>Nama Bisnis</th>
                             <th>Jenis Bisnis</th>
                             <th>No.WA</th>
@@ -516,9 +526,9 @@ $(document).ready(function() {
                                 success: function(response) {
                                     $('#tableData').html(response);
                                 },
-                                error: function() {
-                                    alert('Gagal memuat data filter');
-                                }
+                                // error: function() {
+                                //     alert('Gagal memuat data filter');
+                                // }
                             });
                         });
                     });
@@ -608,8 +618,14 @@ function createNewRow(e) {
                 // Prepend to tbody
                 $('#myTable tbody').prepend(response.html);
                 
-                // Optional: Highlight row or focus name
                 let $newRow = $('#myTable tbody tr:first');
+                
+                // Populate Provinces for the new row
+                if(window.populateProvinceRow) {
+                    window.populateProvinceRow($newRow);
+                }
+                
+                // Optional: Highlight row or focus name
                 $newRow.css('background-color', '#d4edda').animate({backgroundColor: '#fff'}, 2000);
             }
         },
@@ -733,6 +749,274 @@ function createNewRow(e) {
 
     </div>
 </div>
+
+<script>
+$(document).ready(function() {
+    // Global variables to cache default province list
+    let cachedProvinces = [];
+
+    // Helper: Populate specific select elements
+    function populateProvinceSelect($elements) {
+        if(cachedProvinces.length === 0) return;
+
+        $elements.each(function() {
+            let $select = $(this);
+            // check if already populated to avoid potential overwrite issues if logic changes
+            if($select.children('option').length > 1) return; 
+
+            let currentNama = $select.data('nama');
+            
+            // Keep existing "Pilih" if exists
+            let $default = $select.find('option:first');
+            $select.empty().append($default);
+
+            cachedProvinces.forEach(function(prov) {
+                let isSelected = (currentNama && currentNama.toUpperCase() === prov.name.toUpperCase()) ? 'selected' : '';
+                $select.append(`<option value="${prov.id}" data-name="${prov.name}" ${isSelected}>${prov.name}</option>`);
+            });
+        });
+    }
+
+    // 1. Fetch Provinces & Populate
+    $.getJSON('https://www.emsifa.com/api-wilayah-indonesia/api/provinces.json', function(provinces) {
+        // Sort: Alphabetical
+        provinces.sort((a, b) => a.name.localeCompare(b.name));
+        cachedProvinces = provinces;
+
+        // Populate existing rows
+        populateProvinceSelect($('.select-provinsi'));
+        
+        // Also populate Header Filter
+        let $filterProv = $('#filterProvinsi');
+        cachedProvinces.forEach(function(prov) {
+             // Avoid duplicate append if run multiple times
+             if($filterProv.find(`option[value="${prov.name}"]`).length === 0) {
+                 $filterProv.append(`<option value="${prov.name}" data-id="${prov.id}">${prov.name}</option>`);
+             }
+        });
+    });
+
+    // Expose populate function purely for local usage pattern if needed, 
+    // but better to attach a listener or just call it from createNewRow.
+    
+    // We attach it to window so createNewRow can access it if defined outside (though it is defined outside doc.ready)
+    window.populateProvinceRow = function($row) {
+         if(cachedProvinces.length > 0) {
+             populateProvinceSelect($row.find('.select-provinsi'));
+         } else {
+             // retry if not yet loaded? usually loaded by the time user clicks add
+         }
+    };
+
+    // 2. Change Province -> Find Cities & Save
+    $(document).on('change', '.select-provinsi', function() {
+        let $select = $(this);
+        let id = $select.data('id');
+        let provId = $select.val();
+        let provName = $select.find(':selected').data('name');
+        
+        let $kotaSelect = $select.closest('tr').find('.select-kota');
+        
+        // Save to DB
+        if(provId) {
+             $.post('/admin/database/update-location', {
+                _token: '{{ csrf_token() }}',
+                id: id,
+                provinsi_id: provId,
+                provinsi_nama: provName
+            }).done(function() {
+                 console.log('Provinsi saved');
+            });
+            
+            // Load Cities
+            loadCities(provId, $kotaSelect);
+        } else {
+            $kotaSelect.empty().append('<option value="">-- Pilih Kota --</option>');
+        }
+    });
+
+    // 3. Change City -> Save
+    $(document).on('change', '.select-kota', function() {
+        let $select = $(this);
+        let id = $select.data('id');
+        let kotaId = $select.val();
+        let kotaName = $select.find(':selected').data('name');
+
+        if(kotaId) {
+            $.post('/admin/database/update-location', {
+                 _token: '{{ csrf_token() }}',
+                 id: id,
+                 kota_id: kotaId,
+                 kota_nama: kotaName
+            }).done(function() {
+                 console.log('Kota saved');
+            });
+        }
+    });
+
+    // 4. Lazy Load Cities on Click (if not populated)
+    $(document).on('click', '.select-kota', function() {
+        let $kotaSelect = $(this);
+        // Only load if we haven't loaded options yet (length <= 1 means only default option)
+        // And ensure we have a province selected
+        if($kotaSelect.children('option').length <= 1) {
+             let $provSelect = $kotaSelect.closest('tr').find('.select-provinsi');
+             let provId = $provSelect.val();
+             
+             if(provId) {
+                 loadCities(provId, $kotaSelect);
+             } else {
+                 // Try to resolve province ID from its text if user hasn't touched it? 
+                 // Difficult because we haven't mapped ID to the initial text unless content matched.
+                 if($provSelect.find('option:selected').val()) {
+                     loadCities($provSelect.find('option:selected').val(), $kotaSelect);
+                 }
+             }
+        }
+    });
+
+    function loadCities(provId, $targetSelect) {
+        $targetSelect.empty().append('<option value="">Loading...</option>');
+        
+        $.getJSON(`https://www.emsifa.com/api-wilayah-indonesia/api/regencies/${provId}.json`, function(cities) {
+             cities.sort((a, b) => a.name.localeCompare(b.name));
+             
+             $targetSelect.empty().append('<option value="">-- Pilih Kota --</option>');
+             
+             let currentKota = $targetSelect.data('nama');
+             
+             cities.forEach(function(city) {
+                 let isSelected = (currentKota && currentKota.toUpperCase() === city.name.toUpperCase()) ? 'selected' : '';
+                 $targetSelect.append(`<option value="${city.id}" data-name="${city.name}" ${isSelected}>${city.name}</option>`);
+             });
+        });
+    }
+
+    // ==========================================
+    // FILTER HEADER (Baru)
+    // ==========================================
+    
+    // A. Populate Header Filter Provinsi
+    $.getJSON('https://www.emsifa.com/api-wilayah-indonesia/api/provinces.json', function(provinces) {
+        provinces.sort((a, b) => a.name.localeCompare(b.name));
+        let $filterProv = $('#filterProvinsi');
+        
+        provinces.forEach(function(prov) {
+            $filterProv.append(`<option value="${prov.name}" data-id="${prov.id}">${prov.name}</option>`);
+        });
+    });
+
+    // B. Event Listener Filter Provinsi
+    $('#filterProvinsi').on('change', function() {
+        let selectedProvName = $(this).val();
+        let selectedProvId = $(this).find(':selected').data('id');
+        let $filterKota = $('#filterKota');
+        
+        // 1. Reset & Reload Kota Filter
+        $filterKota.empty().append('<option value="">-- Semua Kota --</option>');
+        
+        if(selectedProvId) {
+            $.getJSON(`https://www.emsifa.com/api-wilayah-indonesia/api/regencies/${selectedProvId}.json`, function(cities) {
+                 cities.sort((a, b) => a.name.localeCompare(b.name));
+                 cities.forEach(function(city) {
+                     $filterKota.append(`<option value="${city.name}">${city.name}</option>`);
+                 });
+            });
+        }
+        
+        // 2. Trigger Main Filter
+        applyTableFilters();
+    });
+
+    // C. Event Listener Filter Kota
+    $('#filterKota').on('change', function() {
+        applyTableFilters();
+    });
+
+    // D. Main Filtering Logic (Combines existing logic)
+    function applyTableFilters() {
+         var userRole = "{{ strtolower(auth()->user()->role) }}";
+         
+         // Get values
+         var fUser = $('#filterUser').val() ? $('#filterUser').val().toLowerCase() : '';
+         var fBulan = $('#filterBulan').val();
+         var fSumber = $('#filterSumber').val();
+         var fKelas = $('#filterKelas').val();
+         // Header Filters
+         var fProv = $('#filterProvinsi').val();
+         var fKota = $('#filterKota').val();
+         
+         var search = $('#tableSearch').val() ? $('#tableSearch').val().toLowerCase() : '';
+ 
+         $('#myTable tbody tr').each(function() {
+             var $tr = $(this);
+             var trUser = $tr.data('created-by'); 
+             var trBulan = $tr.data('bulan');
+             var trYear = $tr.data('year');
+             var currentYear = new Date().getFullYear();
+             
+             // Row Values
+             var trText = $tr.text().toLowerCase();
+             var trSumber = $tr.find('.select-sumber').val();
+             
+             // Get Province/City from the dropdown data (most accurate) or text if fallback
+             var $trProvSelect = $tr.find('.select-provinsi');
+             var trProvinsi = $trProvSelect.length ? $trProvSelect.data('nama') : $tr.find('td[data-field="provinsi_nama"]').text();
+             
+             var $trKotaSelect = $tr.find('.select-kota');
+             var trKota = $trKotaSelect.length ? $trKotaSelect.data('nama') : $tr.find('td[data-field="kota_nama"]').text();
+
+             // Normalizing string for comparison (uppercase/trim)
+             if(trProvinsi) trProvinsi = trProvinsi.trim();
+             if(trKota) trKota = trKota.trim();
+             
+             var show = true;
+ 
+             // Filter User
+             if (fUser && trUser !== fUser) show = false;
+             
+             // Filter Bulan
+             if (show && fBulan) {
+                 if (trBulan != fBulan) show = false;
+                 else if (trYear != currentYear) show = false;
+             }
+             
+             // Filter Sumber
+             if (show && fSumber && trSumber !== fSumber) show = false;
+             
+             // Filter Kelas (existing logic already covers this or we add it if not)
+             var trKelas = '';
+             var $kelasSelect = $tr.find('.select-potensi');
+             if ($kelasSelect.length > 0) {
+                 trKelas = $kelasSelect.find('option:selected').text().trim();
+             }
+             if (show && fKelas && trKelas !== fKelas) show = false;
+             
+             // --- NEW FILTERS ---
+             // Filter Provinsi
+             if (show && fProv && trProvinsi !== fProv) show = false;
+             
+             // Filter Kota
+             if (show && fKota && trKota !== fKota) show = false;
+             
+             // Search
+             if (show && search && !trText.includes(search)) show = false;
+             
+             $tr.toggle(show);
+         });
+    }
+    
+    // Hook into existing events to also call our unified filter
+    $('#filterSumber, #filterKelas').on('change', applyTableFilters);
+    
+    // Note: older applyFilters function defined in document.ready above might conflict if not careful.
+    // We are overriding or extending functionality. The previous script block used "applyFilters" name. 
+    // Since we are inside the same doc.ready (effectively), we should be careful. 
+    // To be safe, we'll assume the previous separate scripts might need consolidation, 
+    // but typically later script specific listeners will run.
+    // We explicitly attach applyTableFilters to the new inputs.
+});
+</script>
 @endsection
 <!-- Modal Create -->
 

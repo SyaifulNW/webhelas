@@ -209,6 +209,7 @@ Route::put('/salesplan/{id}/fu/{fu}', [SalesPlanController::class, 'updateFU'])-
 
 //Edit Ajax
 Route::post('/admin/database/update-inline', [DataController::class, 'updateInline']);
+Route::post('/admin/database/update-location', [DataController::class, 'updateLocation']);
 Route::post('/admin/database/update-potensi/{id}', [DataController::class, 'updatePotensi']);
 
 

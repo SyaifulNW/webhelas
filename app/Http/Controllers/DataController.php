@@ -174,6 +174,28 @@ public function index(Request $request)
         return response()->json(['success' => true]);
     }
 
+    public function updateLocation(Request $request)
+    {
+        $data = Data::findOrFail($request->id);
+        
+        if ($request->has('provinsi_id')) {
+            $data->provinsi_id = $request->provinsi_id;
+            $data->provinsi_nama = $request->provinsi_nama;
+            // Reset kota jika provinsi berubah
+            $data->kota_id = null;
+            $data->kota_nama = null;
+        }
+
+        if ($request->has('kota_id')) {
+            $data->kota_id = $request->kota_id;
+            $data->kota_nama = $request->kota_nama;
+        }
+
+        $data->save();
+
+        return response()->json(['success' => true]);
+    }
+
 
 
 
