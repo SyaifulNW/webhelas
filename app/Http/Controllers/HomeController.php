@@ -43,6 +43,7 @@ class HomeController extends Controller
 
         // ====================== 💰 OMSET & KOMISI ======================
         $isCsSmi = auth()->user()->role === 'cs-smi';
+        $isCsMbc = auth()->user()->role === 'cs-mbc';
 
         if ($isCsSmi) {
             // Khusus CS SMI: Ambil kelas Start-Up Muda Indonesia (tanpa filter tanggal mulai)
@@ -52,6 +53,21 @@ class HomeController extends Controller
                         ->whereYear('updated_at', $tahun)
                         ->whereMonth('updated_at', $bulanNum)
                         ->where('status', 'sudah_transfer');
+                }])
+                ->get();
+        } elseif ($isCsMbc) {
+            // Khusus CS MBC: Start-Up Muslim (tanpa filter tanggal) + Kelas lain (bulan berjalan)
+            $kelasOmset = Kelas::where(function ($q) use ($tahun, $bulanNum) {
+                    $q->where('nama_kelas', 'like', '%Start-Up Muslim Indonesia%')
+                      ->orWhere(function ($sub) use ($tahun, $bulanNum) {
+                          $sub->whereYear('tanggal_mulai', $tahun)
+                              ->whereMonth('tanggal_mulai', $bulanNum);
+                      });
+                })
+                ->with(['salesplans' => function ($query) use ($csId, $tahun, $bulanNum) {
+                    $query->where('created_by', $csId)
+                        ->whereYear('updated_at', $tahun)
+                        ->whereMonth('updated_at', $bulanNum);
                 }])
                 ->get();
         } else {
