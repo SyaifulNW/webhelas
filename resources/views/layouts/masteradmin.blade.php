@@ -147,16 +147,30 @@
 
             <!-- Nav Item - Dashboard -->
             {{-- Nav Item - Dashboard --}}
+            {{-- Nav Item - Dashboard --}}
             @if(strtolower(Auth::user()->role) === 'administrator')
-                @if(\App\Models\Menu::isActive('dashboard_admin'))
-                <li class="nav-item active">
-                    {{-- Dashboard untuk Administrator --}}
-                    <a class="nav-link" href="{{ route('administrator') }}">
+                <li class="nav-item {{ request()->routeIs('penjualan.index') || request()->routeIs('hr') || request()->routeIs('marketing') || request()->routeIs('admin.operasional') || request()->routeIs('admin.keuangan') ? 'active' : '' }}">
+                    <a class="nav-link {{ request()->routeIs('penjualan.index') || request()->routeIs('hr') || request()->routeIs('marketing') || request()->routeIs('admin.operasional') || request()->routeIs('admin.keuangan') ? '' : 'collapsed' }}" href="#" data-toggle="collapse" data-target="#collapseDashboard"
+                        aria-expanded="{{ request()->routeIs('penjualan.index') || request()->routeIs('hr') || request()->routeIs('marketing') || request()->routeIs('admin.operasional') || request()->routeIs('admin.keuangan') ? 'true' : 'false' }}" aria-controls="collapseDashboard">
                         <i class="fas fa-fw fa-tachometer-alt"></i>
                         <span>DASHBOARD ADMIN</span>
                     </a>
+                    <div id="collapseDashboard" class="collapse {{ request()->routeIs('penjualan.index') || request()->routeIs('hr') || request()->routeIs('marketing') || request()->routeIs('admin.operasional') || request()->routeIs('admin.keuangan') ? 'show' : '' }}" aria-labelledby="headingDashboard" data-parent="#accordionSidebar">
+                        <div class="bg-white py-2 collapse-inner rounded">
+                            <h6 class="collapse-header">Sub Dashboard:</h6>
+                            {{-- Penjualan --}}
+                            <a class="collapse-item {{ request()->routeIs('penjualan.index') ? 'active' : '' }}" href="{{ route('penjualan.index') }}">Penjualan</a>
+                            {{-- HRD --}}
+                            <a class="collapse-item {{ request()->routeIs('hr') ? 'active' : '' }}" href="{{ route('hr') }}">HRD</a>
+                            {{-- Marketing --}}
+                            <a class="collapse-item {{ request()->routeIs('marketing') ? 'active' : '' }}" href="{{ route('marketing') }}">Marketing</a>
+                            {{-- Operasional --}}
+                            <a class="collapse-item {{ request()->routeIs('admin.operasional') ? 'active' : '' }}" href="{{ route('admin.operasional') }}">Operasional</a>
+                            {{-- Keuangan --}}
+                            <a class="collapse-item {{ request()->routeIs('admin.keuangan') ? 'active' : '' }}" href="{{ route('admin.keuangan') }}">Keuangan</a>
+                        </div>
+                    </div>
                 </li>
-                @endif
             @elseif(strtolower(Auth::user()->role) === 'marketing')
                 @if(\App\Models\Menu::isActive('dashboard_marketing'))
                 <li class="nav-item active">
@@ -449,13 +463,7 @@
                 </li>
                 @endif
 
-                @if(\App\Models\Menu::isActive('penjualan'))
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ route('penjualan.index') }}">
-                        <strong><i class="fa-solid fa-cart-shopping me-2"></i> PENJUALAN</strong>
-                    </a>
-                </li>
-                @endif
+
 
                 {{-- NEW SETTING MENU --}}
                 <li class="nav-item">

@@ -257,6 +257,10 @@ use App\Http\Controllers\AdminController;
 
 Route::get('/administrator', [AdminController::class, 'index'])->name('administrator');
 
+use App\Http\Controllers\DashboardController;
+Route::get('/admin/operasional', [DashboardController::class, 'operasional'])->name('admin.operasional')->middleware('auth');
+Route::get('/admin/keuangan', [DashboardController::class, 'keuangan'])->name('admin.keuangan')->middleware('auth');
+
 Route::get('/admin/cs/{id}', [AdminController::class, 'detailCS'])->name('admin.cs.detail');
 // Route::prefix('admin/cs')->group(function () {
 //     Route::get('{id}/salesplan', [App\Http\Controllers\Admin\CSController::class, 'salesplan'])->name('admin.cs.salesplan');
