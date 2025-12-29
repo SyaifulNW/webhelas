@@ -321,14 +321,7 @@
                 </li>
                 @endif
 
-                @if(\App\Models\Menu::isActive('penilaian_kinerja_saya'))
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ route('admin.penilaian.index') }}">
-                        <i class="fas fa-fw fa-star"></i>
-                        <span><strong>PENILAIAN KINERJA SAYA</strong></span>
-                    </a>
-                </li>
-                @endif
+
             @endif
 
             @php
@@ -342,8 +335,8 @@
                 @if(\App\Models\Menu::isActive('sales_plan'))
                 {{-- Jika user adalah Fitra Jaya Saleh atau Agus Setyo --}}
                 @if($userName == 'Fitra Jaya Saleh' || $userName == 'Agus Setyo')
-                    <li class="nav-item {{ request()->routeIs('admin.salesplan.index') && request('kelas') == null ? 'active' : '' }}">
-                        <a class="nav-link" href="{{ route('admin.salesplan.index') }}">
+                    <li class="nav-item {{ request()->routeIs('admin.salesplan.index') && request('kelas') == 'Start-Up Muslim Indonesia' ? 'active' : '' }}">
+                        <a class="nav-link" href="{{ route('admin.salesplan.index', ['kelas' => 'Start-Up Muslim Indonesia']) }}">
                             <i class="fas fa-fw fa-users"></i>
                             <span><strong>SALES PLAN</strong></span>
                         </a>
@@ -425,7 +418,7 @@
                     <div id="collapseKoordinasi" class="collapse" aria-labelledby="headingKoordinasi" data-parent="#accordionSidebar">
                         <div class="bg-white py-2 collapse-inner rounded">
                             <h6 class="collapse-header text-uppercase text-secondary">Daftar Pengguna:</h6>
-                            @foreach(\App\Models\User::whereIn('name', ['Tursia', 'Latifah'])->orderBy('name')->get() as $user)
+                            @foreach(\App\Models\User::whereIn('name', ['Tursia', 'Latifah', 'Gunawan', 'Puput'])->orderBy('name')->get() as $user)
                                 <a class="collapse-item d-flex align-items-center justify-content-between" href="{{ route('koordinasi.show', $user->id) }}">
                                     <span>
                                         <i class="fas fa-user-circle mr-2 text-primary"></i> 

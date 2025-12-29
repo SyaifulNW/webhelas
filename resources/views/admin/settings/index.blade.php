@@ -115,6 +115,12 @@
                     <input type="number" name="target_omset" class="form-control" value="{{ $targetOmset }}" required>
                     <small class="text-muted">Target ini akan digunakan untuk perhitungan bonus semua CS secara default kecuali diatur lain.</small>
                 </div>
+                
+                <div class="form-group mt-3">
+                    <label class="fw-bold">Target Omset Start-Up Muda Indonesia (Rp)</label>
+                    <input type="number" name="target_omset_smi" class="form-control" value="{{ $targetOmsetSmi ?? 0 }}" required>
+                    <small class="text-muted">Target khusus untuk Start-Up Muda Indonesia (SMI).</small>
+                </div>
                 <button type="submit" class="btn btn-primary">Simpan Target</button>
             </form>
         </div>

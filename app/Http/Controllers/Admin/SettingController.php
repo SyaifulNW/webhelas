@@ -12,8 +12,9 @@ class SettingController extends Controller
         $users = \App\Models\User::all();
         $menus = \App\Models\Menu::all();
         $targetOmset = \App\Models\Setting::where('key', 'target_omset')->value('value');
+        $targetOmsetSmi = \App\Models\Setting::where('key', 'target_omset_smi')->value('value');
 
-        return view('admin.settings.index', compact('users', 'menus', 'targetOmset'));
+        return view('admin.settings.index', compact('users', 'menus', 'targetOmset', 'targetOmsetSmi'));
     }
 
     // --- USERS ---
@@ -75,12 +76,22 @@ class SettingController extends Controller
     // --- TARGET OMSET ---
     public function updateTarget(Request $request)
     {
-        $request->validate(['target_omset' => 'required|numeric']);
+        $request->validate([
+            'target_omset' => 'required|numeric',
+            'target_omset_smi' => 'nullable|numeric'
+        ]);
 
         \App\Models\Setting::updateOrCreate(
             ['key' => 'target_omset'],
             ['value' => $request->target_omset]
         );
+
+        if ($request->has('target_omset_smi')) {
+            \App\Models\Setting::updateOrCreate(
+                ['key' => 'target_omset_smi'],
+                ['value' => $request->target_omset_smi]
+            );
+        }
 
         return redirect()->back()->with('success', 'Target Omset berhasil diperbarui.');
     }

@@ -15,6 +15,9 @@ class SalesPlanController extends Controller
     {
         $kelasFilter  = $request->input('kelas');
         $csFilter     = $request->input('created_by');
+        if (auth()->user()->name == 'Agus Setyo') {
+            $kelasFilter = 'Start-Up Muslim Indonesia';
+        }
 
         // ======================================
         // 🔥 AUTO UPDATE STATUS
@@ -45,7 +48,7 @@ class SalesPlanController extends Controller
     // =====================================================
     // 🔥 JIKA ADMIN BELUM MEMFILTER → JANGAN TAMPILKAN DATA
     // =====================================================
-    $isAdmin = in_array($userId, [1, 13]);
+    $isAdmin = in_array($userId, [1]);
     $noFilter = empty($kelasFilter) && empty($csFilter) && empty($statusFilter);
 
     if ($isAdmin && $noFilter) {
@@ -89,7 +92,7 @@ class SalesPlanController extends Controller
                   ->whereYear('updated_at', $tahunFilter);
         })
 
-        ->when(! $isAdmin && auth()->user()->name !== 'Agus Setyo', function ($query) use ($userId) {
+        ->when(! $isAdmin && !in_array(auth()->user()->name, ['Agus Setyo', 'Fitra Jaya Saleh']), function ($query) use ($userId) {
             $query->where('created_by', $userId);
         })
 
@@ -112,7 +115,7 @@ class SalesPlanController extends Controller
             $query->where('created_by', $csFilter);
         })
 
-        ->when(! $isAdmin, function ($query) use ($userId) {
+        ->when(! $isAdmin && !in_array(auth()->user()->name, ['Agus Setyo', 'Fitra Jaya Saleh']), function ($query) use ($userId) {
             $query->where('created_by', $userId);
         })
 
@@ -130,6 +133,10 @@ class SalesPlanController extends Controller
     $dataMap = Data::whereIn('nama', $names)->get()->keyBy('nama');
 
 
+    // Ambil Target Omset dari database
+    $targetOmsetGlobal = \App\Models\Setting::where('key', 'target_omset')->value('value');
+    $targetOmsetSmi = \App\Models\Setting::where('key', 'target_omset_smi')->value('value');
+
     return view('admin.salesplan.index', [
         'salesplans'      => $salesplans,
         'pesertaTransfer' => $pesertaTransfer,
@@ -137,12 +144,13 @@ class SalesPlanController extends Controller
         'csList'          => $csList,
         'kelasFilter'     => $kelasFilter,
         'csFilter'        => $csFilter,
-        'csFilter'        => $csFilter,
         'statusFilter'    => $statusFilter,
         'bulanFilter'     => $bulanFilter,
         'tahunFilter'     => $tahunFilter,
         'salesplansByCS'  => $salesplansByCS,
         'dataMap'         => $dataMap,
+        'targetOmsetGlobal' => $targetOmsetGlobal,
+        'targetOmsetSmi'  => $targetOmsetSmi,
         'message'         => null
     ]);
 }

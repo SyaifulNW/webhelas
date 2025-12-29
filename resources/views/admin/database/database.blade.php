@@ -47,7 +47,7 @@
             </div>
         </div>
         
-        
+    @if(auth()->user()->name !== 'Agus Setyo')
         <div class="card shadow-sm border-0 mb-4">
     <div class="card-header bg-warning text-dark fw-bold">
         <i class="fas fa-comments me-2"></i> Komentar untuk {{ $user->name }}
@@ -108,6 +108,9 @@
     </div>
   </div>
 </div>
+</div>
+</div>
+@endif
 @endif
 
     
@@ -121,64 +124,58 @@ use Carbon\Carbon;
 use App\Models\Data;
 
 $bulanLabel = Carbon::now()->isoFormat('MMMM YYYY');
-$user = auth()->user();
+// Preserve passed $user if in readonly mode, otherwise get auth user
+$currentUser = auth()->user(); 
 $request = request();
 
-$filterUser  = $request->get('user');
-$filterBulan = $request->get('bulan');
+// Only run default query logic if NOT in readonly mode (Koordinasi)
+if (!isset($readonly)) {
+    // Standard Database View
+    $user = $currentUser; // Use logged in user for permission checks
+    
+    $filterUser  = $request->get('user');
+    $filterBulan = $request->get('bulan');
 
-// ✅ Daftar auth id admin MBC
-$adminMbcIds = [2, 3, 6, 10];
+    $query = Data::query();
 
-// =============================
-// 🔹 Buat query dasar
-// =============================
-$query = Data::query();
-
-// =============================
-// 🔹 ROLE ADMIN / MANAGER
-// =============================
-if (in_array(strtolower($user->role), ['administrator', 'manager']) || $user->name === 'Agus Setyo') {
-
-    // 🔸 Jika filter user dipilih → ambil data CS yang dipilih
-    if (!empty($filterUser)) {
-        $query->where('created_by', $filterUser);
+    // ROLE ADMIN / MANAGER / SPECIAL
+    if (in_array(strtolower($user->role), ['administrator', 'manager']) || $user->name === 'Agus Setyo') {
+        if (!empty($filterUser)) {
+            $query->where('created_by', $filterUser);
+        }
+    } else {
+        $query->where('created_by', $user->name);
     }
 
+    // Khusus Agus Setyo
+    if ($user->name === 'Agus Setyo') {
+        $query->whereHas('kelas', function($q) {
+             $q->where('nama_kelas', 'Start-Up Muda Indonesia')
+               ->orWhere('nama_kelas', 'Start-Up Muslim Indonesia');
+        });
+    }
+
+    if (!empty($filterBulan)) {
+        $query->whereMonth('created_at', $filterBulan);
+    }
+
+    $data = $query->orderBy('created_at', 'desc')->get();
 } else {
-    // CS biasa → hanya bisa lihat datanya sendiri
-    // CS biasa → hanya bisa lihat datanya sendiri
-    $query->where('created_by', $user->name);
+    // READONLY MODE (Koordinasi)
+    // $data is already passed from controller. 
+    // $user is passed from controller (target user).
+    // We just need to ensure stats variables are set.
 }
-
-// Khusus Agus Setyo: Hanya kelas Start-Up Muslim/Muda Indonesia
-if ($user->name === 'Agus Setyo') {
-    $query->whereHas('kelas', function($q) {
-         $q->where('nama_kelas', 'Start-Up Muda Indonesia')
-           ->orWhere('nama_kelas', 'Start-Up Muslim Indonesia');
-    });
-}
-
-// =============================
-// 🔹 Filter Bulan
-// =============================
-if (!empty($filterBulan)) {
-    $query->whereMonth('created_at', $filterBulan);
-}
-
-// =============================
-// 🔹 Eksekusi Query
-// =============================
-$data = $query->orderBy('created_at', 'desc')->get();
 
 $now = Carbon::now();
 
-$databaseBaru = (clone $query)
-    ->whereYear('created_at', $now->year)
-    ->whereMonth('created_at', $now->month)
-    ->count();
+// Calculate Stats based on the resulting $data collection
+// This applies to both modes (Filtered Query or Controller Data)
+$databaseBaru = $data->filter(function($item) use ($now) {
+    return $item->created_at->year == $now->year && $item->created_at->month == $now->month;
+})->count();
 
-$totalDatabase = (clone $query)->count();
+$totalDatabase = $data->count();
 
 $target = 50;
 $kurang = max($target - $databaseBaru, 0);
@@ -241,7 +238,7 @@ $kurang = max($target - $databaseBaru, 0);
 @endphp
 
     {{-- ðŸ”¹ Administrator / Manager: Filter Input Oleh --}}
-    @if(in_array(strtolower(auth()->user()->role), ['administrator', 'manager']) || auth()->user()->name === 'Agus Setyo')
+    @if(in_array(strtolower(auth()->user()->role), ['administrator', 'manager']) && auth()->user()->name !== 'Agus Setyo')
         <select id="filterUser" class="form-select form-select-sm" onchange="updateFilterUser(this.value)">
             {{-- Option Semua CS removed as requested --}}
             <option value="" disabled selected>-- Pilih CS --</option>

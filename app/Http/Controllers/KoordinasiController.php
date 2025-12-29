@@ -23,7 +23,7 @@ public function show($id, Request $request)
     $userRole = strtolower($user->role);
 
     // ✅ 2. Hanya Administrator & Manager yang boleh akses halaman ini
-    if (!in_array($userRole, ['administrator', 'Manager'])) {
+    if (!in_array($userRole, ['administrator', 'manager'])) {
         abort(403, 'Anda tidak memiliki izin untuk mengakses halaman ini.');
     }
 
@@ -34,9 +34,9 @@ public function show($id, Request $request)
 
     // ✅ 4. Jika role Manager, hanya boleh akses CS tertentu
     if ($userRole === 'manager') {
-        $allowedCs = ['latifah', 'tursia'];
+        $allowedCs = ['latifah', 'tursia', 'gunawan', 'puput'];
         if (!in_array($csName, $allowedCs)) {
-            abort(403, 'Manager hanya dapat mengakses data milik Latifah dan Tursia.');
+            abort(403, 'Manager hanya dapat mengakses data milik Latifah, Tursia, Gunawan, dan Puput.');
         }
     }
 
