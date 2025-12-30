@@ -149,6 +149,7 @@
             {{-- Nav Item - Dashboard --}}
             {{-- Nav Item - Dashboard --}}
             @if(strtolower(Auth::user()->role) === 'administrator')
+                @if(\App\Models\Menu::isActive('dashboard_admin'))
                 <li class="nav-item {{ request()->routeIs('penjualan.index') || request()->routeIs('hr') || request()->routeIs('marketing') || request()->routeIs('admin.operasional') || request()->routeIs('admin.keuangan') ? 'active' : '' }}">
                     <a class="nav-link {{ request()->routeIs('penjualan.index') || request()->routeIs('hr') || request()->routeIs('marketing') || request()->routeIs('admin.operasional') || request()->routeIs('admin.keuangan') ? '' : 'collapsed' }}" href="#" data-toggle="collapse" data-target="#collapseDashboard"
                         aria-expanded="{{ request()->routeIs('penjualan.index') || request()->routeIs('hr') || request()->routeIs('marketing') || request()->routeIs('admin.operasional') || request()->routeIs('admin.keuangan') ? 'true' : 'false' }}" aria-controls="collapseDashboard">
@@ -159,18 +160,29 @@
                         <div class="bg-white py-2 collapse-inner rounded">
                             <h6 class="collapse-header">Sub Dashboard:</h6>
                             {{-- Penjualan --}}
+                            @if(\App\Models\Menu::isActive('penjualan'))
                             <a class="collapse-item {{ request()->routeIs('penjualan.index') ? 'active' : '' }}" href="{{ route('penjualan.index') }}">Penjualan</a>
+                            @endif
                             {{-- HRD --}}
+                            @if(\App\Models\Menu::isActive('hr'))
                             <a class="collapse-item {{ request()->routeIs('hr') ? 'active' : '' }}" href="{{ route('hr') }}">HRD</a>
+                            @endif
                             {{-- Marketing --}}
+                            @if(\App\Models\Menu::isActive('marketing'))
                             <a class="collapse-item {{ request()->routeIs('marketing') ? 'active' : '' }}" href="{{ route('marketing') }}">Marketing</a>
+                            @endif
                             {{-- Operasional --}}
+                            @if(\App\Models\Menu::isActive('operasional'))
                             <a class="collapse-item {{ request()->routeIs('admin.operasional') ? 'active' : '' }}" href="{{ route('admin.operasional') }}">Operasional</a>
+                            @endif
                             {{-- Keuangan --}}
+                            @if(\App\Models\Menu::isActive('keuangan'))
                             <a class="collapse-item {{ request()->routeIs('admin.keuangan') ? 'active' : '' }}" href="{{ route('admin.keuangan') }}">Keuangan</a>
+                            @endif
                         </div>
                     </div>
                 </li>
+                @endif
             @elseif(strtolower(Auth::user()->role) === 'marketing')
                 @if(\App\Models\Menu::isActive('dashboard_marketing'))
                 <li class="nav-item active">
@@ -202,6 +214,7 @@
                 </li>
                 @endif
             @elseif(strtolower(trim(Auth::user()->role)) === 'advertising')
+                @if(\App\Models\Menu::isActive('dashboard_advertising'))
                 <li class="nav-item active">
                     {{-- Dashboard untuk Advertising --}}
                     <a class="nav-link" href="{{ route('advertising') }}">
@@ -209,6 +222,7 @@
                         <span>DASHBOARD ADVERTISING</span>
                     </a>
                 </li>
+                @endif
             @else
                 @if(\App\Models\Menu::isActive('dashboard_general'))
                 <li class="nav-item active">
@@ -387,12 +401,16 @@
 
             {{-- Menu Khusus CS MBC & CS SMI --}}
             @if(in_array(strtolower(trim(Auth::user()->role)), ['cs-mbc', 'cs-smi']))
+            @if(in_array(strtolower(trim(Auth::user()->role)), ['cs-mbc', 'cs-smi']))
+                @if(\App\Models\Menu::isActive('data_peserta_smi'))
                 <li class="nav-item">
                     <a class="nav-link" href="{{ route('admin.salesplan.index', ['kelas' => 'Start-Up Muda Indonesia']) }}">
                         <i class="fas fa-fw fa-users"></i>
                         <span><strong>Data Peserta SMI</strong></span>
                     </a>
                 </li>
+                @endif
+            @endif
             @endif
 
             {{-- Dropdown Semua Akun --}}
@@ -408,6 +426,7 @@
                 @endif
             @elseif(auth()->user()->name === 'Agus Setyo')
                 {{-- Agus Setyo: Hanya bisa lihat Tursia dan Latifah --}}
+                @if(\App\Models\Menu::isActive('database_cs'))
                 <li class="nav-item">
                     <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseKoordinasi"
                        aria-expanded="false" aria-controls="collapseKoordinasi">
@@ -430,6 +449,7 @@
                         </div>
                     </div>
                 </li>
+                @endif
             @endif
 
             @if(strtolower(auth()->user()->role) === 'administrator')
@@ -459,11 +479,13 @@
 
 
                 {{-- NEW SETTING MENU --}}
+                @if(\App\Models\Menu::isActive('settings'))
                 <li class="nav-item">
                     <a class="nav-link" href="{{ route('admin.settings.index') }}">
                         <strong><i class="fa-solid fa-cogs me-2"></i> SETTING</strong>
                     </a>
                 </li>
+                @endif
             @endif
             
             
@@ -502,27 +524,31 @@
                     
                     
             @if(strtolower(auth()->user()->name) === 'Yasmin')
-             <li class="nav-item">
+                @if(\App\Models\Menu::isActive('settings'))
+                <li class="nav-item">
                     <a class="nav-link" href="{{ route('admin.settings.index') }}">
                         <strong><i class="fa-solid fa-cogs me-2"></i> SETTING</strong>
                     </a>
                 </li>
-            
+                @endif
             @endif
 
 
 
                 {{-- Penilaian Karyawan --}}
+                @if(\App\Models\Menu::isActive('penilaian_karyawan'))
                 <li class="nav-item">
                     <a class="nav-link text-white" href="{{ route('manager.penilaian-cs.index') }}">
                         <i class="fa-solid fa-list-user me-2"></i>
                         <span>Penilaian Kinerja Tim</span>
                     </a>
                 </li>
+                @endif
             @endif
 
             {{-- MENU HRD --}}
             @if(strtolower(auth()->user()->role) === 'hrd')
+                @if(\App\Models\Menu::isActive('menu_hrd'))
                 <li class="nav-item mt-3">
                     <span class="nav-link text-uppercase fw-bold fs-5" style="color: #a8c6ff;">
                         MENU HRD
@@ -588,6 +614,7 @@
                         <strong><i class="fa-solid fa-file-lines me-2"></i> Laporan HRD</strong> 
                     </a>
                 </li>
+                @endif
             @endif
 
             <hr class="sidebar-divider d-none d-md-block" />

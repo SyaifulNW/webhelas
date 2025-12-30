@@ -24,7 +24,10 @@
             <a class="nav-link" id="target-tab" data-toggle="tab" href="#target" role="tab">Target Omset</a>
         </li>
         <li class="nav-item">
-            <a class="nav-link" id="menus-tab" data-toggle="tab" href="#menus" role="tab">Akses Menu</a>
+            <a class="nav-link" id="menus-tab" data-toggle="tab" href="#menus" role="tab">Menu Global</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" id="rolemenu-tab" data-toggle="tab" href="#rolemenu" role="tab">Akses Menu Role</a>
         </li>
     </ul>
 
@@ -125,10 +128,10 @@
             </form>
         </div>
 
-        {{-- TAB 3: MENUS MANAGEMENT --}}
+        {{-- TAB 3: MENUS MANAGEMENT (GLOBAL) --}}
         <div class="tab-pane fade p-3 bg-white border border-top-0" id="menus" role="tabpanel">
             <div class="alert alert-info">
-                <i class="fas fa-info-circle"></i> Matikan toggle untuk menyembunyikan menu dari sidebar.
+                <i class="fas fa-info-circle"></i> Pengaturan ini akan mengaktifkan/menonaktifkan menu secara <strong>GLOBAL</strong> untuk semua user.
             </div>
             <table class="table table-bordered">
                 <thead class="bg-dark text-white">
@@ -155,6 +158,47 @@
                     @endforeach
                 </tbody>
             </table>
+        </div>
+
+        {{-- TAB 4: ROLE MENU ACCESS --}}
+        <div class="tab-pane fade p-3 bg-white border border-top-0" id="rolemenu" role="tabpanel">
+            <div class="alert alert-warning">
+                <i class="fas fa-exclamation-triangle"></i> Atur akses menu spesifik per Role. Jika Menu Global non-aktif, maka menu tetap tidak muncul meski di sini aktif.
+            </div>
+            <div class="table-responsive">
+                <table class="table table-bordered table-striped text-center">
+                    <thead class="thead-dark">
+                        <tr>
+                            <th class="text-left">Role / Menu</th>
+                            @foreach($menus as $m)
+                                <th>{{ $m->label }}</th>
+                            @endforeach
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($roles as $role)
+                        <tr>
+                            <td class="text-left font-weight-bold">{{ ucfirst($role) }}</td>
+                            @foreach($menus as $m)
+                            @php
+                                $canAccess = \App\Models\Menu::hasRoleAccess($m->name, $role);
+                            @endphp
+                            <td>
+                                <div class="custom-control custom-switch">
+                                    <input type="checkbox" class="custom-control-input role-menu-toggle" 
+                                        id="role-{{ $role }}-{{ $m->id }}" 
+                                        data-role="{{ $role }}"
+                                        data-menuid="{{ $m->id }}"
+                                        {{ $canAccess ? 'checked' : '' }}>
+                                    <label class="custom-control-label" for="role-{{ $role }}-{{ $m->id }}"></label>
+                                </div>
+                            </td>
+                            @endforeach
+                        </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
         </div>
 
     </div>
@@ -205,7 +249,7 @@
 </div>
 
 <script>
-    // AJAX Toggle Menu
+    // AJAX Toggle Menu Global
     document.querySelectorAll('.menu-toggle').forEach(item => {
         item.addEventListener('change', event => {
             const id = event.target.dataset.id;
@@ -225,6 +269,32 @@
             .then(response => response.json())
             .then(data => {
                 if(!data.success) alert('Gagal mengubah status menu');
+            })
+            .catch(error => console.error('Error:', error));
+        });
+    });
+
+    // AJAX Toggle Role Menu Access
+    document.querySelectorAll('.role-menu-toggle').forEach(item => {
+        item.addEventListener('change', event => {
+            const role = event.target.dataset.role;
+            const menu_id = event.target.dataset.menuid;
+            const active = event.target.checked ? 1 : 0;
+
+            console.log(`Updating role ${role} menu ${menu_id} access to ${active}`);
+
+            fetch('{{ route('admin.settings.role-menus.update') }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify({ role: role, menu_id: menu_id, active: active })
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Update success:', data);
+                if(!data.success) alert('Gagal mengubah akses menu role');
             })
             .catch(error => console.error('Error:', error));
         });

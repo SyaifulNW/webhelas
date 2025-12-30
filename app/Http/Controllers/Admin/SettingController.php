@@ -14,7 +14,12 @@ class SettingController extends Controller
         $targetOmset = \App\Models\Setting::where('key', 'target_omset')->value('value');
         $targetOmsetSmi = \App\Models\Setting::where('key', 'target_omset_smi')->value('value');
 
-        return view('admin.settings.index', compact('users', 'menus', 'targetOmset', 'targetOmsetSmi'));
+        // Fetch unique roles from users table (could also be a static list if preferred)
+        $roles = \App\Models\User::distinct('role')->pluck('role')->map(function($role) {
+            return strtolower(trim($role));
+        })->unique()->values();
+
+        return view('admin.settings.index', compact('users', 'menus', 'targetOmset', 'targetOmsetSmi', 'roles'));
     }
 
     // --- USERS ---
@@ -106,4 +111,21 @@ class SettingController extends Controller
             return response()->json(['success' => true]);
         }
         return response()->json(['success' => false], 404);
-    }}
+    }
+
+    public function updateRoleMenu(Request $request)
+    {
+        $request->validate([
+            'role' => 'required|string',
+            'menu_id' => 'required|exists:menus,id',
+            'active' => 'required|boolean'
+        ]);
+
+        \App\Models\RoleMenu::updateOrCreate(
+            ['role' => $request->role, 'menu_id' => $request->menu_id],
+            ['can_access' => $request->active]
+        );
+
+        return response()->json(['success' => true]);
+    }
+}
