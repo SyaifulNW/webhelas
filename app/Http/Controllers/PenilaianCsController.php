@@ -19,7 +19,13 @@ class PenilaianCsController extends Controller
         $userName = trim(auth()->user()->name);
 
         if ($userName === 'Linda') {
-             $daftarCs = User::whereIn('name', ['Felmi', 'Eko Sulis', 'Arifa', 'Nisa'])->orderBy('name')->get();
+             $daftarCs = User::where(function($q) {
+                                $q->whereIn('name', ['Felmi', 'Eko Sulis', 'Arifa', 'Nisa'])
+                                  ->orWhereIn('role', ['cs-mbc', 'cs-smi']);
+                             })
+                             ->whereNotIn('name', ['Linda', 'Yasmin'])
+                             ->orderBy('name')
+                             ->get();
         } elseif ($userName === 'Agus Setyo') {
              $daftarCs = User::whereIn('name', ['Puput'])->orderBy('name')->get();
         } else {
@@ -38,8 +44,14 @@ class PenilaianCsController extends Controller
         $routeView = 'manager.penilaian-cs.index'; // Default view for manager
         
         if ($userName === 'Linda') {
-             // Linda hanya (Felmi, Eko Sulis, Arifa, Nisa)
-             $daftarCs = User::whereIn('name', ['Felmi', 'Eko Sulis', 'Arifa', 'Nisa'])->orderBy('name')->get();
+             // Linda melihat: (Felmi, Eko Sulis, Arifa, Nisa) + Semua CS-MBC + Semua CS-SMI
+             $daftarCs = User::where(function($q) {
+                                $q->whereIn('name', ['Felmi', 'Eko Sulis', 'Arifa', 'Nisa'])
+                                  ->orWhereIn('role', ['cs-mbc', 'cs-smi']);
+                             })
+                             ->whereNotIn('name', ['Linda', 'Yasmin'])
+                             ->orderBy('name')
+                             ->get();
              $routeView = 'admin.penilaian-cs.index'; // Tetap gunakan view admin jika diperlukan
         } elseif ($userName === 'Yasmin') {
             // Yasmin bisa melihat SEMUA user

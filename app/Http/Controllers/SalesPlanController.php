@@ -92,7 +92,7 @@ class SalesPlanController extends Controller
                   ->whereYear('updated_at', $tahunFilter);
         })
 
-        ->when(! $isAdmin && !in_array(auth()->user()->name, ['Agus Setyo', 'Fitra Jaya Saleh']), function ($query) use ($userId) {
+        ->when(! $isAdmin && !in_array(auth()->user()->name, ['Agus Setyo', 'Fitra Jaya Saleh', 'Linda']), function ($query) use ($userId) {
             $query->where('created_by', $userId);
         })
 
@@ -115,7 +115,7 @@ class SalesPlanController extends Controller
             $query->where('created_by', $csFilter);
         })
 
-        ->when(! $isAdmin && !in_array(auth()->user()->name, ['Agus Setyo', 'Fitra Jaya Saleh']), function ($query) use ($userId) {
+        ->when(! $isAdmin && !in_array(auth()->user()->name, ['Agus Setyo', 'Fitra Jaya Saleh', 'Linda']), function ($query) use ($userId) {
             $query->where('created_by', $userId);
         })
 

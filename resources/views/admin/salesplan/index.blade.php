@@ -172,7 +172,7 @@
 @endphp
 
 <!-- Filter hanya administrator -->
-@if(auth()->id() == 1 || auth()->id() == 13)
+@if(auth()->id() == 1 || auth()->id() == 13 || auth()->user()->name == 'Linda')
 <style>
     .filter-container {
         display: flex;
@@ -242,7 +242,7 @@
         }
     }
 </style>
-@if(auth()->id() == 1 || auth()->id() == 13)
+@if(auth()->id() == 1 || auth()->id() == 13 || auth()->user()->name == 'Linda')
 <form method="GET" action="{{ route('admin.salesplan.index') }}" class="filter-container">
 {{-- ✅ Filter CS --}}
 <div class="filter-group">
@@ -252,7 +252,8 @@
         @foreach($csList as $cs)
             @if(
                 (auth()->id() == 1 && !in_array($cs->name, ['Latifah', 'Tursia'])) ||
-                (auth()->id() == 13 && in_array($cs->name, ['Latifah', 'Tursia', 'Gunawan', 'Puput']))
+                (auth()->id() == 13 && in_array($cs->name, ['Latifah', 'Tursia', 'Gunawan', 'Puput'])) ||
+                (auth()->user()->name == 'Linda')
             )
                 <option value="{{ $cs->id }}" {{ request('created_by') == $cs->id ? 'selected' : '' }}>
                     {{ $cs->name }}
@@ -271,7 +272,8 @@
         @foreach($kelasList as $kelas)
             @if(
                 (auth()->id() == 1 && !in_array($kelas->nama_kelas, ['Start-Up Muda Indonesia', 'Sekolah Kaya'])) ||
-                (auth()->id() == 13 && $kelas->nama_kelas == 'Start-Up Muda Indonesia')
+                (auth()->id() == 13 && $kelas->nama_kelas == 'Start-Up Muda Indonesia') ||
+                (auth()->user()->name == 'Linda')
             )
                 <option value="{{ $kelas->nama_kelas }}" {{ request('kelas') == $kelas->nama_kelas ? 'selected' : '' }}>
                     {{ $kelas->nama_kelas }}
@@ -397,7 +399,7 @@
         if (strtolower($cs->name) === 'administrator' && empty(request('created_by'))) continue;
 
         // Skip jika user biasa mencoba melihat orang lain (logic pertahanan)
-        if (auth()->user()->role !== 'administrator' && auth()->user()->role !== 'manager' && $cs->id !== auth()->id()) continue;
+        if (auth()->user()->role !== 'administrator' && auth()->user()->role !== 'manager' && auth()->user()->name !== 'Linda' && $cs->id !== auth()->id()) continue;
 
         // Ambil items salesplan untuk CS ini (bisa kosong)
         $items = $salesplansByCS->get($cs->id, collect());

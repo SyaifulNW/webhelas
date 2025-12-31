@@ -348,6 +348,15 @@
             @if(!in_array($userRole, ['marketing', 'hrd', 'advertising']))
                 @if(\App\Models\Menu::isActive('sales_plan'))
                 {{-- Jika user adalah Fitra Jaya Saleh atau Agus Setyo --}}
+                @if($userName == 'Linda')
+                    <li class="nav-item {{ request()->routeIs('admin.salesplan.index') && !request('kelas') ? 'active' : '' }}">
+                        <a class="nav-link" href="{{ route('admin.salesplan.index') }}">
+                            <i class="fas fa-fw fa-users"></i>
+                            <span><strong>SALES PLAN ALL</strong></span>
+                        </a>
+                    </li>
+                @endif
+                
                 @if($userName == 'Fitra Jaya Saleh' || $userName == 'Agus Setyo')
                     <li class="nav-item {{ request()->routeIs('admin.salesplan.index') && request('kelas') == 'Start-Up Muslim Indonesia' ? 'active' : '' }}">
                         <a class="nav-link" href="{{ route('admin.salesplan.index', ['kelas' => 'Start-Up Muslim Indonesia']) }}">
