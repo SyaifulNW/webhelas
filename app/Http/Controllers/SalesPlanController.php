@@ -19,6 +19,13 @@ class SalesPlanController extends Controller
             $kelasFilter = 'Start-Up Muslim Indonesia';
         }
 
+        // Check for restricted view flag
+        // Force restricted view for Linda if she selects a specific class
+        $restrictedView = $request->input('restricted_view', false);
+        if (auth()->user()->name == 'Linda' && !empty($kelasFilter)) {
+            $restrictedView = true;
+        }
+
         // ======================================
         // 🔥 AUTO UPDATE STATUS
         // Jika status 'tertarik' sudah > 5 hari tidak berubah -> ubah jadi 'no'
@@ -63,7 +70,8 @@ class SalesPlanController extends Controller
             'statusFilter'    => $statusFilter,
             'bulanFilter'     => $bulanFilter,
             'salesplansByCS'  => collect(),  // kosongkan
-            'message'         => "Silakan pilih filter untuk menampilkan data."
+            'message'         => "Silakan pilih filter untuk menampilkan data.",
+            'isRestrictedView' => $restrictedView
         ]);
     }
 
@@ -71,6 +79,14 @@ class SalesPlanController extends Controller
     // ======================================
     // 🔥 QUERY UTAMA SALESPLAN
     // ======================================
+    
+    // Determine exempt users (who can see all data)
+    $exemptUsers = ['Agus Setyo', 'Fitra Jaya Saleh'];
+    // Linda is exempt only if NOT in restricted view
+    if (auth()->user()->name == 'Linda' && !$restrictedView) {
+        $exemptUsers[] = 'Linda';
+    }
+
     $salesplans = SalesPlan::with(['kelas', 'data'])
 
         ->when($kelasFilter, function ($query) use ($kelasFilter) {
@@ -92,7 +108,7 @@ class SalesPlanController extends Controller
                   ->whereYear('updated_at', $tahunFilter);
         })
 
-        ->when(! $isAdmin && !in_array(auth()->user()->name, ['Agus Setyo', 'Fitra Jaya Saleh', 'Linda']), function ($query) use ($userId) {
+        ->when(! $isAdmin && !in_array(auth()->user()->name, $exemptUsers), function ($query) use ($userId) {
             $query->where('created_by', $userId);
         })
 
@@ -115,7 +131,7 @@ class SalesPlanController extends Controller
             $query->where('created_by', $csFilter);
         })
 
-        ->when(! $isAdmin && !in_array(auth()->user()->name, ['Agus Setyo', 'Fitra Jaya Saleh', 'Linda']), function ($query) use ($userId) {
+        ->when(! $isAdmin && !in_array(auth()->user()->name, $exemptUsers), function ($query) use ($userId) {
             $query->where('created_by', $userId);
         })
 
@@ -151,7 +167,8 @@ class SalesPlanController extends Controller
         'dataMap'         => $dataMap,
         'targetOmsetGlobal' => $targetOmsetGlobal,
         'targetOmsetSmi'  => $targetOmsetSmi,
-        'message'         => null
+        'message'         => null,
+        'isRestrictedView' => $restrictedView
     ]);
 }
 
@@ -163,7 +180,7 @@ class SalesPlanController extends Controller
      */
     public function filter($kelas)
     {
-        $request = new Request(['kelas' => $kelas]);
+        $request = new Request(['kelas' => $kelas, 'restricted_view' => true]);
         return $this->index($request);
     }
 

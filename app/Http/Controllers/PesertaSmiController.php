@@ -38,7 +38,7 @@ class PesertaSmiController extends Controller
         $data = $query->get();
         // Get list of CS for dropdown (using roles if possible, or just all users for now)
         // Assuming CS have a role 'CS' or just get all users
-        $listCs = \App\Models\User::orderBy('name')->get();
+        $listCs = \App\Models\User::whereIn('role', ['cs-mbc', 'cs-smi'])->orderBy('name')->get();
 
         return view('admin.peserta-smi.index', compact('data', 'listCs'));
     }

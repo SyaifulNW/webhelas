@@ -172,7 +172,7 @@
 @endphp
 
 <!-- Filter hanya administrator -->
-@if(auth()->id() == 1 || auth()->id() == 13 || auth()->user()->name == 'Linda')
+@if(auth()->id() == 1 || auth()->id() == 13 || (auth()->user()->name == 'Linda' && empty($isRestrictedView)))
 <style>
     .filter-container {
         display: flex;
@@ -242,7 +242,7 @@
         }
     }
 </style>
-@if(auth()->id() == 1 || auth()->id() == 13 || auth()->user()->name == 'Linda')
+@if(auth()->id() == 1 || auth()->id() == 13 || (auth()->user()->name == 'Linda' && empty($isRestrictedView)))
 <form method="GET" action="{{ route('admin.salesplan.index') }}" class="filter-container">
 {{-- ✅ Filter CS --}}
 <div class="filter-group">
@@ -399,7 +399,7 @@
         if (strtolower($cs->name) === 'administrator' && empty(request('created_by'))) continue;
 
         // Skip jika user biasa mencoba melihat orang lain (logic pertahanan)
-        if (auth()->user()->role !== 'administrator' && auth()->user()->role !== 'manager' && auth()->user()->name !== 'Linda' && $cs->id !== auth()->id()) continue;
+        if (auth()->user()->role !== 'administrator' && auth()->user()->role !== 'manager' && (auth()->user()->name !== 'Linda' || !empty($isRestrictedView)) && $cs->id !== auth()->id()) continue;
 
         // Ambil items salesplan untuk CS ini (bisa kosong)
         $items = $salesplansByCS->get($cs->id, collect());
@@ -632,6 +632,7 @@
 
 
 
+        @if(empty($isRestrictedView))
         <form method="GET" class="d-flex gap-2">
             
             <input type="hidden" name="kelas" value="{{ request('kelas') }}">
@@ -691,6 +692,7 @@
 
             </select>
         </form>
+        @endif
 
     
 
