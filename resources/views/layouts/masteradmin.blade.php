@@ -435,6 +435,13 @@
                 @endif
             @elseif(auth()->user()->name === 'Agus Setyo')
                 {{-- Agus Setyo: Hanya bisa lihat Tursia dan Latifah --}}
+                <li class="nav-item">
+                     <a class="nav-link" href="{{ route('peserta-smi.index') }}">
+                        <i class="fas fa-fw fa-users"></i>
+                        <span><strong>DAFTAR PESERTA SMI</strong></span>
+                    </a>
+                </li>
+                
                 @if(\App\Models\Menu::isActive('database_cs'))
                 <li class="nav-item">
                     <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseKoordinasi"
@@ -521,7 +528,7 @@
                 </li>
                 @endif
 
-                @if(\App\Models\Menu::isActive('jadwal_kelas'))
+                @if(\App\Models\Menu::isActive('jadwal_kelas') && auth()->user()->name !== 'Agus Setyo')
                 {{-- Jadwal Kelas --}}
                 <li class="nav-item">
                     <a class="nav-link text-white" href="{{ route('admin.kelas.index') }}">
@@ -546,12 +553,23 @@
 
                 {{-- Penilaian Karyawan --}}
                 @if(\App\Models\Menu::isActive('penilaian_karyawan'))
-                <li class="nav-item">
-                    <a class="nav-link text-white" href="{{ route('manager.penilaian-cs.index') }}">
-                        <i class="fa-solid fa-list-user me-2"></i>
-                        <span>Penilaian Kinerja Tim</span>
-                    </a>
-                </li>
+                    @if(auth()->user()->name !== 'Agus Setyo')
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="{{ route('manager.penilaian-cs.index') }}">
+                            <i class="fa-solid fa-list-user me-2"></i>
+                            <span>Penilaian Kinerja Tim</span>
+                        </a>
+                    </li>
+                    @endif
+
+                    @if(auth()->user()->name === 'Agus Setyo')
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="{{ route('admin.penilaian-cs.index') }}">
+                            <i class="fa-solid fa-user me-2"></i>
+                            <span>Penilaian Kinerja Saya</span>
+                        </a>
+                    </li>
+                    @endif
                 @endif
             @endif
 

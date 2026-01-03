@@ -27,7 +27,7 @@ class PenilaianCsController extends Controller
                              ->orderBy('name')
                              ->get();
         } elseif ($userName === 'Agus Setyo') {
-             $daftarCs = User::whereIn('name', ['Puput'])->orderBy('name')->get();
+             $daftarCs = User::where('name', 'Agus Setyo')->get();
         } else {
              // Default behavior (Admin & Others) -> All Users
              $daftarCs = User::where('name', '!=', 'Fitra Jaya Saleh')->orderBy('name')->get();
@@ -58,8 +58,9 @@ class PenilaianCsController extends Controller
             $daftarCs = User::where('name', '!=', 'Fitra Jaya Saleh')->orderBy('name')->get();
             $routeView = 'admin.penilaian-cs.index';
         } elseif ($userName === 'Agus Setyo') {
-            // Agus Setyo hanya Puput
-            $daftarCs = User::whereIn('name', ['Puput'])->orderBy('name')->get();
+            // Agus Setyo view self
+            $daftarCs = User::where('name', 'Agus Setyo')->get();
+            $routeView = 'admin.penilaian-cs.index';
         } else {
             // Default Fallback (jika ada manager lain) -> Filter Tursia & Latifah
             $daftarCs = User::whereIn('name', ['Tursia', 'Latifah'])->orderBy('name')->get();
@@ -248,7 +249,7 @@ class PenilaianCsController extends Controller
              $historyNilai[$m] = $this->hitungTotalNilaiCS($userId, $m, $tahun);
         }
 
-        return view('admin.penilaian-cs.index', compact(
+        return view(($namaUser === 'Agus Setyo' ? 'admin.penilaian-cs.self' : 'admin.penilaian-cs.index'), compact(
             'bulan','tahun','userId','daftarCs', 'namaUser',
             'totalDatabase','totalClosing',
             'persenClosing','closingTarget','totalOmset','nilaiOmset','targetOmset',

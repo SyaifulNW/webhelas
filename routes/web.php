@@ -276,8 +276,11 @@ Route::middleware(['auth', 'role:administrator'])->group(function () {
     Route::get('/koordinasi/{csId}', [App\Http\Controllers\HomeController::class, 'showDashboardCs'])->name('koordinasi.cs');
 });
 
-    
-// Route::get('/user/{id}', [UserController::class, 'show'])->name('user.show');
+
+    // Managemen Peserta SMI
+    Route::resource('peserta-smi', App\Http\Controllers\PesertaSmiController::class);
+
+    // Route::get('/user/{id}', [UserController::class, 'show'])->name('user.show');
 
 // Manajemen kelas
 use App\Http\Controllers\KelasController;
