@@ -67,14 +67,20 @@
                                 <th rowspan="2" class="align-middle text-center" style="width: 15%">Tanggal Masuk - Selesai</th>
                                 <th rowspan="2" class="align-middle text-center" style="width: 10%">Biaya Pendaftaran</th>
                                 <th rowspan="2" class="align-middle text-center" style="width: 10%">CS Closing</th>
-                                <th colspan="6" class="text-center">SPP</th>
+                                <th colspan="12" class="text-center">SPP</th>
                                 <th rowspan="2" class="align-middle text-center" style="width: 5%">Aksi</th>
                             </tr>
                             <tr>
-                                @for($i=1; $i<=6; $i++)
-                                <th class="text-center">
-                                    <a href="{{ route('peserta-smi.index', ['sort_spp' => $i, 'sort_dir' => request('sort_spp') == $i && request('sort_dir') == 'desc' ? 'asc' : 'desc']) }}" class="text-dark text-decoration-none">
-                                        {{ $i }} 
+                                @php
+                                    $bulan = [
+                                        1 => 'Jan', 2 => 'Feb', 3 => 'Mar', 4 => 'Apr', 5 => 'Mei', 6 => 'Jun',
+                                        7 => 'Jul', 8 => 'Ags', 9 => 'Sep', 10 => 'Okt', 11 => 'Nov', 12 => 'Des'
+                                    ];
+                                @endphp
+                                @for($i=1; $i<=12; $i++)
+                                <th class="text-center bg-light" style="min-width: 40px; width: 40px;">
+                                    <a href="{{ route('peserta-smi.index', ['sort_spp' => $i, 'sort_dir' => request('sort_spp') == $i && request('sort_dir') == 'desc' ? 'asc' : 'desc']) }}" class="text-dark text-decoration-none small font-weight-bold">
+                                        {{ $bulan[$i] }}
                                         {!! request('sort_spp') == $i ? (request('sort_dir') == 'desc' ? '&#9660;' : '&#9650;') : '' !!}
                                     </a>
                                 </th>
@@ -110,7 +116,7 @@
                                         @endforeach
                                     </select>
                                 </td>
-                                @for($i = 1; $i <= 6; $i++)
+                                @for($i = 1; $i <= 12; $i++)
                                 <td class="text-center align-middle p-1">
                                     <input form="formTambah" type="checkbox" name="spp_{{ $i }}" value="1" style="transform: scale(1.5);">
                                 </td>
@@ -164,26 +170,28 @@
                                     </td>
                                     
                                     {{-- SPP Checkboxes --}}
-                                    @for($i = 1; $i <= 6; $i++)
-                                    <td class="text-center align-middle p-1">
-                                        <input type="checkbox" name="spp_{{ $i }}" value="1" {{ $item->{"spp_$i"} ? 'checked' : '' }} style="transform: scale(1.5);">
+                                    @for($i = 1; $i <= 12; $i++)
+                                    <td class="text-center align-middle p-0" style="vertical-align: middle;">
+                                        <input type="checkbox" name="spp_{{ $i }}" value="1" {{ $item->{"spp_$i"} ? 'checked' : '' }} style="transform: scale(1.2); cursor: pointer;">
                                     </td>
                                     @endfor
                                     
                                     {{-- Action Buttons --}}
                                     <td class="text-center align-middle">
-                                        <button type="submit" class="btn btn-primary btn-sm p-1 mb-1" title="Update Row">
-                                            <i class="fas fa-save"></i>
-                                        </button>
-                                </form> 
-                                        {{-- Delete Form (Separate) --}}
-                                        <form action="{{ route('peserta-smi.destroy', $item->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Hapus data ini?')">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" class="btn btn-danger btn-sm p-1" title="Hapus">
-                                                <i class="fas fa-trash"></i>
+                                        <div class="d-flex justify-content-center gap-1">
+                                            <button type="submit" class="btn btn-primary btn-sm p-1" title="Update Row" style="line-height: 1;">
+                                                <i class="fas fa-save fa-xs"></i>
                                             </button>
-                                        </form>
+                                    </form> 
+                                            {{-- Delete Form (Separate) --}}
+                                            <form action="{{ route('peserta-smi.destroy', $item->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Hapus data ini?')">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="btn btn-danger btn-sm p-1" title="Hapus" style="line-height: 1;">
+                                                    <i class="fas fa-trash fa-xs"></i>
+                                                </button>
+                                            </form>
+                                        </div>
                                     </td>
                             </tr>
                             @endforeach

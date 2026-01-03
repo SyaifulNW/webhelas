@@ -20,8 +20,8 @@ class PesertaSmiController extends Controller
             $month = $request->filter_spp_month;
             $status = $request->filter_spp_status; // 1 = lunas, 0 = belum
             
-            // Validate month 1-6
-            if (in_array($month, range(1, 6))) {
+            // Validate month 1-12
+            if (in_array($month, range(1, 12))) {
                 $query->where('spp_' . $month, $status);
             }
         }
@@ -91,7 +91,13 @@ class PesertaSmiController extends Controller
 
         // Handle checkboxes not present in request (unchecked)
         $data = $request->all();
-        foreach(['spp_1', 'spp_2', 'spp_3', 'spp_4', 'spp_5', 'spp_6'] as $spp) {
+        // Handle checkboxes for SPP 1-12
+        $sppFields = [];
+        for($i=1; $i<=12; $i++) {
+            $sppFields[] = 'spp_' . $i;
+        }
+        
+        foreach($sppFields as $spp) {
             $data[$spp] = $request->has($spp) ? 1 : 0;
         }
         

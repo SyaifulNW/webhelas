@@ -172,7 +172,7 @@ $now = Carbon::now();
 // Calculate Stats based on the resulting $data collection
 // This applies to both modes (Filtered Query or Controller Data)
 $databaseBaru = $data->filter(function($item) use ($now) {
-    return $item->created_at->year == $now->year && $item->created_at->month == $now->month;
+    return $item->created_at && $item->created_at->year == $now->year && $item->created_at->month == $now->month;
 })->count();
 
 $totalDatabase = $data->count();
@@ -898,8 +898,19 @@ $(document).ready(function() {
         provinces.sort((a, b) => a.name.localeCompare(b.name));
         let $filterProv = $('#filterProvinsi');
         
+        // Prevent duplicates (in case other scripts populated it)
+        $filterProv.find('option:not(:first)').remove();
+
         provinces.forEach(function(prov) {
             $filterProv.append(`<option value="${prov.name}" data-id="${prov.id}">${prov.name}</option>`);
+        });
+
+        // Initialize Select2 with search
+        $filterProv.select2({
+            theme: 'bootstrap4',
+            width: '100%',
+            placeholder: "-- Semua Provinsi --",
+            allowClear: true
         });
     });
 
@@ -1245,3 +1256,4 @@ $(document).ready(function() {
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.5/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.5/js/dataTables.bootstrap5.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
