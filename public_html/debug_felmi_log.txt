@@ -1,0 +1,36 @@
+Time: 2026-04-01 15:48:53
+User: Felmi
+Raw Activities Count: 10
+Grouped Keys: [8,9,10]
+Intake Recap Count: 3
+Intake Recap Data: Array
+(
+    [0] => Array
+        (
+            [nama] => DAILY INTAKE
+            [target] => 100%
+            [bobot] => 33.33
+            [persentase] => 0
+            [nilai] => 0
+        )
+
+    [1] => Array
+        (
+            [nama] => WEEKLY INTAKE
+            [target] => 100%
+            [bobot] => 33.33
+            [persentase] => 0
+            [nilai] => 0
+        )
+
+    [2] => Array
+        (
+            [nama] => MONTHLY INTAKE
+            [target] => 100%
+            [bobot] => 33.34
+            [persentase] => 0
+            [nilai] => 0
+        )
+
+)
+
