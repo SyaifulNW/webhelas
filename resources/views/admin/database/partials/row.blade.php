@@ -97,7 +97,7 @@
                     data-fu10-telp="{{ $item->fu10_telp }}"
                     data-fu10-at="{{ $item->fu10_at ? $item->fu10_at->format('d/m/Y H:i') : '' }}"
                     data-fu10-hasil="{{ $item->fu10_hasil }}" data-fu10-tindak-lanjut="{{ $item->fu10_tindak_lanjut }}">
-                    Interaksi
+                    Follow Up
                 </button>
             </div>
         </div>
@@ -148,13 +148,13 @@
     <td class="text-wrap-normal">
         <div class="d-flex flex-column gap-2" style="min-width: 200px;">
             <div class="situasi-block">
-                <div class="read-more-container p-1 px-2 shadow-sm"
+                <div class="read-more-container p-2 shadow-sm"
                     style="border: 1px solid #dee2e6; border-radius: 8px; background: #fff; min-height: 40px;">
                     <div contenteditable="{{ $canEdit ? 'true' : 'false' }}" class="{{ $canEdit ? 'editable' : '' }}"
-                        data-field="situasi_bisnis" style="outline: none;">{{ $item->situasi_bisnis }}</div>
+                        data-field="situasi_bisnis" style="outline: none; white-space: pre-wrap; font-size: 0.75rem; line-height: 1.4; color: #444;">{{ $item->situasi_bisnis }}</div>
                 </div>
                 @if(strlen($item->situasi_bisnis ?? '') > 100)
-                    <a href="javascript:void(0)" class="btn-read-more small mt-1 d-inline-block">{{ $userRole === 'chapter' ? 'Baca Harapan' : 'Baca Situasi' }}</a>
+                    <a href="javascript:void(0)" class="btn-read-more small mt-1 d-inline-block">Baca Situasi</a>
                 @endif
             </div>
             

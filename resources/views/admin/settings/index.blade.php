@@ -53,6 +53,8 @@
                                         <th>Nama</th>
                                         <th>Email</th>
                                         <th>Role</th>
+                                        <th>Status</th>
+                                        <th class="text-center">Transfer Database</th>
                                         <th class="text-right">Aksi</th>
                                     </tr>
                                 </thead>
@@ -64,6 +66,21 @@
                                             <td>{{ $u->email }}</td>
                                             <td>
                                                 <span class="badge badge-info shadow-sm">{{ ucfirst($u->role) }}</span>
+                                            </td>
+                                            <td>
+                                                <div class="custom-control custom-switch">
+                                                    <input type="checkbox" class="custom-control-input user-toggle" id="userSwitch{{ $u->id }}"
+                                                        data-id="{{ $u->id }}" {{ $u->is_active ? 'checked' : '' }}>
+                                                    <label class="custom-control-label" for="userSwitch{{ $u->id }}">
+                                                        {{ $u->is_active ? 'Aktif' : 'Non-Aktif' }}
+                                                    </label>
+                                                </div>
+                                            </td>
+                                            <td class="text-center">
+                                                <button class="btn btn-sm btn-indigo shadow-sm btn-transfer-db" 
+                                                    data-id="{{ $u->id }}" data-name="{{ $u->name }}">
+                                                    <i class="fas fa-exchange-alt mr-1"></i> Transfer
+                                                </button>
                                             </td>
                                             <td class="text-right">
                                                 <button class="btn btn-sm btn-warning shadow-sm" data-toggle="modal"
@@ -104,6 +121,8 @@
                                         <th>Nama</th>
                                         <th>Email</th>
                                         <th>Role / Lokasi</th>
+                                        <th>Status</th>
+                                        <th class="text-center">Transfer Database</th>
                                         <th class="text-right">Aksi</th>
                                     </tr>
                                 </thead>
@@ -142,6 +161,25 @@
                                                     <i class="fas fa-users-cog mr-1"></i>{{ $staff->count() }} Agen
                                                 </span>
                                             </td>
+                                            <td>
+                                                @if($leader)
+                                                    <div class="custom-control custom-switch">
+                                                        <input type="checkbox" class="custom-control-input user-toggle" id="userSwitch{{ $leader->id }}"
+                                                            data-id="{{ $leader->id }}" {{ $leader->is_active ? 'checked' : '' }}>
+                                                        <label class="custom-control-label" for="userSwitch{{ $leader->id }}">
+                                                            {{ $leader->is_active ? 'Aktif' : 'Non-Aktif' }}
+                                                        </label>
+                                                    </div>
+                                                @endif
+                                            </td>
+                                            <td class="text-center">
+                                                @if($leader)
+                                                    <button class="btn btn-sm btn-indigo shadow-sm btn-transfer-db" 
+                                                        data-id="{{ $leader->id }}" data-name="{{ $leader->name }}">
+                                                        <i class="fas fa-exchange-alt mr-1"></i> Transfer
+                                                    </button>
+                                                @endif
+                                            </td>
                                             <td class="text-right">
                                                 @if($leader)
                                                     <button class="btn btn-sm btn-warning shadow-sm" data-toggle="modal"
@@ -162,7 +200,7 @@
                                         {{-- Staff / Reseller Rows (Collapsible) --}}
                                         @if($staff->count() > 0)
                                             <tr id="members-{{ $chapterId }}" class="collapse">
-                                                <td colspan="5" class="p-0">
+                                                <td colspan="7" class="p-0">
                                                     <table class="table table-sm mb-0 bg-white">
                                                         <tbody style="border-left: 5px solid #4e73df;">
                                                             @foreach($staff as $u)
@@ -175,6 +213,21 @@
                                                                     <td style="width: 25%;">{{ $u->email }}</td>
                                                                     <td>
                                                                         <span class="badge badge-info shadow-sm">{{ ucfirst($u->role) }}</span>
+                                                                    </td>
+                                                                    <td>
+                                                                        <div class="custom-control custom-switch">
+                                                                            <input type="checkbox" class="custom-control-input user-toggle" id="userSwitch{{ $u->id }}"
+                                                                                data-id="{{ $u->id }}" {{ $u->is_active ? 'checked' : '' }}>
+                                                                            <label class="custom-control-label" for="userSwitch{{ $u->id }}">
+                                                                                {{ $u->is_active ? 'Aktif' : 'Non-Aktif' }}
+                                                                            </label>
+                                                                        </div>
+                                                                    </td>
+                                                                    <td class="text-center">
+                                                                        <button class="btn btn-xs btn-outline-indigo btn-transfer-db" 
+                                                                            data-id="{{ $u->id }}" data-name="{{ $u->name }}">
+                                                                            <i class="fas fa-exchange-alt mr-1"></i> Transfer
+                                                                        </button>
                                                                     </td>
                                                                     <td class="text-right">
                                                                         <button class="btn btn-sm btn-outline-warning" data-toggle="modal"
@@ -371,6 +424,50 @@
         </div>
     </div>
 
+    {{-- Modal Transfer Database --}}
+    <div class="modal fade" id="transferDatabaseModal" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title"><i class="fas fa-exchange-alt mr-2"></i> Transfer Database</h5>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <form id="transferDatabaseForm">
+                    @csrf
+                    <div class="modal-body">
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle mr-2"></i> <strong>Peringatan!</strong> Tindakan ini akan memindahkan semua data Calon Peserta dan Peserta M1T dari user sumber ke user tujuan.
+                        </div>
+                        
+                        <input type="hidden" name="from_id" id="transfer_from_id">
+                        <div class="form-group">
+                            <label class="font-weight-bold">User Sumber:</label>
+                            <p id="transfer_from_name" class="form-control-plaintext text-primary font-weight-bold ml-2"></p>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="font-weight-bold">Transfer ke User Tujuan:</label>
+                            <select name="to_id" id="transfer_to_id" class="form-control" required>
+                                <option value="">-- Pilih User Tujuan --</option>
+                                @foreach($usersPusat->merge($usersCabang)->sortBy('name') as $user)
+                                    <option value="{{ $user->id }}">{{ $user->name }} ({{ ucfirst($user->role) }})</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Batal</button>
+                        <button type="submit" class="btn btn-primary" id="btnSubmitTransfer">
+                            <i class="fas fa-check-circle mr-1"></i> Mulai Transfer
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     {{-- SweetAlert2 CDN --}}
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
@@ -399,6 +496,42 @@
                         }
                     })
                     .catch(error => console.error('Error:', error));
+            });
+        });
+
+        // AJAX Toggle Status User
+        document.querySelectorAll('.user-toggle').forEach(item => {
+            item.addEventListener('change', event => {
+                const id = event.target.dataset.id;
+                const active = event.target.checked ? 1 : 0;
+                const label = event.target.nextElementSibling;
+
+                label.textContent = active ? 'Aktif' : 'Non-Aktif';
+
+                fetch('{{ route('admin.settings.users.toggle') }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    },
+                    body: JSON.stringify({ id: id, active: active })
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (!data.success) {
+                            Swal.fire('Gagal!', 'Gagal mengubah status user', 'error');
+                            // Revert toggle if failed
+                            event.target.checked = !active;
+                            label.textContent = !active ? 'Aktif' : 'Non-Aktif';
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        Swal.fire('Error!', 'Terjadi kesalahan sistem', 'error');
+                        // Revert toggle if failed
+                        event.target.checked = !active;
+                        label.textContent = !active ? 'Aktif' : 'Non-Aktif';
+                    });
             });
         });
 
@@ -493,6 +626,70 @@
         $('.clickable-row').on('click', function() {
             $(this).find('.toggle-icon').toggleClass('fa-plus fa-minus');
             $(this).toggleClass('bg-white bg-light');
+        });
+
+        // Transfer Database Logic
+        $('.btn-transfer-db').on('click', function(e) {
+            e.stopPropagation(); 
+            const id = $(this).data('id');
+            const name = $(this).data('name');
+            
+            $('#transfer_from_id').val(id);
+            $('#transfer_from_name').text(name);
+            
+            $('#transfer_to_id option').prop('disabled', false);
+            $('#transfer_to_id option[value="' + id + '"]').prop('disabled', true);
+            
+            $('#transferDatabaseModal').modal('show');
+        });
+
+        $('#transferDatabaseForm').on('submit', function(e) {
+            e.preventDefault();
+            
+            const toId = $('#transfer_to_id').val();
+            const toName = $('#transfer_to_id option:selected').text();
+            
+            if (!toId) {
+                Swal.fire('Error', 'Silakan pilih user tujuan.', 'error');
+                return;
+            }
+
+            Swal.fire({
+                title: 'Konfirmasi Transfer',
+                text: "Anda yakin ingin memindahkan SEMUA database ke " + toName + "?",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#4e73df',
+                cancelButtonColor: '#858796',
+                confirmButtonText: 'Ya, Transfer Sekarang!',
+                cancelButtonText: 'Batal'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    Swal.fire({
+                        title: 'Memproses...',
+                        text: 'Sedang memindahkan database, mohon tunggu.',
+                        allowOutsideClick: false,
+                        didOpen: () => {
+                            Swal.showLoading();
+                        }
+                    });
+
+                    $.ajax({
+                        url: "{{ route('admin.settings.users.transfer') }}",
+                        method: 'POST',
+                        data: $(this).serialize(),
+                        success: function(response) {
+                            Swal.fire('Berhasil!', response.message, 'success').then(() => {
+                                location.reload();
+                            });
+                        },
+                        error: function(xhr) {
+                            const msg = xhr.responseJSON ? xhr.responseJSON.message : 'Terjadi kesalahan sistem.';
+                            Swal.fire('Gagal!', msg, 'error');
+                        }
+                    });
+                }
+            });
         });
     </script>
 @endsection

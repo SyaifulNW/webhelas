@@ -81,7 +81,7 @@ class SalesPlanController extends Controller
 
         // Filter CS List for Admin Dropdown (Specific Request)
         if (in_array(auth()->id(), [1, 2])) {
-            $csList = User::whereIn('name', ['Yasmin', 'Linda', 'Arifa', 'Diah Putri', 'Puput', 'Gunawan', 'Latifah'])
+            $csList = User::whereIn('name', ['Yasmin', 'Linda', 'Arifa', 'Diah Putri', 'Shafa Zahra', 'Gunawan', 'Latifah'])
                 ->orderBy('name', 'asc')
                 ->get();
         } else {
@@ -115,7 +115,7 @@ class SalesPlanController extends Controller
             'cold' => 0
         ]; // For the cards in the view
 
-        if ($isAdmin && $noFilter) {
+        if (($isAdmin || $isCsMbc) && $noFilter) {
             return view('admin.salesplan.index', [
                 'data' => $salesplans,
                 'salesplans' => $salesplans,
@@ -148,10 +148,11 @@ class SalesPlanController extends Controller
 
         // Determine exempt users (who can see all data)
         $exemptUsers = ['Agus Setyo', 'Fitra Jaya Saleh'];
-        
-        // Linda is exempt for MBC (to see DATA PESERTA ALL), but NOT for M1T (type=smi)
+
+        // Linda & Shafa Zahra are exempt for MBC (to see DATA PESERTA ALL), but NOT for M1T (type=smi)
         if ($request->input('type') != 'smi' && request('kelas') != 'Start-Up Muslim Indonesia') {
             $exemptUsers[] = 'Linda';
+            $exemptUsers[] = 'Shafa Zahra';
         }
 
         // Clone query logic untuk statistik agar menyertakan semua data (tidak terpotong pagination)
@@ -184,7 +185,7 @@ class SalesPlanController extends Controller
             ->when(!$isAdmin && auth()->check() && !in_array(optional(auth()->user())->name, $exemptUsers), function ($query) use ($userId) {
                 if (auth()->user()->role === 'chapter') {
                     $chapter = auth()->user()->chapter;
-                    $excludeNames = ['Yasmin', 'Linda', 'Puput', 'Arifa', 'Diah Putri', 'Shafa', 'Muthia', 'Latifah', 'Gunawan'];
+                    $excludeNames = ['Yasmin', 'Linda', 'Shafa Zahra', 'Arifa', 'Diah Putri', 'Shafa', 'Muthia', 'Latifah', 'Gunawan'];
                     $query->where(function($q) use ($userId, $chapter, $excludeNames) {
                         $q->where('created_by', $userId)
                           ->orWhereHas('data', function ($sub) use ($chapter, $excludeNames) {
@@ -248,7 +249,7 @@ class SalesPlanController extends Controller
             ->when(!$isAdmin && auth()->check() && !in_array(optional(auth()->user())->name, $exemptUsers), function ($query) use ($userId) {
                 if (auth()->user()->role === 'chapter') {
                     $chapter = auth()->user()->chapter;
-                    $excludeNames = ['Yasmin', 'Linda', 'Puput', 'Arifa', 'Diah Putri', 'Shafa', 'Muthia', 'Latifah', 'Gunawan'];
+                    $excludeNames = ['Yasmin', 'Linda', 'Shafa Zahra', 'Arifa', 'Diah Putri', 'Shafa', 'Muthia', 'Latifah', 'Gunawan'];
                     $query->where(function($q) use ($userId, $chapter, $excludeNames) {
                         $q->where('created_by', $userId)
                           ->orWhereHas('data', function ($sub) use ($chapter, $excludeNames) {
@@ -308,7 +309,7 @@ class SalesPlanController extends Controller
             ->when(!$isAdmin && auth()->check() && !in_array(optional(auth()->user())->name, $exemptUsers), function ($query) use ($userId) {
                 if (auth()->user()->role === 'chapter') {
                     $chapter = auth()->user()->chapter;
-                    $excludeNames = ['Yasmin', 'Linda', 'Puput', 'Arifa', 'Diah Putri', 'Shafa', 'Muthia', 'Latifah', 'Gunawan'];
+                    $excludeNames = ['Yasmin', 'Linda', 'Shafa Zahra', 'Arifa', 'Diah Putri', 'Shafa', 'Muthia', 'Latifah', 'Gunawan'];
                     $query->where(function($q) use ($userId, $chapter, $excludeNames) {
                         $q->where('created_by', $userId)
                           ->orWhereHas('data', function ($sub) use ($chapter, $excludeNames) {
@@ -735,7 +736,7 @@ class SalesPlanController extends Controller
             ->when(!$isAdmin && auth()->check() && !in_array(optional(auth()->user())->name, $exemptUsers), function ($query) use ($userId) {
                 if (auth()->user()->role === 'chapter') {
                     $chapter = auth()->user()->chapter;
-                    $excludeNames = ['Yasmin', 'Linda', 'Puput', 'Arifa', 'Diah Putri', 'Shafa', 'Muthia', 'Latifah', 'Gunawan'];
+                    $excludeNames = ['Yasmin', 'Linda', 'Shafa Zahra', 'Arifa', 'Diah Putri', 'Shafa', 'Muthia', 'Latifah', 'Gunawan'];
                     $query->whereHas('data', function ($sub) use ($chapter, $excludeNames) {
                         $sub->where('kota_nama', 'like', "%$chapter%")
                             ->whereNotIn('created_by', $excludeNames)

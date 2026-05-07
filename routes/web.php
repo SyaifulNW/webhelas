@@ -254,6 +254,8 @@ Route::middleware(['auth'])->group(function () {
             Route::delete('/settings/users/{id}', [SettingController::class, 'destroyUser'])->name('settings.users.destroy');
             Route::post('/settings/target', [SettingController::class, 'updateTarget'])->name('settings.target.update');
             Route::post('/settings/menus/toggle', [SettingController::class, 'toggleMenu'])->name('settings.menus.toggle');
+            Route::post('/settings/users/toggle', [SettingController::class, 'toggleUserStatus'])->name('settings.users.toggle');
+            Route::post('/settings/users/transfer', [SettingController::class, 'transferUserDatabase'])->name('settings.users.transfer');
             Route::post('/settings/role-menus/update', [SettingController::class, 'updateRoleMenu'])->name('settings.role-menus.update');
         });
 

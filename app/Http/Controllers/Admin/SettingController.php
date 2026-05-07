@@ -25,7 +25,7 @@ class SettingController extends Controller
         }
 
         // Auto-fix: Add missing columns to users table on server
-        $userColumns = ['chapter', 'id_no', 'wa', 'username'];
+        $userColumns = ['chapter', 'id_no', 'wa', 'username', 'is_active'];
         foreach ($userColumns as $col) {
             if (!\Illuminate\Support\Facades\Schema::hasColumn('users', $col)) {
                 try {
@@ -181,5 +181,68 @@ class SettingController extends Controller
         );
 
         return response()->json(['success' => true]);
+    }
+
+    public function toggleUserStatus(Request $request)
+    {
+        $user = \App\Models\User::where('id', $request->id)->first();
+        if ($user) {
+            $user->is_active = $request->active;
+            $user->save();
+            return response()->json(['success' => true]);
+        }
+        return response()->json(['success' => false], 404);
+    }
+
+    public function transferUserDatabase(Request $request)
+    {
+        $request->validate([
+            'from_id' => 'required|exists:users,id',
+            'to_id' => 'required|exists:users,id',
+        ]);
+
+        if ($request->from_id == $request->to_id) {
+            return response()->json(['success' => false, 'message' => 'User sumber dan tujuan tidak boleh sama.'], 422);
+        }
+
+        $fromUser = \App\Models\User::find($request->from_id);
+        $toUser = \App\Models\User::find($request->to_id);
+
+        \DB::beginTransaction();
+        try {
+            // 1. Update Data Leads
+            $countData = \DB::table('data')
+                ->where('created_by', $fromUser->id)
+                ->update(['created_by' => $toUser->id]);
+
+            // 2. Update SalesPlans
+            $countSales = \DB::table('salesplans')
+                ->where('created_by', $fromUser->id)
+                ->update(['created_by' => $toUser->id]);
+
+            // 3. Update Peserta SMI
+            \DB::table('peserta_smis')
+                ->where('created_by', $fromUser->id)
+                ->update(['created_by' => $toUser->id]);
+
+            \DB::table('peserta_smis')
+                ->where('closing_cs_id', $fromUser->id)
+                ->update(['closing_cs_id' => $toUser->id]);
+
+            $countSmi = \DB::table('peserta_smis')
+                ->where('cs_name', $fromUser->name)
+                ->update(['cs_name' => $toUser->name]);
+
+            \DB::commit();
+
+            return response()->json([
+                'success' => true, 
+                'message' => "Berhasil memindahkan database dari {$fromUser->name} ke {$toUser->name}. " .
+                             "({$countData} Leads, {$countSales} Prospek, {$countSmi} Peserta M1T diperbarui)"
+            ]);
+        } catch (\Exception $e) {
+            \DB::rollBack();
+            return response()->json(['success' => false, 'message' => 'Terjadi kesalahan: ' . $e->getMessage()], 500);
+        }
     }
 }

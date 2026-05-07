@@ -91,7 +91,16 @@
                                         <option value="asc" {{ $sortBy == 'tanggal_pengajuan' && $sortOrder == 'asc' ? 'selected' : '' }}>Terlama</option>
                                     </select>
                                 </th>
-                                <th width="15%" class="align-middle">Nama Pengajuan</th>
+                                <th width="15%" class="align-middle text-center">
+                                    <div class="mb-1">Nama Pengajuan</div>
+                                    <select name="type_client" class="form-control form-control-sm m-auto table-filter"
+                                        style="width: 140px; font-size: 0.75rem; height: 28px;" data-filter="type"
+                                        onchange="applyTableFilters()">
+                                        <option value="all">ALL</option>
+                                        <option value="main">Pengajuan Bulan {{ $month != 'all' ? \Carbon\Carbon::create()->month($month)->translatedFormat('F') : 'Ini' }} Saja</option>
+                                        <option value="overdue">Pengajuan yang menunggak</option>
+                                    </select>
+                                </th>
                                 <th width="10%" class="text-center align-middle">
                                     <div class="mb-1">Biaya Pengajuan</div>
                                     <select name="sort_cost_client" class="form-control form-control-sm m-auto table-sort"
@@ -122,15 +131,13 @@
                                 <th width="12%" class="text-center align-middle">
                                     <div class="mb-1">Status</div>
                                     <select name="status_client" class="form-control form-control-sm m-auto table-filter"
-                                        style="width: 90px; font-size: 0.75rem; height: 28px;" data-filter="status"
+                                        style="width: 100px; font-size: 0.75rem; height: 28px;" data-filter="status"
                                         onchange="applyTableFilters()">
                                         <option value="">Semua</option>
-                                        <option value="pending" {{ $selectedStatus == 'pending' ? 'selected' : '' }}>Pending
-                                        </option>
-                                        <option value="approved" {{ $selectedStatus == 'approved' ? 'selected' : '' }}>
-                                            Disetujui</option>
-                                        <option value="rejected" {{ $selectedStatus == 'rejected' ? 'selected' : '' }}>Ditolak
-                                        </option>
+                                        <option value="pending" {{ $selectedStatus == 'pending' ? 'selected' : '' }}>Belum Terbayar</option>
+                                        <option value="belum_lunas" {{ $selectedStatus == 'belum_lunas' ? 'selected' : '' }}>Belum Lunas</option>
+                                        <option value="approved" {{ $selectedStatus == 'approved' ? 'selected' : '' }}>Disetujui</option>
+                                        <option value="rejected" {{ $selectedStatus == 'rejected' ? 'selected' : '' }}>Ditolak</option>
                                     </select>
                                 </th>
                                 <th width="10%">Keterangan</th>
@@ -272,14 +279,14 @@
                                         <td class="align-middle text-center small font-weight-bold">{{ $req->diajukan_oleh }}</td>
                                     @endif
                                     <td class="align-middle text-right font-weight-bold text-success">
-                                        @if($req->status === 'approved')
+                                        @if($req->status === 'approved' || $req->status === 'belum_lunas')
                                             Rp {{ number_format($req->biaya_disetujui, 0, ',', '.') }}
                                         @else
                                             -
                                         @endif
                                     </td>
                                     <td class="align-middle text-right font-weight-bold text-danger">
-                                        @if($req->status === 'approved')
+                                        @if($req->status === 'approved' || $req->status === 'belum_lunas')
                                             Rp {{ number_format($req->jumlah_biaya - $req->biaya_disetujui, 0, ',', '.') }}
                                         @else
                                             -
@@ -290,7 +297,7 @@
                                             @if($canManage)
                                                 <div class="d-flex flex-column gap-2 px-2">
                                                     <button type="button" class="btn btn-success btn-sm btn-action mb-1 shadow-sm w-100"
-                                                        onclick="openApprovalModal({{ $req->id }}, 'approved', '{{ $req->nama_pengajuan }}', {{ $req->jumlah_biaya }})">
+                                                        onclick="openApprovalModal({{ $req->id }}, 'approved', '{{ $req->nama_pengajuan }}', {{ $req->jumlah_biaya }}, {{ $req->biaya_disetujui ?? 0 }})">
                                                         <i class="fas fa-check mr-1"></i> Setujui
                                                     </button>
                                                     <button type="button" class="btn btn-danger btn-sm btn-action shadow-sm w-100"
@@ -304,9 +311,22 @@
                                                 </span>
                                             @endif
                                         @elseif($req->status === 'approved')
-                                            <span class="badge badge-primary py-2 px-3 badge-pill shadow-sm">
+                                            <span class="badge badge-success py-2 px-3 badge-pill shadow-sm">
                                                 <i class="fas fa-check-circle mr-1"></i> Disetujui
                                             </span>
+                                        @elseif($req->status === 'belum_lunas')
+                                            <div class="d-flex flex-column align-items-center">
+                                                <span class="badge badge-info py-2 px-3 badge-pill shadow-sm mb-1">
+                                                    <i class="fas fa-hand-holding-usd mr-1"></i> Belum Lunas
+                                                </span>
+                                                @if($canManage)
+                                                    <button type="button" class="btn btn-success btn-xs px-2 shadow-sm font-weight-bold" 
+                                                        onclick="openApprovalModal({{ $req->id }}, 'approved', '{{ $req->nama_pengajuan }}', {{ $req->jumlah_biaya }}, {{ $req->biaya_disetujui }})"
+                                                        style="border-radius: 6px; font-size: 0.7rem;">
+                                                        <i class="fas fa-money-bill-wave mr-1"></i> Bayar Lagi
+                                                    </button>
+                                                @endif
+                                            </div>
                                         @elseif($req->status === 'rejected')
                                             <div class="d-flex flex-column align-items-center">
                                                 <span class="badge badge-danger py-2 px-3 badge-pill shadow-sm mb-2">
@@ -394,7 +414,9 @@
                                             $iconColor = $isCritical ? 'text-danger' : 'text-orange';
 
                                         @endphp
-                                        <tr class="overdue-row overdue-for-{{ $req->id }} bg-light" style="display: none; {{ $borderStyle }}">
+                                        <tr class="overdue-row overdue-for-{{ $req->id }} bg-light" 
+                                            data-status="{{ $overdue->status }}"
+                                            style="display: none; {{ $borderStyle }}">
 
                                             <td class="text-center align-middle"><i class="fas fa-level-up-alt fa-rotate-90 {{ $iconColor }}"></i></td>
                                             <td class="text-center align-middle small text-muted font-weight-bold">
@@ -412,16 +434,36 @@
                                             @if($canManage || $isAdminMonitor)
                                                 <td class="text-center align-middle small text-muted">{{ $overdue->diajukan_oleh }}</td>
                                             @endif
-                                            <td class="text-right align-middle text-muted" style="font-size: 0.85rem;">
+                                            <td class="text-right align-middle text-muted font-weight-bold" style="font-size: 0.85rem;">
                                                 Rp {{ number_format($overdue->biaya_disetujui, 0, ',', '.') }}
                                             </td>
-                                            <td class="text-right align-middle text-muted" style="font-size: 0.85rem;">
+                                            <td class="text-right align-middle text-muted font-weight-bold" style="font-size: 0.85rem;">
                                                 Rp {{ number_format($overdue->jumlah_biaya - $overdue->biaya_disetujui, 0, ',', '.') }}
                                             </td>
                                             <td class="text-center align-middle">
-                                                <span class="badge px-2 py-1 shadow-sm" style="font-size: 0.65rem; {{ $badgeStyle }}">
-                                                    <i class="fas fa-clock mr-1"></i> Belum Terbayar
-                                                </span>
+                                                <div class="d-flex flex-column align-items-center">
+                                                    @if($overdue->status === 'approved')
+                                                        <span class="badge badge-success px-2 py-1 shadow-sm mb-2" style="font-size: 0.65rem;">
+                                                            <i class="fas fa-check-circle mr-1"></i> Disetujui
+                                                        </span>
+                                                    @elseif($overdue->status === 'belum_lunas')
+                                                        <span class="badge badge-info px-2 py-1 shadow-sm mb-2" style="font-size: 0.65rem;">
+                                                            <i class="fas fa-hand-holding-usd mr-1"></i> Belum Lunas
+                                                        </span>
+                                                    @else
+                                                        <span class="badge px-2 py-1 shadow-sm mb-2" style="font-size: 0.65rem; {{ $badgeStyle }}">
+                                                            <i class="fas fa-clock mr-1"></i> Belum Terbayar
+                                                        </span>
+                                                    @endif
+
+                                                    @if($canManage && $overdue->status !== 'approved')
+                                                        <button type="button" class="btn btn-success btn-xs px-2 shadow-sm font-weight-bold" 
+                                                            onclick="openApprovalModal({{ $overdue->id }}, 'approved', '{{ $overdue->nama_pengajuan }}', {{ $overdue->jumlah_biaya }}, {{ $overdue->biaya_disetujui ?? 0 }}, '({{ \Carbon\Carbon::parse($overdue->tanggal_pengajuan)->translatedFormat('F Y') }})')"
+                                                            style="border-radius: 6px; font-size: 0.7rem;">
+                                                            <i class="fas fa-money-bill-wave mr-1"></i> {{ $overdue->status === 'belum_lunas' ? 'Bayar Lagi' : 'Bayar Sekarang' }}
+                                                        </button>
+                                                    @endif
+                                                </div>
                                             </td>
                                             <td colspan="3" class="align-middle small text-muted font-italic">
                                                 {{ $overdue->keterangan ?: '- Belum ada catatan -' }}
@@ -470,10 +512,10 @@
                         </p>
 
                         <div id="containerBiayaDisetujui" class="form-group d-none">
-                            <label class="font-weight-bold">Biaya Disetujui (Rp)</label>
+                            <label class="font-weight-bold">Nominal Pembayaran (Rp)</label>
                             <input type="text" name="biaya_disetujui" id="inputBiayaDisetujui" class="form-control"
                                 placeholder="0">
-                            <small class="text-muted">Jika dikosongkan, akan disetujui sesuai nominal pengajuan.</small>
+                            <small class="text-muted">Masukkan nominal yang dibayar saat ini. Sisa akan otomatis terhitung.</small>
                         </div>
 
                         <div class="form-group">
@@ -897,6 +939,7 @@
             window.applyTableFilters = function () {
                 const statusFilter = $('select[name="status_client"]').val();
                 const applicantFilter = $('select[name="applicant_client"]').val();
+                const typeFilter = $('select[name="type_client"]').val();
                 const dateSort = $('select[name="sort_date_client"]').val();
                 const costSort = $('select[name="sort_cost_client"]').val();
 
@@ -904,12 +947,63 @@
 
                 // 1. Filtering
                 rows.forEach(row => {
+                    const rowId = $(row).data('id');
                     const rowStatus = $(row).data('status');
                     const rowApplicant = $(row).data('applicant');
+                    const overdueRows = $(`.overdue-for-${rowId}`);
+                    
+                    // Check if main row matches
+                    const mainMatchesStatus = !statusFilter || rowStatus === statusFilter;
+                    const mainMatchesApplicant = !applicantFilter || rowApplicant === applicantFilter;
+                    const mainMatches = mainMatchesStatus && mainMatchesApplicant;
 
-                    let show = true;
-                    if (statusFilter && rowStatus !== statusFilter) show = false;
-                    if (applicantFilter && rowApplicant !== applicantFilter) show = false;
+                    // Check if any overdue row matches
+                    let matchingOverdueCount = 0;
+                    overdueRows.each(function() {
+                        const ovStatus = $(this).data('status');
+                        const ovMatchesStatus = !statusFilter || ovStatus === statusFilter;
+                        const ovMatches = ovMatchesStatus && mainMatchesApplicant;
+
+                        if (ovMatches) {
+                            matchingOverdueCount++;
+                            // If filtering by status specifically, show the matching overdue rows
+                            if (statusFilter) $(this).show();
+                        } else {
+                            $(this).hide();
+                        }
+                    });
+
+                    // Logic: Show main row if it matches OR if it has matching overdue rows
+                    let show = mainMatches || (statusFilter && matchingOverdueCount > 0);
+
+                    // Type Filter Logic (Main vs Overdue)
+                    if (show) {
+                        if (typeFilter === 'main') {
+                            overdueRows.hide();
+                            $(row).find('.toggle-overdue i').removeClass('fa-minus-circle text-danger').addClass('fa-plus-circle text-warning');
+                        } else if (typeFilter === 'overdue') {
+                            if (matchingOverdueCount === 0) {
+                                show = false;
+                            } else {
+                                // Ensure matching overdue are shown
+                                overdueRows.each(function() {
+                                    const matches = (!statusFilter || $(this).data('status') === statusFilter) && mainMatchesApplicant;
+                                    if (matches) $(this).show();
+                                });
+                                $(row).find('.toggle-overdue i').removeClass('fa-plus-circle text-warning').addClass('fa-minus-circle text-danger');
+                            }
+                        } else {
+                            // General view: if status filter is active and we have matches, keep them visible
+                            if (statusFilter && matchingOverdueCount > 0) {
+                                $(row).find('.toggle-overdue i').removeClass('fa-plus-circle text-warning').addClass('fa-minus-circle text-danger');
+                            } else {
+                                overdueRows.hide();
+                                $(row).find('.toggle-overdue i').removeClass('fa-minus-circle text-danger').addClass('fa-plus-circle text-warning');
+                            }
+                        }
+                    } else {
+                        overdueRows.hide();
+                    }
 
                     $(row).toggle(show);
                 });
@@ -1098,7 +1192,7 @@
             });
         }
 
-        function openApprovalModal(id, status, name, amount) {
+        function openApprovalModal(id, status, name, totalAmount, currentApproved = 0, extraTitle = '') {
             const modal = $('#modalApproval');
             const form = $('#formApproval');
             const header = $('#modalHeaderApproval');
@@ -1106,10 +1200,19 @@
             const btnSubmit = $('#btnSubmitApproval');
             const containerBiaya = $('#containerBiayaDisetujui');
 
+            const remaining = totalAmount - currentApproved;
+
             $('#inputStatusApproval').val(status);
-            $('#namaPengajuanApproval').text(name);
-            $('#biayaDiajukanApproval').text('Rp ' + new Intl.NumberFormat('id-ID').format(amount));
-            $('#inputBiayaDisetujui').val(new Intl.NumberFormat('id-ID').format(amount));
+            $('#namaPengajuanApproval').text(name + (extraTitle ? ' ' + extraTitle : ''));
+            
+            let diajukanHtml = 'Rp ' + new Intl.NumberFormat('id-ID').format(totalAmount);
+            if (currentApproved > 0) {
+                diajukanHtml += ` <span class="badge badge-info ml-1" style="font-size:0.7rem">Sudah dibayar: Rp ${new Intl.NumberFormat('id-ID').format(currentApproved)}</span>`;
+                diajukanHtml += ` <div class="text-danger small font-weight-bold mt-1">Sisa yang harus dibayar: Rp ${new Intl.NumberFormat('id-ID').format(remaining)}</div>`;
+            }
+            $('#biayaDiajukanApproval').html(diajukanHtml);
+            
+            $('#inputBiayaDisetujui').val(new Intl.NumberFormat('id-ID').format(remaining));
             $('#inputCatatanApproval').val('');
 
             form.attr('action', window.location.pathname + '/' + id + '/status');

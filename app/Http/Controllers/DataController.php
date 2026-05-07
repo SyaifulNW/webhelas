@@ -944,14 +944,19 @@ use App\Models\SalesPlan; // Ensure you import the Salesplan model
 
             // Commission logic (copied from SalesPlanController)
             if ($newStatus === 'sudah_transfer' && $oldStatus !== 'sudah_transfer') {
-                $nominal = $plan->nominal;
-                if ($nominal > 0) {
-                    \App\Services\WalletService::creditCommission(
-                        $plan->created_by,
-                        $nominal * 0.1, // 10% Commission
-                        'Closing MMA - ' . $plan->nama,
-                        'Program ' . ($plan->kelas ? $plan->kelas->nama_kelas : 'MMA')
-                    );
+                $creator = $plan->createdBy;
+                $isChapter = $creator && str_contains(strtolower($creator->role), 'chapter');
+                
+                if (!$isChapter) {
+                    $nominal = $plan->nominal;
+                    if ($nominal > 0) {
+                        \App\Services\WalletService::creditCommission(
+                            $plan->created_by,
+                            $nominal * 0.1, // 10% Commission
+                            'Closing MMA - ' . $plan->nama,
+                            'Program ' . ($plan->kelas ? $plan->kelas->nama_kelas : 'MMA')
+                        );
+                    }
                 }
             }
 

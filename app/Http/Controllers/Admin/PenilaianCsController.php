@@ -25,18 +25,22 @@ class PenilaianCsController extends Controller
 
         if ($userName === 'Linda') {
              $daftarCs = User::where(function($q) {
-                                $q->whereIn('name', ['Felmi', 'Eko Sulis', 'Arifa', 'Nisa'])
-                                  ->orWhereIn('role', ['cs-mbc', 'cs-smi']);
+                                $q->whereIn('name', ['Felmi', 'Eko Sulis', 'Arifa', 'Nisa', 'Rida', 'Shafa Zahra'])
+                                  ->orWhereIn('role', ['cs-mbc', 'cs-smi', 'advertising', 'produksi']);
                              })
                              ->whereNotIn('name', ['Linda', 'Yasmin'])
+                             ->where('id', '!=', 1)
+                             ->where('is_active', 1)
                              ->orderBy('name')
                              ->get();
         } elseif ($userName === 'Agus Setyo') {
              $daftarCs = User::where('name', 'Agus Setyo')->get();
         } else {
              // Revised List for Admin & Others
-             $daftarCs = User::whereIn('name', ['Arifa', 'Puput', 'Yasmin', 'Linda', 'Diah Putri', 'Nisa', 'Felmi', 'Rofi'])
+             $daftarCs = User::whereIn('name', ['Arifa', 'Puput', 'Yasmin', 'Linda', 'Diah Putri', 'Nisa', 'Felmi', 'Rofi', 'Eko Sulis', 'Shafa Zahra', 'Rida'])
                              ->orWhere('id', 14)
+                             ->where('id', '!=', 1)
+                             ->where('is_active', 1)
                              ->orderBy('name')
                              ->get();
         }
@@ -54,8 +58,8 @@ class PenilaianCsController extends Controller
         if ($userName === 'Linda') {
              // Linda melihat: (Felmi, Eko Sulis, Arifa, Nisa) + Semua CS-MBC + Semua CS-SMI
              $daftarCs = User::where(function($q) {
-                                $q->whereIn('name', ['Felmi', 'Eko Sulis', 'Arifa', 'Nisa'])
-                                  ->orWhereIn('role', ['cs-mbc', 'cs-smi']);
+                                $q->whereIn('name', ['Felmi', 'Eko Sulis', 'Arifa', 'Nisa', 'Rida', 'Shafa Zahra'])
+                                  ->orWhereIn('role', ['cs-mbc', 'cs-smi', 'advertising', 'produksi']);
                              })
                              ->whereNotIn('name', ['Linda', 'Yasmin'])
                              ->orderBy('name')
@@ -63,8 +67,10 @@ class PenilaianCsController extends Controller
              $routeView = 'admin.penilaian-cs.index'; // Tetap gunakan view admin jika diperlukan
         } elseif ($userName === 'Yasmin') {
             // Yasmin melihat 8 user spesifik
-            $daftarCs = User::whereIn('name', ['Arifa', 'Puput', 'Yasmin', 'Linda', 'Diah Putri', 'Nisa', 'Felmi', 'Rofi'])
+            $daftarCs = User::whereIn('name', ['Arifa', 'Puput', 'Yasmin', 'Linda', 'Diah Putri', 'Nisa', 'Felmi', 'Rofi', 'Eko Sulis', 'Shafa Zahra', 'Rida'])
                              ->orWhere('id', 14)
+                             ->where('id', '!=', 1)
+                             ->where('is_active', 1)
                              ->orderBy('name')
                              ->get();
             $routeView = 'admin.penilaian-cs.index';
@@ -72,9 +78,10 @@ class PenilaianCsController extends Controller
             // Agus Setyo view self
             $daftarCs = User::where('name', 'Agus Setyo')->get();
             $routeView = 'admin.penilaian-cs.index';
-        } else {
-            // Administrator / Other Managers -> See all CS and Marketing
-            $daftarCs = User::whereIn('role', ['cs', 'cs-mbc', 'cs-smi', 'marketing'])
+            // Administrator / Other Managers -> See all relevant roles
+            $daftarCs = User::whereIn('role', ['cs', 'cs-mbc', 'cs-smi', 'marketing', 'advertising', 'produksi'])
+                ->where('id', '!=', 1)
+                ->where('is_active', 1)
                 ->orderBy('name')
                 ->get();
         }

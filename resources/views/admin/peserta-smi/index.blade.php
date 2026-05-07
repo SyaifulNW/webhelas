@@ -137,14 +137,27 @@
                 z-index: 1040 !important;
                 background-color: #4e73df !important;
                 box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+                border-bottom: 2px solid #2e59d9 !important;
             }
 
+            /* Sticky table header styles (Freeze Pane) */
             #dataTable thead th {
                 position: sticky !important;
-                top: 165px !important; /* topbar (85px) + card-header (~80px) */
+                background-color: #2e59d9 !important; /* Navy Blue */
                 z-index: 1035 !important;
-                background: #4e73df !important; /* Keep background solid when scrolling */
-                border-top: 1px solid rgba(255,255,255,0.2) !important;
+                border: 1px solid rgba(255,255,255,0.1) !important;
+                box-shadow: 0 2px 2px rgba(0,0,0,0.1);
+            }
+
+            /* No and Name main row */
+            #dataTable thead tr:nth-child(1) th {
+                top: 0px !important; 
+            }
+
+            /* Secondary Month row sticks below No/Name row */
+            #dataTable thead tr:nth-child(2) th {
+                top: 47px !important; /* Height of the first row header */
+                z-index: 1034 !important;
             }
 
             /* Prevent parent containers from hiding the sticky elements */
@@ -152,125 +165,15 @@
                 overflow: visible !important;
             }
 
-            /* Ensure internal containers don't create a second vertical scrollbar */
-            .table-responsive {
-                overflow-y: visible !important;
-                overflow-x: auto;
-            }
-
-            thead.thead-dark-blue {
-                background: linear-gradient(135deg, #2e59d9, #224abe);
-                color: white;
-            }
-
-            thead.thead-dark-blue th {
-                border-color: #4e73df;
-                font-weight: 700;
-                letter-spacing: 0.5px;
-            }
-
-            thead.thead-dark-blue a {
-                color: white !important;
-                text-transform: uppercase;
-                font-size: 0.75rem;
-            }
-
-            /* Input Styling in Table */
-            .table-input {
-                border: 1px solid transparent;
-                border-radius: 4px;
-                padding: 4px;
-                transition: all 0.2s;
-                background: transparent;
-                color: #333;
-                width: 100%;
-            }
-
-            .table-input:hover {
-                background: #f8f9fc;
-                border-color: #e3e6f0;
-            }
-
-            .table-input:focus {
-                background: #fff;
-                border-color: #4e73df;
-                box-shadow: 0 0 0 0.1rem rgba(78, 115, 223, 0.25);
-                outline: none;
-            }
-
-            /* Checkbox Styling */
-            .custom-checkbox {
-                width: 18px;
-                height: 18px;
-                cursor: pointer;
-                accent-color: #4e73df;
-                /* Modern browsers support this */
-            }
-
-            /* Fixed Layout */
-            .table td,
-            .table th {
-                vertical-align: middle !important;
-            }
-
-            /* Sticky Header Styles */
-            /* Removed sticky from title components to prevent overlapping with table rows */
-            .sticky-header-top {
-                background-color: #4e73df !important;
-                border-bottom: 2px solid #2e59d9;
-            }
-
-            /* Consolidating Sticky Table Header CSS into one block later in the file */
-
-            /* Ensure table container allows scrolling for wide content */
-            /* 
-               CRITICAL FOR FREEZE PANE:
-               To let headers stick to the window, all parents MUST have overflow:visible.
-               We handle horizontal scroll at the #content-wrapper level instead.
-            */
-            .table-responsive {
+            #content-wrapper, #wrapper {
                 overflow: visible !important;
             }
 
-            #content-wrapper {
-                overflow-x: auto !important;
-                overflow-y: visible !important;
-                min-width: 0;
-            }
-
-            #wrapper {
-                overflow: visible !important;
-            }
-
-            /* Sticky table header styles (Freeze Pane) */
-            #dataTable thead th {
-                position: sticky !important;
-                background-color: #2e59d9 !important; /* Navy Blue */
-                z-index: 100;
-                border: 1px solid rgba(255,255,255,0.1) !important;
-                box-shadow: 0 2px 2px rgba(0,0,0,0.1);
-            }
-
-            /* No and Name main row */
-            #dataTable thead tr:nth-child(1) th {
-                top: 0px !important;
-            }
-
-            /* Secondary Month row sticks below No/Name row */
-            #dataTable thead tr:nth-child(2) th {
-                top: 47px !important; /* Height of the first row header is approx 47px */
-                z-index: 95;
-            }
-
-            /* Reset title card to static to avoid conflict with table header sticky */
-            .card-header.sticky-header-top {
-                background-color: #4e73df !important;
-                box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
-                border-bottom: 2px solid #2e59d9;
-            }
-
+            /* Ensure table container allows horizontal scroll AND vertical freeze pane */
             .table-responsive {
-                /* Removed overflow: visible */
+                overflow: auto !important;
+                max-height: 65vh; /* Constraints height so vertical scroll happens INSIDE the table */
+                border-bottom: 1px solid #e3e6f0;
             }
 
             .dummy-scroll-content {

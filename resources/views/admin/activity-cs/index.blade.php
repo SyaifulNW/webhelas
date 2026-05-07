@@ -136,9 +136,11 @@
                 onchange="this.form.submit()">
                 <option value="">-- Pilih CS --</option>
                 @foreach($csList as $cs)
+                    @if($cs->id != 1 && $cs->is_active)
                     <option value="{{ $cs->id }}" {{ $csId == $cs->id ? 'selected' : '' }}>
                         {{ $cs->name }}
                     </option>
+                    @endif
                 @endforeach
             </select>
         </div>

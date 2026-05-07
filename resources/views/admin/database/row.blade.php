@@ -82,7 +82,7 @@
                     data-fu10-telp="{{ $item->fu10_telp }}"
                     data-fu10-at="{{ $item->fu10_at ? $item->fu10_at->format('d/m/Y H:i') : '' }}"
                     data-fu10-hasil="{{ $item->fu10_hasil }}" data-fu10-tindak-lanjut="{{ $item->fu10_tindak_lanjut }}">
-                    Interaksi
+                    Follow Up
                 </button>
             </div>
         </div>

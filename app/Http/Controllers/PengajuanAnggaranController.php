@@ -70,8 +70,8 @@ class PengajuanAnggaranController extends Controller
 
         // Calculate Totals before pagination
         $totalAwal = (clone $query)->sum('jumlah_biaya');
-        $totalSetuju = (clone $query)->where('status', 'approved')->sum('biaya_disetujui');
-        $totalSisa = (clone $query)->where('status', 'approved')
+        $totalSetuju = (clone $query)->whereIn('status', ['approved', 'belum_lunas'])->sum('biaya_disetujui');
+        $totalSisa = (clone $query)->whereIn('status', ['approved', 'belum_lunas'])
             ->get()
             ->sum(function ($q) {
                 return $q->jumlah_biaya - $q->biaya_disetujui;
@@ -81,7 +81,7 @@ class PengajuanAnggaranController extends Controller
 
         // Fetch overdue items (pending from previous months)
         $targetDate = Carbon::create($year, $month, 1);
-        $overdueQuery = PengajuanAnggaran::where('status', 'pending')
+        $overdueQuery = PengajuanAnggaran::whereIn('status', ['pending', 'belum_lunas', 'approved'])
             ->where('tanggal_pengajuan', '<', $targetDate->startOfMonth());
 
         if (!($isLinda || $isAdmin)) {
@@ -232,10 +232,37 @@ class PengajuanAnggaranController extends Controller
 
         $anggaran = PengajuanAnggaran::findOrFail($id);
 
+        $inputBiaya = $request->biaya_disetujui;
+        // Jika status approved, kita anggap input adalah nominal tambahan atau total yang baru?
+        // Berdasarkan permintaan user: "bertambah 3 juta", maka kita akumulasikan.
+        // Jika input kosong, maka dianggap lunas (sisa dibayar semua).
+        
+        $currentApproved = $anggaran->biaya_disetujui ?? 0;
+        $remaining = $anggaran->jumlah_biaya - $currentApproved;
+        
+        $addedAmount = $inputBiaya !== null ? $inputBiaya : $remaining;
+        $totalApproved = $currentApproved + $addedAmount;
+        
+        $newStatus = $request->status;
+        if ($newStatus === 'approved') {
+            if ($totalApproved < $anggaran->jumlah_biaya) {
+                $newStatus = 'belum_lunas';
+            } else {
+                $newStatus = 'approved';
+                $totalApproved = $anggaran->jumlah_biaya; // Max out at total
+            }
+        } else {
+            // Jika rejected, reset biaya disetujui? 
+            // Biasanya kalau sudah ada cicilan tapi direject di tengah jalan tetap tersimpan?
+            // Tapi untuk amannya kalau status 'rejected', kita ikuti input atau biarkan?
+            // User tidak spesifik soal reject, tapi biasanya reject berarti tidak lanjut.
+            $totalApproved = 0; 
+        }
+
         $updateData = [
-            'status' => $request->status,
+            'status' => $newStatus,
             'catatan_admin' => $request->catatan_admin,
-            'biaya_disetujui' => $request->status === 'approved' ? ($request->biaya_disetujui ?? $anggaran->jumlah_biaya) : 0
+            'biaya_disetujui' => $totalApproved
         ];
 
         if ($request->hasFile('bukti_transfer')) {

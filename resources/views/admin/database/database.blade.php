@@ -499,7 +499,7 @@
                             class="btn btn-primary d-flex align-items-center gap-2 px-3 shadow-sm rounded-pill {{ (request('bulan') && request('tahun')) ? '' : 'd-none' }}"
                             onclick="exportPdfInteraksi()"
                             style="background: linear-gradient(45deg, #1d4ed8, #2563eb); border: none; font-weight: 600;">
-                            <i class="fas fa-file-pdf"></i> Interaksi
+                            <i class="fas fa-file-pdf"></i> Follow Up
                         </button>
                         
                         @if(in_array($userRole, ['chapter', 'reseller']))
@@ -861,7 +861,7 @@
                                     </div>
                                 </th>
                                 <th rowspan="2" style="width: 140px;">Nama bisnis</th>
-                                <th rowspan="2" style="width: 180px;">{{ $userRole === 'chapter' ? 'Harapan' : 'Situasi / Kendala bisnis' }}</th>
+                                <th rowspan="2" style="width: 250px;">{{ in_array($userRole, ['chapter', 'reseller']) ? 'Situasi & Kendala Bisnis' : 'Situasi / Kendala bisnis' }}</th>
                                 @if($userRole !== 'cs-mbc')
                                     <th rowspan="2" style="width: 120px;">
                                         Rekap Penilaian
@@ -1879,12 +1879,12 @@
 
     <!-- Modal Riwayat FU -->
     <div class="modal fade" id="modalRiwayat" tabindex="-1" role="dialog" aria-labelledby="modalRiwayatLabel"
-        aria-hidden="true">
+        aria-hidden="true" data-backdrop="static" data-keyboard="false" data-bs-backdrop="static" data-bs-keyboard="false">
         <div class="modal-dialog modal-xl" role="document">
             <div class="modal-content shadow-lg border-0">
                 <div class="modal-header bg-primary text-white">
                     <h5 class="modal-title" id="modalRiwayatLabel">
-                        <i class="fas fa-history me-2"></i> Riwayat SPIN - <span id="namaPeserta"></span>
+                        <i class="fas fa-history me-2"></i> Riwayat Follow Up - <span id="namaPeserta"></span>
                     </h5>
                     <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
@@ -1899,7 +1899,7 @@
                                 <div class="card h-100 shadow-sm border-0 rounded-3 overflow-hidden">
                                     <div class="bg-warning text-dark fw-bold px-2 py-1 d-flex justify-content-between align-items-center"
                                         style="font-size: 0.75rem;">
-                                        <span class="text-uppercase" style="font-weight: 900 !important;">SPIN {{ $i }}</span>
+                                        <span class="text-uppercase" style="font-weight: 900 !important;">Follow Up {{ $i }}</span>
                                         <input type="text" class="fu-at-input border-0 rounded px-1 text-center"
                                             id="fu{{ $i }}_at"
                                             {{ auth()->user()->role === 'administrator' ? 'readonly' : '' }}
@@ -1962,7 +1962,7 @@
                                     id="btnTambahSpin"
                                     style="height: 100%; border: 2px dashed #4e73df; background: #f8f9fc; transition: all 0.3s; width: 100%; min-height: 200px;">
                                     <i class="fas fa-plus-circle fa-2x mb-2 text-primary"></i>
-                                    <span class="fw-bold text-primary" style="font-size: 0.85rem;">Tambah SPIN</span>
+                                    <span class="fw-bold text-primary" style="font-size: 0.85rem;">Tambah Follow Up</span>
                                 </button>
                             </div>
                         @endif
@@ -1981,6 +1981,14 @@
     </div>
 
     <script>
+        $(document).ready(function() {
+            $('#modalRiwayat').modal({
+                backdrop: 'static',
+                keyboard: false,
+                show: false
+            });
+        });
+
         $(document).on('click', '.btn-riwayat', function () {
             let $btn = $(this);
             let id = $btn.data('id');
@@ -2026,7 +2034,7 @@
             } else {
                 Swal.fire({
                     icon: 'info',
-                    text: 'Maksimal 10 SPIN tercapai.'
+                    text: 'Maksimal 10 Follow Up tercapai.'
                 });
             }
         });
@@ -2278,7 +2286,7 @@
 
                         {{-- Situasi Bisnis --}}
                         <div class="form-group">
-                            <label for="situasi_bisnis">{{ $userRole === 'chapter' ? 'Harapan' : 'Situasi Bisnis' }}</label>
+                            <label for="situasi_bisnis">{{ in_array($userRole, ['chapter', 'reseller']) ? 'Situasi & Kendala Bisnis' : 'Situasi Bisnis' }}</label>
                             <textarea class="form-control" id="situasi_bisnis" name="situasi_bisnis" rows="3"></textarea>
                         </div>
 

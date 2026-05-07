@@ -335,7 +335,7 @@
 
 <div class="d-sm-flex align-items-center justify-content-between mb-4">
     <h1 class="h3 mb-0 text-gray-800">
-        {{ in_array(auth()->user()->name, ['Yasmin', 'Linda']) ? 'DATA PESERTA' : 'PROSPEK' }} 
+        {{ in_array(auth()->user()->name, ['Yasmin', 'Linda', 'Shafa Zahra']) ? 'DATA PESERTA' : 'PROSPEK' }} 
         @if(request('type') == 'mbc' || ($isCsMbc && request('type') != 'smi'))
             MBC
         @endif
@@ -347,7 +347,7 @@
     <div class="col-sm-6">
         <ol class="breadcrumb float-sm-right">
             <li class="breadcrumb-item"><a href="{{ route('home') }}">Home</a></li>
-            <li class="breadcrumb-item">{{ in_array(auth()->user()->name, ['Yasmin', 'Linda']) ? 'DATA PESERTA' : 'PROSPEK' }}</li>
+            <li class="breadcrumb-item">{{ in_array(auth()->user()->name, ['Yasmin', 'Linda', 'Shafa Zahra']) ? 'DATA PESERTA' : 'PROSPEK' }}</li>
             @if($kelasFilter)
             <li class="breadcrumb-item active">{{ $kelasFilter == 'Start-Up Muslim Indonesia' ? 'M1T' : $kelasFilter }}</li>
             @endif
@@ -396,7 +396,7 @@
     $isAdminView = (auth()->id() == 1 || auth()->id() == 13 || (auth()->user()->name == 'Linda' && empty($isRestrictedView)));
     $isCsMbc = (strtolower(auth()->user()->role) === 'cs-mbc');
 @endphp
-@if(($isAdminView || $isCsMbc) && !in_array(auth()->user()->name, ['Yasmin', 'Linda']))
+@if($isAdminView || $isCsMbc)
 <form method="GET" action="{{ route('admin.salesplan.index') }}" class="filter-container" id="filterFormMbc">
     @if(request()->has('type'))
         <input type="hidden" name="type" value="{{ request('type') }}">
@@ -502,7 +502,7 @@
         }
     }
 </style>
-@if($isAdminView)
+@if($isAdminView && !$isCsMbc)
 {{-- ✅ Filter CS --}}
 <div class="filter-group">
     <label for="cs_filter" class="filter-label" title="Nama Tim"><i class="fas fa-user-tie text-primary"></i></label>
@@ -517,6 +517,7 @@
         @endforeach
     </select>
 </div>
+@endif
 
 @if($kelasFilter != 'Start-Up Muslim Indonesia')
 @if(auth()->id() != 13)
@@ -532,7 +533,8 @@
             @if(
                 (auth()->id() == 1 && !in_array($kelas->nama_kelas, ['Start-Up Muda Indonesia', 'Sekolah Kaya', 'Start-Up Muslim Indonesia'])) ||
                          (auth()->id() == 13 && $kelas->nama_kelas == 'Start-Up Muda Indonesia') ||
-                (auth()->user()->name == 'Linda')
+                (auth()->user()->name == 'Linda') ||
+                (strtolower(auth()->user()->role) === 'cs-mbc')
             )
                 <option value="{{ $kelas->nama_kelas }}" {{ request('kelas') == $kelas->nama_kelas ? 'selected' : '' }}>
                     {{ $kelas->nama_kelas }}
@@ -541,7 +543,6 @@
         @endforeach
     </select>
 </div>
-@endif
 @endif
 @endif
 
@@ -736,7 +737,7 @@
         }
     }
 @endphp
-@if(strtolower(Auth::user()->role) !== 'administrator' && !in_array(auth()->user()->name, ['Yasmin', 'Linda']))
+@if(strtolower(Auth::user()->role) !== 'administrator' && !in_array(auth()->user()->name, ['Yasmin', 'Linda', 'Shafa Zahra']))
     <div class="card shadow-lg border-0 rounded-lg mb-4">
         <div class="card-header bg-primary text-white">
             <h5 class="mb-0"><i class="fas fa-chart-line"></i> Daftar PROSPEK</h5>
@@ -1053,7 +1054,7 @@ $(document).ready(function() {
 
 </div>
 
-            @if(!in_array(auth()->user()->name, ['Yasmin', 'Linda']))
+            @if(!in_array(auth()->user()->name, ['Yasmin', 'Linda', 'Shafa Zahra']))
             <div class="table-responsive table-scroll">
                 <table class="table table-bordered table-hover align-middle">
                     <thead class="text-white" style="background-color:#25799E;">
@@ -1881,7 +1882,7 @@ $(document).ready(function() {
     </script>
 
 
-@if(strtolower(Auth::user()->role) !== 'administrator' && !in_array(auth()->user()->name, ['Yasmin', 'Linda']))
+@if(strtolower(Auth::user()->role) !== 'administrator' && !in_array(auth()->user()->name, ['Yasmin', 'Linda', 'Shafa Zahra']))
 <div class="d-flex justify-content-between align-items-center mb-3">
     <div>
         <span class="badge bg-warning text-white p-2 me-2 fs-6" style="font-size: 13px">
@@ -1921,7 +1922,7 @@ $(document).ready(function() {
         @endif
     </h4>
 
-    @if($kelasFilter == 'Start-Up Muslim Indonesia' || request('type') == 'smi' || (in_array(auth()->user()->name, ['Yasmin', 'Linda']) && (request('type') == 'mbc' || request('type') == 'smi')))
+    @if($kelasFilter == 'Start-Up Muslim Indonesia' || request('type') == 'smi' || (in_array(auth()->user()->name, ['Yasmin', 'Linda', 'Shafa Zahra']) && (request('type') == 'mbc' || request('type') == 'smi')))
     <div class="d-flex gap-3 align-items-center">
         {{-- Filter Bulan (SMI Bawah) --}}
         <div class="d-flex align-items-center gap-2">

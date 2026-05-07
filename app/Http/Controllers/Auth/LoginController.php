@@ -61,4 +61,14 @@ protected function authenticated(Request $request, $user)
     {
         $this->middleware('guest')->except('logout');
     }
+
+    /**
+     * Override credentials to check is_active status.
+     */
+    protected function credentials(Request $request)
+    {
+        $credentials = $request->only($this->username(), 'password');
+        $credentials['is_active'] = 1;
+        return $credentials;
+    }
 }

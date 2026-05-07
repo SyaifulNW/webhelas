@@ -43,7 +43,7 @@ class AdminActivityController extends Controller
             $csQuery->where('id', $user->id);
         }
 
-        $csList = $csQuery->orderBy('name')->get();
+        $csList = $csQuery->where('is_active', 1)->where('id', '!=', 1)->orderBy('name')->get();
         if (!$csId && $csList->isNotEmpty()) {
              $csId = $csList->first()->id;
         }

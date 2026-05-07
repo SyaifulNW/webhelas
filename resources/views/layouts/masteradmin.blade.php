@@ -410,7 +410,7 @@
                             $namaSMI = ['Latifah', 'Tursia', 'Agus Setyo'];
                             
                             $pendingM1TCount = 0;
-                            if ($userRole === 'administrator' || stripos($userName, 'Linda') !== false || stripos($userName, 'Yasmin') !== false) {
+                            if ($userRole === 'administrator' || stripos($userName, 'Linda') !== false || stripos($userName, 'Yasmin') !== false || stripos($userName, 'Shafa Zahra') !== false) {
                                 $pendingM1TCount = \App\Models\PesertaSmi::where(function($q) {
                                     $q->where('approval_status', 'Pending')
                                       ->orWhereNull('approval_status');
@@ -531,7 +531,7 @@
                     </li>
 
                     {{-- 8. SETTING --}}
-                    @if(\App\Models\Menu::isActive('settings') && auth()->user()->name !== 'Yasmin')
+                    @if(\App\Models\Menu::isActive('settings'))
                         <li class="nav-item {{ request()->routeIs('admin.settings.index') ? 'active' : '' }}">
                             <a class="nav-link" href="{{ route('admin.settings.index') }}" title="SETTING">
                                 <i class="fas fa-fw fa-cog"></i>
@@ -876,59 +876,92 @@
 
                                 {{-- SALES PLAN MBC (LAINNYA) --}}
                                 @if(!in_array($userRole, ['cs-smi', 'reseller', 'chapter']) && !in_array($userName, ['Latifah', 'Tursia', 'Agus Setyo']))
-                                    <li class="nav-item">
-                                        <a class="nav-link {{ (request('type') == 'mbc' || (request()->has('kelas') && request('kelas') != 'Start-Up Muslim Indonesia')) ? '' : 'collapsed' }}"
-                                            href="#" data-toggle="collapse" data-target="#collapseMBC"
-                                            aria-expanded="{{ (request('type') == 'mbc' || (request()->has('kelas') && request('kelas') != 'Start-Up Muslim Indonesia')) ? 'true' : 'false' }}"
-                                            aria-controls="collapseMBC">
-                                            <i class="fas fa-fw fa-users"></i>
-                                            <span><strong>DATA PESERTA MBC</strong></span>
-                                        </a>
-                                        <div id="collapseMBC"
-                                            class="collapse {{ (request('type') == 'mbc' || (request()->has('kelas') && request('kelas') != 'Start-Up Muslim Indonesia')) ? 'show' : '' }}"
-                                            aria-labelledby="headingMBC" data-parent="#accordionSidebar">
-                                            <div class="bg-white py-2 collapse-inner rounded">
-                                                @if(stripos($userName, 'Linda') !== false)
-                                                    <a class="collapse-item {{ request('type') == 'mbc' && !request('kelas') ? 'active' : '' }}"
-                                                    href="{{ route('admin.salesplan.index', ['type' => 'mbc']) }}">DATA PESERTA ALL</a>
-                                                @endif
+                                    @if($userRole === 'cs-mbc')
+                                        {{-- Simple link for CS-MBC (same as administrator) --}}
+                                        <li class="nav-item {{ request('type') == 'mbc' ? 'active' : '' }}">
+                                            <a class="nav-link" href="{{ route('admin.salesplan.index', ['type' => 'mbc']) }}" title="DATA PESERTA MBC">
+                                                <i class="fas fa-fw fa-users"></i>
+                                                <span><strong>DATA PESERTA MBC</strong></span>
+                                            </a>
+                                        </li>
+                                    @else
+                                        {{-- Collapsible for others --}}
+                                        <li class="nav-item">
+                                            <a class="nav-link {{ (request('type') == 'mbc' || (request()->has('kelas') && request('kelas') != 'Start-Up Muslim Indonesia')) ? '' : 'collapsed' }}"
+                                                href="#" data-toggle="collapse" data-target="#collapseMBC"
+                                                aria-expanded="{{ (request('type') == 'mbc' || (request()->has('kelas') && request('kelas') != 'Start-Up Muslim Indonesia')) ? 'true' : 'false' }}"
+                                                aria-controls="collapseMBC">
+                                                <i class="fas fa-fw fa-users"></i>
+                                                <span><strong>DATA PESERTA MBC</strong></span>
+                                            </a>
+                                            <div id="collapseMBC"
+                                                class="collapse {{ (request('type') == 'mbc' || (request()->has('kelas') && request('kelas') != 'Start-Up Muslim Indonesia')) ? 'show' : '' }}"
+                                                aria-labelledby="headingMBC" data-parent="#accordionSidebar">
+                                                <div class="bg-white py-2 collapse-inner rounded">
+                                                    @if(stripos($userName, 'Linda') !== false)
+                                                        <a class="collapse-item {{ request('type') == 'mbc' && !request('kelas') ? 'active' : '' }}"
+                                                        href="{{ route('admin.salesplan.index', ['type' => 'mbc']) }}">DATA PESERTA ALL</a>
+                                                    @endif
 
-                                                <h6 class="collapse-header">Daftar Kelas MBC:</h6>
+                                                    <h6 class="collapse-header">Daftar Kelas MBC:</h6>
 
-                                                @if(in_array($userName, ['Muthia']))
-                                                    <a class="collapse-item {{ request('kelas') == 'Sekolah Kaya' ? 'active' : '' }}"
-                                                        href="{{ route('admin.salesplan.index', ['kelas' => 'Sekolah Kaya', 'type' => 'mbc']) }}">
-                                                        Sekolah Kaya
-                                                    </a>
-                                                @else
-                                                    @foreach ($kelas as $item)
-                                                        @if($item->nama_kelas != 'Sekolah Kaya' && $item->nama_kelas != 'Start-Up Muslim Indonesia')
-                                                            <a class="collapse-item {{ request('kelas') == $item->nama_kelas ? 'active' : '' }}"
-                                                                href="{{ route('admin.salesplan.index', ['kelas' => $item->nama_kelas, 'type' => 'mbc']) }}">
-                                                                {{ $item->nama_kelas }}
-                                                            </a>
-                                                        @endif
-                                                    @endforeach
-                                                @endif
+                                                    @if(in_array($userName, ['Muthia']))
+                                                        <a class="collapse-item {{ request('kelas') == 'Sekolah Kaya' ? 'active' : '' }}"
+                                                            href="{{ route('admin.salesplan.index', ['kelas' => 'Sekolah Kaya', 'type' => 'mbc']) }}">
+                                                            Sekolah Kaya
+                                                        </a>
+                                                    @else
+                                                        @foreach ($kelas as $item)
+                                                            @if($item->nama_kelas != 'Sekolah Kaya' && $item->nama_kelas != 'Start-Up Muslim Indonesia')
+                                                                <a class="collapse-item {{ request('kelas') == $item->nama_kelas ? 'active' : '' }}"
+                                                                    href="{{ route('admin.salesplan.index', ['kelas' => $item->nama_kelas, 'type' => 'mbc']) }}">
+                                                                    {{ $item->nama_kelas }}
+                                                                </a>
+                                                            @endif
+                                                        @endforeach
+                                                    @endif
+                                                </div>
                                             </div>
-                                        </div>
-                                    </li>
+                                        </li>
+                                    @endif
                                 @endif
 
                                 {{-- SALES PLAN SMI / M1T (LAINNYA) --}}
                                 @if(in_array($userRole, ['cs-smi', 'cs-mbc']) || in_array($userName, ['Latifah', 'Tursia', 'Agus Setyo', 'Linda', 'Fitra Jaya Saleh']))
                                     @if(in_array($userName, ['Yasmin', 'Linda']))
-                                        <li class="nav-item {{ request('type') == 'smi' ? 'active' : '' }}">
+                                        {{-- 1. DATA PESERTA M1T (Sales Plan) --}}
+                                        <li class="nav-item {{ (request('type') == 'smi' && request('kelas') == 'Start-Up Muslim Indonesia') ? 'active' : '' }}">
                                             <a class="nav-link" href="{{ route('admin.salesplan.index', ['type' => 'smi', 'kelas' => 'Start-Up Muslim Indonesia']) }}" title="DATA PESERTA M1T">
+                                                <i class="fas fa-fw fa-users"></i>
+                                                <span style="text-transform: none;"><strong>DATA PESERTA M1T</strong></span>
+                                            </a>
+                                        </li>
+
+                                        {{-- 2. PESERTA M1T (Peserta SMI) --}}
+                                        <li class="nav-item {{ request()->routeIs('peserta-smi.index') ? 'active' : '' }}">
+                                            <a class="nav-link" href="{{ route('peserta-smi.index') }}" title="PESERTA M1T">
+                                                <i class="fas fa-fw fa-user-graduate"></i>
+                                                <span style="text-transform: none;"><strong>PESERTA M1T</strong></span>
+                                                @if($pendingM1TCount > 0)
+                                                    <span class="badge badge-pending-yellow badge-pulse ml-2">{{ $pendingM1TCount }}</span>
+                                                @endif
+                                            </a>
+                                        </li>
+                                    @elseif(in_array($userName, ['Shafa Zahra']))
+                                        <li class="nav-item {{ request()->routeIs('peserta-smi.index') ? 'active' : '' }}">
+                                            <a class="nav-link" href="{{ route('peserta-smi.index') }}" title="Peserta M1T">
                                                 <i class="fas fa-fw fa-user-graduate"></i>
                                                 <span style="text-transform: none;"><strong>DATA PESERTA M1T</strong></span>
+                                                @if($pendingM1TCount > 0)
+                                                    <span class="badge badge-pending-yellow badge-pulse ml-2">{{ $pendingM1TCount }}</span>
+                                                @endif
                                             </a>
                                         </li>
                                     @else
                                         <li class="nav-item {{ request()->routeIs('peserta-smi.index') ? 'active' : '' }}">
                                             <a class="nav-link" href="{{ route('peserta-smi.index') }}" title="Peserta M1T">
                                                 <i class="fas fa-fw fa-user-graduate"></i>
-                                                <span style="text-transform: none;"><strong>Peserta M1T</strong></span>
+                                                <span style="text-transform: none;"><strong>DATA PESERTA M1T</strong></span>
                                             </a>
                                         </li>
                                     @endif
@@ -978,12 +1011,12 @@
 
 
                     {{-- Database SMI --}}
-                    @if(in_array($userRole, ['administrator']) || in_array($userName, ['Linda', 'Puput', 'Diah Putri']))
+                    @if(in_array($userRole, ['administrator']) || in_array($userName, ['Diah Putri']))
                         @if(strtolower(auth()->user()->role) !== 'administrator')
                             <li class="nav-item {{ request()->routeIs('peserta-smi.index') ? 'active' : '' }}">
                                 <a class="nav-link" href="{{ route('peserta-smi.index') }}" title="Peserta M1T">
                                     <i class="fas fa-fw fa-user-graduate"></i>
-                                    <span style="text-transform: none;"><strong>Peserta M1T</strong></span>
+                                    <span style="text-transform: none;"><strong>Data Peserta M1T</strong></span>
                                     @if($pendingM1TCount > 0)
                                         <span class="badge badge-pending-yellow badge-pulse ml-2">{{ $pendingM1TCount }}</span>
                                     @endif
@@ -1031,7 +1064,7 @@
                                     data-parent="#accordionSidebar">
                                     <div class="bg-white py-2 collapse-inner rounded">
                                         <h6 class="collapse-header text-uppercase text-secondary">Daftar Pengguna:</h6>
-                                        @foreach(\App\Models\User::whereIn('name', ['Tursia', 'Latifah', 'Gunawan', 'Puput'])->orderBy('name')->get() as $user)
+                                        @foreach(\App\Models\User::whereIn('name', ['Tursia', 'Latifah', 'Gunawan', 'Shafa Zahra'])->orderBy('name')->get() as $user)
                                             <a class="collapse-item d-flex align-items-center justify-content-between"
                                                 href="{{ route('koordinasi.show', $user->id) }}">
                                                 <span>
@@ -1220,6 +1253,15 @@
                             <a class="nav-link" href="{{ route('admin.keuangan.pengajuan-anggaran') }}">
                                 <i class="fas fa-fw fa-file-invoice-dollar"></i>
                                 <span><strong>PENGAJUAN ANGGARAN</strong></span>
+                            </a>
+                        </li>
+                    @endif
+
+                    @if(auth()->user()->name === 'Yasmin' && \App\Models\Menu::isActive('settings'))
+                        <li class="nav-item {{ request()->routeIs('admin.settings.index') ? 'active' : '' }}">
+                            <a class="nav-link" href="{{ route('admin.settings.index') }}" title="SETTING">
+                                <i class="fas fa-fw fa-cog"></i>
+                                <span><strong>SETTING</strong></span>
                             </a>
                         </li>
                     @endif
