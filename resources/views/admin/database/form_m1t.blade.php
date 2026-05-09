@@ -120,12 +120,12 @@
 
         <div class="form-header">
             <h1>
-                FORMULIR PENDAFTARAN PESERTA M1T
-                @if(strtolower($user->role) === 'chapter' && !empty($user->chapter))
+                FORMULIR PENDAFTARAN 
+                <!-- @if(strtolower($user->role) === 'chapter' && !empty($user->chapter))
                     CHAPTER {{ strtoupper($user->chapter) }}
                 @else
                     CHAPTER - {{ strtoupper($user->name) }}
-                @endif
+                @endif -->
             </h1>
             <p>Silakan isi form di bawah ini dengan data yang sebenarnya.</p>
             <p class="text-danger small">* Wajib</p>
@@ -368,7 +368,8 @@
         </div>
 
         <div class="card-question">
-            <div class="question-title">14. Jika merasa program Mentoring 1 Tahun ini cocok, apakah Anda siap mengambil keputusan: <span class="text-danger">*</span></div>
+            <div class="question-title">14. Jika ada program mentoring bisnis yang bisa membantu anda membangun tim dan sistem anda menjadi lebih baik, 
+apakah anda tertarik, untuk mendengarkan informasinya. : <span class="text-danger">*</span></div>
             <input type="hidden" name="keputusan_label" id="keputusan_label">
             <div class="form-check mb-2">
                 <input class="form-check-input score-radio" type="radio" name="keputusan" id="kep1" value="1" data-label="Tidak" required>

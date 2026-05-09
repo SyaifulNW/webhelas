@@ -10,7 +10,11 @@
                 $isManualLunas = ($item->is_lunas == 1);
                 $isAutoLunas = false;
 
-                // Automatic check: if at least 6 months are paid (>= 1M each)
+                // [USER_REQUEST] Level-based SPP nominal: Grow Up = 1.500.000, Start Up = 1.000.000
+                $itemLevel = strtolower($item->level ?? $item->salesPlan->level ?? '');
+                $levelNominal = str_contains($itemLevel, 'grow') ? 1500000 : 1000000;
+
+                // Automatic check: if at least 6 months are paid (>= level nominal each)
                 if ($item->tanggal_masuk) {
                     $startJoin = \Carbon\Carbon::parse($item->tanggal_masuk)->startOfMonth();
                     $countPaid = 0;
@@ -18,7 +22,7 @@
                     for ($m = 0; $m < 12; $m++) {
                         $checkM = $startJoin->copy()->addMonths($m);
                         $mNum = (int) $checkM->format('n');
-                        if (($item->{"spp_$mNum"} ?? 0) >= 1000000) {
+                        if (($item->{"spp_$mNum"} ?? 0) >= $levelNominal) {
                             $countPaid++;
                         }
                     }
@@ -40,6 +44,19 @@
                     class="table-input font-weight-bold text-dark" value="{{ $item->nama }}" placeholder="Nama peserta..."
                     onblur="quickUpdateField(this, {{ $item->id }}, 'nama')">
             </div>
+
+            {{-- Level Selection (Linda Only) --}}
+            @if(auth()->user()->name === 'Linda')
+            <div class="mt-1 px-1">
+                <select class="form-control form-control-sm" 
+                    style="font-size: 0.65rem; height: 18px; width: 80px; padding: 0 4px; border-radius: 4px; border: 1px solid #d1d3e2; background-color: #f8f9fc; color: #4e73df; font-weight: bold;" 
+                    onchange="quickUpdateField(this, {{ $item->id }}, 'level')">
+                    <option value="" {{ !$item->level ? 'selected' : '' }}>Level</option>
+                    <option value="Grow Up" {{ $item->level == 'Grow Up' ? 'selected' : '' }}>Grow</option>
+                    <option value="Start Up" {{ $item->level == 'Start Up' ? 'selected' : '' }}>Start</option>
+                </select>
+            </div>
+            @endif
             @if($isAllPaid)
                 <div class="px-2 py-0">
                     <span class="badge badge-primary shadow-sm"
@@ -93,6 +110,7 @@
                     title="Ganti Tanggal Masuk"
                     onchange="quickUpdateField(this, {{ $item->id }}, 'tanggal_masuk')">
             </div>
+
             @if($item->status == 'Cuti')
                 <div class="mt-2 d-flex flex-column px-1" style="gap: 4px;">
                     <a href="javascript:void(0)" onclick="focusTanggalSelesai({{ $item->id }})"
@@ -237,7 +255,7 @@
                                 break;
                             }
                         }
-                        $isPaid = ($item->{"spp_$i"} > 0);
+                        $isPaid = ($item->{"spp_$i"} >= $levelNominal);
                         
                         // [USER_REQUEST] Verify if the payment year matches the currently filtered year
                         // If payment was made in a different year, don't show it as 'paid' for this year view.
@@ -258,9 +276,10 @@
                             }
                         @endphp
                         <input type="checkbox" class="spp-checkbox" data-id="{{ $item->id }}" data-month="{{ $i }}"
-                            data-planned-nominal="{{ $plannedNominal }}" {{ ($isPaid || $isPlanChecked) ? 'checked' : '' }}
+                            data-planned-nominal="{{ $plannedNominal }}" data-level-nominal="{{ $levelNominal }}"
+                            {{ ($isPaid || $isPlanChecked) ? 'checked' : '' }}
                             style="accent-color: {{ $accentColor }};"
-                            title="{{ $plannedNominal ? 'Rencana: Rp ' . number_format($plannedNominal, 0, ',', '.') : 'Centang jika Lunas' }}"
+                            title="{{ $plannedNominal ? 'Rencana: Rp ' . number_format($plannedNominal, 0, ',', '.') : 'Centang jika Lunas (Rp ' . number_format($levelNominal, 0, ',', '.') . ')' }}"
                             onclick="toggleSppLunasDirectly(this)">
 
                         <input form="form-update-{{ $item->id }}" type="text" name="spp_{{ $i }}" id="spp_{{ $i }}_{{ $item->id }}"

@@ -322,12 +322,9 @@ class PesertaSmiController extends Controller
         // 2. DISPLAY FILTERS (Only affects the Table below, not the Cards)
         $sppStatus = $request->get('filter_spp_status', 'all'); // 1 = lunas, 0 = belum
         if ($sppMonth !== 'all') {
+            // NOTE: Do NOT filter spp_N here — Blue Checklist is computed in-memory below.
+            // Filtering by spp_N = 0 would incorrectly exclude Blue Checklist participants.
             $month = (int)$sppMonth;
-            if ($sppStatus === '1') {
-                $query->where('spp_' . $month, '>', 0);
-            } elseif ($sppStatus === '0') {
-                $query->where('spp_' . $month, 0);
-            }
         } else {
              // Handle Lunas Badge filtering when Month is ALL
              if ($sppStatus === '1') {
@@ -479,6 +476,50 @@ class PesertaSmiController extends Controller
         }
 
         $data = $query->with(['salesPlan.createdBy', 'closingCs', 'createdBy'])->get();
+
+        // [USER_REQUEST] In-memory filter for SPP status (month-specific)
+        // Must be done in-memory because Blue Checklist (isBlue) is a computed value, not a DB column.
+        // "Belum Lunas" = no Green (spp_N = 0) AND no Blue (not closing/planned month)
+        // "Sudah Lunas" = has Green (spp_N > 0) OR has Blue
+        if ($sppMonth !== 'all' && $sppStatus !== 'all') {
+            $mNum = (int)$sppMonth;
+            $yNum = (int)$yearFilter;
+            $data = $data->filter(function($p) use ($mNum, $yNum, $sppStatus) {
+                $val = (float)($p->{"spp_$mNum"} ?? 0);
+                // [USER_REQUEST] Level-based threshold: Grow Up = 1.500.000, Start Up = 1.000.000
+                $pLevel = strtolower($p->level ?? $p->salesPlan->level ?? '');
+                $pLevelNominal = str_contains($pLevel, 'grow') ? 1500000 : 1000000;
+                $isGreen = ($val >= $pLevelNominal); // Green Checklist = paid at/above level nominal
+
+                // Blue Checklist: Closing month
+                $effDate = $p->tanggal_masuk ? \Carbon\Carbon::parse($p->tanggal_masuk) : $p->created_at;
+                $isClosing = ($effDate->month == $mNum && $effDate->year == $yNum);
+
+                // Blue Checklist: Planned schedule (custom or salesPlan selected_months)
+                $isPlanned = false;
+                $customSch = $p->spp_custom_schedule ?? [];
+                foreach ((array)$customSch as $sch) {
+                    if ((int)($sch['month'] ?? 0) === $mNum && (int)($sch['year'] ?? $yNum) === $yNum) {
+                        $isPlanned = true;
+                        break;
+                    }
+                }
+                if (!$isPlanned && $p->salesPlan) {
+                    $sel = $p->salesPlan->selected_months;
+                    if (is_string($sel)) $sel = json_decode($sel, true) ?? [];
+                    if (isset($sel[$yNum]) && in_array($mNum, (array)$sel[$yNum])) {
+                        $isPlanned = true;
+                    }
+                }
+
+                $isBlue = $isClosing || $isPlanned;
+                $isSudahBayar = $isGreen || $isBlue;
+
+                if ($sppStatus === '1') return $isSudahBayar;   // Sudah Lunas: hanya yang hijau/biru
+                if ($sppStatus === '0') return !$isSudahBayar;  // Belum Lunas: yang tidak ada hijau/biru
+                return true;
+            });
+        }
 
         // [USER_REQUEST] Sort participants by priority:
         // 1. Aktif (non-lunas) -> Top
@@ -780,7 +821,7 @@ class PesertaSmiController extends Controller
         $kelasList = $semuaKelas; // Alias for compatibility
         $statusFilter = request('filter_status'); // Alias for compatibility
 
-        // 🚀 Add $salesplans, $csList, $kelasList, and $statusFilter to avoid undefined variable errors in view
+        // ðŸš€ Add $salesplans, $csList, $kelasList, and $statusFilter to avoid undefined variable errors in view
         $csList = \App\Models\User::whereIn('role', ['cs-mbc', 'cs-smi', 'administrator'])->orderBy('name')->get();
         $listCs = $csList; // Alias for compatibility
 

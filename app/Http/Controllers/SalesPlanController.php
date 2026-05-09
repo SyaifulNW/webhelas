@@ -515,6 +515,13 @@ class SalesPlanController extends Controller
 
             $plan = SalesPlan::findOrFail($request->id);
 
+            // Periksa hak akses: CS-MBC hanya bisa edit data miliknya sendiri
+            if (auth()->user() && strtolower(auth()->user()->role) === 'cs-mbc') {
+                if ($plan->created_by != auth()->id()) {
+                    return response()->json(['error' => 'Akses ditolak: Anda hanya diizinkan mengedit data yang Anda input sendiri.'], 403);
+                }
+            }
+
             $allowedFields = [
                 'fu1_hasil',
                 'fu1_tindak_lanjut',
@@ -621,6 +628,15 @@ class SalesPlanController extends Controller
             if ($request->field === 'level' && (empty($plan->nominal) || $plan->nominal == 0)) {
                 $pLevel = strtolower($value);
                 $plan->nominal = str_contains($pLevel, 'grow') ? 1500000 : 1000000;
+            }
+
+            $plan->save();
+
+            // Sync nominal ke PesertaSmi jika ada
+            if ($request->field === 'nominal' && $plan->pesertaSmi) {
+                $plan->pesertaSmi->spp_awal = $value;
+                $plan->pesertaSmi->total_pembayaran = (float)$value;
+                $plan->pesertaSmi->save();
             }
 
             $isTimestampField = preg_match('/^fu\d+(_rtl)?_at$/', $request->field);

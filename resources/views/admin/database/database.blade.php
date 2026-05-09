@@ -2,6 +2,17 @@
 @section('content')
 
     <style>
+        /* Contenteditable Placeholder */
+        [contenteditable]:empty:before {
+            content: attr(data-placeholder);
+            color: #aaa;
+            font-style: italic;
+            pointer-events: none;
+            display: block;
+        }
+    </style>
+
+    <style>
         .table-scroll-container {
             overflow-x: auto !important;
             width: 100%;
@@ -516,8 +527,8 @@
                         <style>
                             .modern-filter-container {
                                 display: flex;
-                                align-items: center;
-                                gap: 5px;
+                                align-items: flex-end;
+                                gap: 10px;
                                 flex-wrap: nowrap;
                             }
 
@@ -583,7 +594,8 @@
                                 // Daftar CS hanya untuk admin/manager
                                 // Daftar CS dan Chapter hanya untuk admin/manager
                                 if (in_array(strtolower($user->role), ['administrator', 'manager', 'marketing']) || $user->name === 'Agus Setyo' || $user->name === 'Linda') {
-                                    $csList = User::whereIn('role', ['cs', 'CS', 'customer_service', 'cs-mbc', 'cs-smi'])
+                                    $csList = User::where('role', 'cs-mbc')
+                                        ->where('is_active', 1)
                                         ->select('id', 'name')
                                         ->orderBy('name')
                                         ->get();
@@ -595,83 +607,78 @@
                                 }
                             @endphp
 
-                            {{-- Filter Bulan (Server Side) --}}
-                            <select id="filterBulan" class="form-select form-select-sm modern-select">
-                                <option value="">Semua Bulan</option>
-                                @foreach(range(1, 12) as $m)
-                                    <option value="{{ $m }}" {{ request('bulan') == $m ? 'selected' : '' }}>
-                                        {{ \Carbon\Carbon::create()->month($m)->translatedFormat('F') }}
-                                    </option>
-                                @endforeach
-                            </select>
-
-                            {{-- Filter Tahun (Server Side) --}}
-                            <select id="filterTahun" class="form-select form-select-sm modern-select">
-                                <option value="">Tahun</option>
-                                @foreach(range(date('Y'), 2024) as $y)
-                                    <option value="{{ $y }}" {{ request('tahun') == $y ? 'selected' : '' }}>{{ $y }}</option>
-                                @endforeach
-                            </select>
                             @if(!in_array($userRole, ['reseller', 'chapter']))
-                                <select id="filterIkutKelas" class="form-select form-select-sm modern-select"
-                                    onchange="toggleDaftarKelas(this.value)">
-                                    <option value="">Status Kelas</option>
-                                    <option value="1" {{ request('ikut_kelas') == '1' ? 'selected' : '' }}>Sudah Pernah Ikut
-                                    </option>
-                                    <option value="0" {{ request('ikut_kelas') == '0' ? 'selected' : '' }}>Belum Pernah Ikut
-                                    </option>
-                                </select>
+                                <div class="d-flex flex-column" style="gap: 2px;">
+                                    <label class="text-xs fw-bold mb-0 ml-2" style="font-size: 0.65rem; color: #555; text-transform: uppercase;">Pilih Status Ikut Kelas</label>
+                                    <select id="filterIkutKelas" class="form-select form-select-sm modern-select"
+                                        onchange="toggleDaftarKelas(this.value)">
+                                        <option value="">ALL Status</option>
+                                        <option value="1" {{ request('ikut_kelas') == '1' ? 'selected' : '' }}>Sudah Pernah Ikut
+                                        </option>
+                                        <option value="0" {{ request('ikut_kelas') == '0' ? 'selected' : '' }}>Belum Pernah Ikut
+                                        </option>
+                                    </select>
+                                </div>
                             @endif
 
                             {{-- Filter Daftar Kelas (Internal SalesPlan) --}}
-                            <select id="filterDaftarKelas"
-                                class="form-select form-select-sm modern-select {{ (request('ikut_kelas') === '1' || request('ikut_kelas') === '0') ? '' : 'd-none' }}">
-                                <option value="">Pilih Kelas</option>
-                                @foreach($kelas as $k)
-                                    <option value="{{ $k->id }}" {{ request('daftar_kelas') == $k->id ? 'selected' : '' }}>
-                                        {{ str_contains($k->nama_kelas, 'Muslim Indonesia') ? 'M1T' : $k->nama_kelas }}
-                                    </option>
-                                @endforeach
-                            </select>
-
-                            {{-- Filter Input Oleh (Chapter) --}}
-                            @if(in_array(strtolower($user->role), ['administrator', 'manager', 'marketing']) || $user->name === 'Agus Setyo')
-                                <select id="filterChapter" class="form-select form-select-sm modern-select">
-                                    <option value="">CHAPTER</option>
-                                    @if(isset($chapterList))
-                                        @foreach($chapterList as $ch)
-                                            <option value="{{ $ch->id }}" {{ request('chapter_id') == $ch->id ? 'selected' : '' }}>
-                                                {{ strtoupper($ch->name) }} {{ $ch->chapter ? '- ' . $ch->chapter : '' }}
-                                            </option>
-                                        @endforeach
-                                    @endif
-                                </select>
-                            @endif
-
-                            {{-- Filter Input Oleh (CS) --}}
-                            @if(in_array(strtolower($user->role), ['administrator', 'manager', 'marketing']) || $user->name === 'Agus Setyo')
-                                <select id="filterCS" class="form-select form-select-sm modern-select">
-                                    <option value="">TIM CS</option>
-                                    @foreach($csList as $cs)
-                                        <option value="{{ $cs->name }}" {{ request('cs_name') == $cs->name ? 'selected' : '' }}>
-                                            {{ $cs->name }}
+                            <div id="containerDaftarKelas" class="flex-column {{ (request('ikut_kelas') === '1' || request('ikut_kelas') === '0') ? 'd-flex' : 'd-none' }}" style="gap: 2px;">
+                                <label class="text-xs fw-bold mb-0 ml-2" style="font-size: 0.65rem; color: #555; text-transform: uppercase;">Pilih Kelas</label>
+                                <select id="filterDaftarKelas"
+                                    class="form-select form-select-sm modern-select">
+                                    <option value="">Pilih Kelas</option>
+                                    @foreach($kelas as $k)
+                                        <option value="{{ $k->id }}" {{ request('daftar_kelas') == $k->id ? 'selected' : '' }}>
+                                            {{ str_contains($k->nama_kelas, 'Muslim Indonesia') ? 'M1T' : $k->nama_kelas }}
                                         </option>
                                     @endforeach
                                 </select>
+                            </div>
+
+                             {{-- Filter Input Oleh (Chapter) --}}
+                            @if((in_array(strtolower($user->role), ['administrator', 'manager', 'marketing']) || $user->name === 'Agus Setyo') && request('view_type') !== 'cs')
+                                <div class="d-flex flex-column" style="gap: 2px;">
+                                    <label class="text-xs fw-bold mb-0 ml-2" style="font-size: 0.65rem; color: #555; text-transform: uppercase;">Pilih Chapter</label>
+                                    <select id="filterChapter" class="form-select form-select-sm modern-select">
+                                        <option value="">ALL CHAPTER</option>
+                                        @if(isset($chapterList))
+                                            @foreach($chapterList as $ch)
+                                                <option value="{{ $ch->id }}" {{ request('chapter_id') == $ch->id ? 'selected' : '' }}>
+                                                    {{ strtoupper($ch->name) }} {{ $ch->chapter ? '- ' . $ch->chapter : '' }}
+                                                </option>
+                                            @endforeach
+                                        @endif
+                                    </select>
+                                </div>
+                            @endif
+
+                            {{-- Filter Input Oleh (CS) --}}
+                            @if((in_array(strtolower($user->role), ['administrator', 'manager', 'marketing']) || $user->name === 'Agus Setyo') && request('view_type') !== 'chapter')
+                                <div class="d-flex flex-column" style="gap: 2px;">
+                                    <label class="text-xs fw-bold mb-0 ml-2" style="font-size: 0.65rem; color: #555; text-transform: uppercase;">Pilih Tim CS</label>
+                                    <select id="filterCS" class="form-select form-select-sm modern-select">
+                                        <option value="">ALL Tim CS</option>
+                                        @foreach($csList as $cs)
+                                            <option value="{{ $cs->name }}" {{ request('cs_name') == $cs->name ? 'selected' : '' }}>
+                                                {{ $cs->name }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
                             @endif
 
 
 
-                            {{-- Search --}}
-                             <div class="d-flex align-items-center flex-nowrap" style="gap: 3px;">
-                                 <input type="text" id="tableSearch" class="form-control form-control-sm"
-                                     style="width: 100px; border-radius: 50px; font-size: 0.75rem; height: 30px;"
-                                     placeholder="Cari..." value="{{ request('search') }}">
-                                 <button class="btn btn-primary btn-sm shadow-sm font-weight-bold px-2" type="button"
-                                     onclick="applyAllDatabaseFilters()" style="border-radius: 50px; height: 30px; white-space: nowrap; font-size: 0.75rem;">
-                                     <i class="fas fa-search mr-1"></i> TAMPILKAN
-                                 </button>
-                             </div>
+                            {{-- Search Group --}}
+                            <div class="modern-search-group">
+                                <input type="text" id="tableSearch" class="form-control form-control-sm modern-search-input"
+                                    style="width: 120px; height: 30px; font-size: 0.75rem;"
+                                    placeholder="Cari..." value="{{ request('search') }}">
+                                <button class="btn btn-primary btn-sm modern-search-btn" type="button"
+                                    onclick="applyAllDatabaseFilters()" style="height: 30px; font-size: 0.75rem;">
+                                    <i class="fas fa-search mr-1"></i> TAMPILKAN
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -729,14 +736,6 @@
                                 if (document.getElementById('statBulanLabel')) document.getElementById('statBulanLabel').innerText = data.stats.bulanLabel;
                             }
 
-                            // Update Interaksi Button Visibility
-                            const btnInteraksi = document.getElementById('btnInteraksi');
-                            if (url.searchParams.get('bulan') && url.searchParams.get('tahun')) {
-                                btnInteraksi.classList.remove('d-none');
-                            } else {
-                                btnInteraksi.classList.add('d-none');
-                            }
-
                             window.history.pushState({}, '', url.toString());
 
                             // Scroll to top of table
@@ -762,8 +761,6 @@
                     };
 
                     updateFilters({
-                        bulan: getVal('filterBulan'),
-                        tahun: getVal('filterTahun'),
                         ikut_kelas: getVal('filterIkutKelas'),
                         daftar_kelas: getVal('filterDaftarKelas'),
                         chapter_id: getVal('filterChapter'),
@@ -771,17 +768,40 @@
                         search: getVal('tableSearch'),
                         sumber: getVal('filterSumber'),
                         provinsi: getVal('filterProvinsi'),
-                        kota: getVal('filterKota')
+                        kota: getVal('filterKota'),
+                        potensi: getVal('filterPotensi'),
+                        potensi_kelas_id: getVal('filterPotensiKelas')
+                    });
+                }
+
+                function updatePotensiHeader(val) {
+                    let kelasFilter = document.getElementById('filterPotensiKelas');
+                    if (val === 'MBC') {
+                        if (kelasFilter) kelasFilter.classList.remove('d-none');
+                    } else {
+                        if (kelasFilter) {
+                            kelasFilter.classList.add('d-none');
+                            kelasFilter.value = '';
+                        }
+                    }
+                    
+                    // If we just want to show the dropdown without immediate filtering, we can stop here.
+                    // But usually header filters trigger immediate action.
+                    updateFilters({
+                        potensi: val,
+                        potensi_kelas_id: val === 'MBC' ? (kelasFilter ? kelasFilter.value : '') : ''
                     });
                 }
 
                 function toggleDaftarKelas(val) {
-                    let el = document.getElementById('filterDaftarKelas');
-                    // Tampilkan jika val == '1' (Sudah Pernah Ikut) atau val == '0' (Belum Pernah Ikut)
+                    let container = document.getElementById('containerDaftarKelas');
+                    if (!container) return;
                     if (val === '1' || val === '0') {
-                        el.classList.remove('d-none');
+                        container.classList.remove('d-none');
+                        container.classList.add('d-flex');
                     } else {
-                        el.classList.add('d-none');
+                        container.classList.add('d-none');
+                        container.classList.remove('d-flex');
                     }
                 }
 
@@ -904,18 +924,33 @@
                                 </th>
 
                                 @if(Auth::user()->role !== 'marketing' && !in_array($userRole, ['reseller', 'chapter']))
-                                    <th rowspan="2" style="width: 100px; vertical-align: middle;">
+                                    <th rowspan="2" style="width: 140px; vertical-align: middle;">
                                         <div class="d-flex flex-column gap-1">
                                             <div class="text-white small fw-bold mb-1" style="font-size: 0.7rem;">POTENSI</div>
                                             <select id="filterPotensi"
                                                 class="form-control form-control-sm border-0 bg-white text-dark fw-bold p-0 text-center shadow-none"
                                                 style="font-size: 0.7rem; cursor: pointer; height: 22px;"
-                                                onchange="updateFilter('potensi', this.value)">
+                                                onchange="updatePotensiHeader(this.value)">
                                                 <option value="all">ALL</option>
                                                 <option value="MBC" {{ request('potensi') == 'MBC' ? 'selected' : '' }}>MBC
                                                 </option>
                                                 <option value="SMI" {{ request('potensi') == 'SMI' ? 'selected' : '' }}>M1T
                                                 </option>
+                                            </select>
+                                            
+                                            {{-- Filter Dependent MBC --}}
+                                            <select id="filterPotensiKelas" 
+                                                class="form-control form-control-sm border-0 bg-white text-dark small mt-1 {{ request('potensi') == 'MBC' ? '' : 'd-none' }}"
+                                                style="font-size: 0.65rem; height: 20px; padding: 0 2px;"
+                                                onchange="updateFilter('potensi_kelas_id', this.value)">
+                                                <option value="">- Pilih Kelas -</option>
+                                                @foreach($kelas as $k)
+                                                    @if(!str_contains($k->nama_kelas, 'Muslim Indonesia'))
+                                                        <option value="{{ $k->id }}" {{ request('potensi_kelas_id') == $k->id ? 'selected' : '' }}>
+                                                            {{ $k->nama_kelas }}
+                                                        </option>
+                                                    @endif
+                                                @endforeach
                                             </select>
                                         </div>
                                     </th>

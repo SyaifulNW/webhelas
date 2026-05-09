@@ -404,7 +404,7 @@
 
                         {{-- Status Filter --}}
                         <div class="d-flex flex-column" style="gap: 2px;">
-                            <label class="mb-0 text-white font-weight-bold" style="font-size: 0.65rem; margin-left: 2px; letter-spacing: 0.5px;">STATUS</label>
+                            <label class="mb-0 text-white font-weight-bold" style="font-size: 0.65rem; margin-left: 2px; letter-spacing: 0.5px;">STATUS PESERTA</label>
                             <select form="sppFilterForm" name="filter_status" id="smi_filter_status" onchange="updateSmiFilters()" class="form-control form-control-sm border-0 bg-light text-primary font-weight-bold" style="font-size: 0.75rem; height: 30px; width: 90px;">
                                 <option value="all" {{ request('filter_status', 'all') == 'all' ? 'selected' : '' }}>ALL</option>
                                 <option value="Aktif" {{ request('filter_status') == 'Aktif' ? 'selected' : '' }}>AKTIF</option>
@@ -426,8 +426,8 @@
 
                         {{-- SPP Bulan --}}
                         <div class="d-flex flex-column" style="gap: 2px;">
-                            <label class="mb-0 text-white font-weight-bold" style="font-size: 0.65rem; margin-left: 2px; letter-spacing: 0.5px;">BLN SPP</label>
-                            <select form="sppFilterForm" name="filter_spp_month" id="smi_filter_spp_month" onchange="updateSmiFilters()" class="form-control form-control-sm border-0 bg-light" style="width: 100px; font-size: 0.75rem; height: 30px;">
+                            <label class="mb-0 text-white font-weight-bold" style="font-size: 0.65rem; margin-left: 2px; letter-spacing: 0.5px;">PEMBAYARAN SPP</label>
+                            <select form="sppFilterForm" name="filter_spp_month" id="smi_filter_spp_month" onchange="updateSmiFilters()" class="form-control form-control-sm border-0 bg-light" style="width: 110px; font-size: 0.75rem; height: 30px;">
                                 <option value="all" {{ request('filter_spp_month', 'all') == 'all' ? 'selected' : '' }}>ALL</option>
                                 @foreach($monthsRaw as $key => $val)
                                     <option value="{{ $key }}" {{ request('filter_spp_month') == $key ? 'selected' : '' }}>{{ $val }}</option>
@@ -437,8 +437,8 @@
 
                         {{-- SPP Status --}}
                         <div class="d-flex flex-column" style="gap: 2px;">
-                            <label class="mb-0 text-white font-weight-bold" style="font-size: 0.65rem; margin-left: 2px; letter-spacing: 0.5px;">STAT SPP</label>
-                            <select form="sppFilterForm" name="filter_spp_status" id="smi_filter_spp_status" onchange="updateSmiFilters()" class="form-control form-control-sm border-0 bg-light" style="width: 90px; font-size: 0.75rem; height: 30px;">
+                            <label class="mb-0 text-white font-weight-bold" style="font-size: 0.65rem; margin-left: 2px; letter-spacing: 0.5px;">STATUS SPP</label>
+                            <select form="sppFilterForm" name="filter_spp_status" id="smi_filter_spp_status" onchange="updateSmiFilters()" class="form-control form-control-sm border-0 bg-light" style="width: 100px; font-size: 0.75rem; height: 30px;">
                                 <option value="all" {{ request('filter_spp_status', 'all') == 'all' ? 'selected' : '' }}>ALL</option>
                                 <option value="1" {{ request('filter_spp_status') === '1' ? 'selected' : '' }}>Lunas</option>
                                 <option value="0" {{ request('filter_spp_status') === '0' ? 'selected' : '' }}>Belum</option>
@@ -456,17 +456,18 @@
                             </select>
                         </div>
 
-                        {{-- Sortir --}}
+                        {{-- Level Filter (Linda Only) --}}
+                        @if(auth()->user()->name === 'Linda')
                         <div class="d-flex flex-column" style="gap: 2px;">
-                            <label class="mb-0 text-white font-weight-bold" style="font-size: 0.65rem; margin-left: 2px; letter-spacing: 0.5px;">SORTIR</label>
-                            <select form="sppFilterForm" name="filter_sort" id="smi_filter_sort" onchange="updateSmiFilters()" class="form-control form-control-sm border-0 bg-light" style="width: 100px; font-size: 0.75rem; height: 30px;">
-                                <option value="priority" {{ request('filter_sort') == 'priority' ? 'selected' : '' }}>Prioritas</option>
-                                <option value="name_asc" {{ request('filter_sort') == 'name_asc' ? 'selected' : '' }}>Nama A-Z</option>
-                                <option value="name_desc" {{ request('filter_sort') == 'name_desc' ? 'selected' : '' }}>Nama Z-A</option>
-                                <option value="newest" {{ request('filter_sort') == 'newest' ? 'selected' : '' }}>Terbaru</option>
-                                <option value="oldest" {{ request('filter_sort') == 'oldest' ? 'selected' : '' }}>Terlama</option>
+                            <label class="mb-0 text-white font-weight-bold" style="font-size: 0.65rem; margin-left: 2px; letter-spacing: 0.5px;">LEVEL</label>
+                            <select form="sppFilterForm" name="filter_level" id="smi_filter_level" onchange="updateSmiFilters()" class="form-control form-control-sm border-0 bg-light text-primary font-weight-bold" style="width: 110px; font-size: 0.75rem; height: 30px;">
+                                <option value="all" {{ request('filter_level', 'all') == 'all' ? 'selected' : '' }}>ALL</option>
+                                <option value="Grow Up" {{ request('filter_level') == 'Grow Up' ? 'selected' : '' }}>GROW UP</option>
+                                <option value="Start Up" {{ request('filter_level') == 'Start Up' ? 'selected' : '' }}>START UP</option>
                             </select>
                         </div>
+                        @endif
+
 
                         <a href="javascript:void(0)" onclick="resetSmiFilters()" class="text-white ml-1 mb-1" title="Reset Filter">
                             <i class="fas fa-sync-alt"></i>
@@ -766,34 +767,32 @@
         function toggleSppLunasDirectly(checkbox) {
             const id = checkbox.dataset.id;
             const month = checkbox.dataset.month;
-            const plannedNominal = checkbox.dataset.plannedNominal; // New: extract planned nominal
+            const plannedNominal = checkbox.dataset.plannedNominal;
+            // [USER_REQUEST] Use level-based nominal: Grow = 1.500.000, Start = 1.000.000
+            const levelNominal = checkbox.dataset.levelNominal || '1000000';
             const input = document.getElementById(`spp_${month}_${id}`);
 
             if (input) {
-                // Determine new value: 
-                // If checking: use planned nominal (if any) or default 1M. 
-                // If unchecking, set to 0.
                 let newVal = '0';
                 if (checkbox.checked) {
-                    newVal = plannedNominal ? plannedNominal : '1.000.000';
-                    // Format for currency input display
-                    if (newVal.indexOf('.') === -1) {
-                        newVal = new Intl.NumberFormat('id-ID').format(newVal);
+                    if (plannedNominal) {
+                        newVal = plannedNominal;
+                        if (newVal.indexOf('.') === -1) {
+                            newVal = new Intl.NumberFormat('id-ID').format(newVal);
+                        }
+                    } else {
+                        // Use level-based nominal
+                        newVal = new Intl.NumberFormat('id-ID').format(parseInt(levelNominal));
                     }
                 }
 
                 input.value = newVal;
 
-                // Update accent color for manual feedback
                 if (checkbox.checked) {
                     checkbox.style.accentColor = '#1cc88a'; // Green for manual
                 }
 
-                // Call existing quick update
                 quickUpdateField(input, id, `spp_${month}`);
-
-                // Refresh slightly after update to show current state correctly
-                // Refresh table instead of location.reload() for better UX
                 setTimeout(() => updateSmiFilters(), 500);
             }
         }
@@ -802,7 +801,8 @@
             const val = input.value.replace(/[^0-9]/g, '');
             const checkbox = document.querySelector(`.spp-checkbox[data-id="${id}"][data-month="${month}"]`);
             if (checkbox) {
-                checkbox.checked = (parseInt(val || 0) >= 1000000);
+                const levelNominal = parseInt(checkbox.dataset.levelNominal || '1000000');
+                checkbox.checked = (parseInt(val || 0) >= levelNominal);
             }
         }
 
@@ -1005,6 +1005,7 @@
                 filter_spp_status: getVal('smi_filter_spp_status'),
                 filter_year: getVal('smi_filter_year'),
                 filter_sort: getVal('smi_filter_sort'),
+                filter_level: getVal('smi_filter_level'),
                 search: getVal('smi_search')
             });
 
@@ -1105,6 +1106,7 @@
                 'smi_filter_year',
                 'smi_filter_sort',
                 'smi_filter_approval',
+                'smi_filter_level',
                 'smi_search'
             ];
             ids.forEach(id => {

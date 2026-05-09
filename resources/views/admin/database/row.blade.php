@@ -17,7 +17,7 @@
         <div class="d-flex flex-column gap-2" style="min-width: 160px;">
             <div contenteditable="{{ $canEdit ? 'true' : 'false' }}"
                 class="{{ $canEdit ? 'editable' : '' }} fw-bold {{ $item->is_no_potensi ? 'text-white' : 'text-dark' }} text-nowrap p-1 px-2 shadow-sm"
-                data-field="nama"
+                data-field="nama" data-placeholder="(Masukkan Nama)"
                 style="font-size: 0.95rem; border: 1px solid #dee2e6; border-radius: 10px; background: {{ $item->is_no_potensi ? '#e74a3b' : '#fff' }}; transition: all 0.3s; min-height: 32px; display: flex; align-items: center;"
                 onfocus="this.style.borderColor='#4e73df'; this.style.boxShadow='0 0 0 0.15rem rgba(78, 115, 223, 0.25)'"
                 onblur="this.style.borderColor='#dee2e6'; this.style.boxShadow='none'">

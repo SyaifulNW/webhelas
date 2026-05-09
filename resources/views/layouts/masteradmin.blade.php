@@ -480,12 +480,18 @@
                         </li>
                     @endif
 
-                    {{-- 2. DATABASE CS --}}
+                    {{-- 2. DATABASE CS HELAS & CHAPTER --}}
                     @if(\App\Models\Menu::isActive('database_cs'))
-                        <li class="nav-item {{ request()->routeIs('admin.database.database') && !request('view') ? 'active' : '' }}">
-                            <a class="nav-link" href="{{ route('admin.database.database') }}" title="DATABASE">
+                        <li class="nav-item {{ request()->routeIs('admin.database.database') && request('view_type') == 'cs' ? 'active' : '' }}">
+                            <a class="nav-link" href="{{ route('admin.database.database', ['view_type' => 'cs']) }}" title="DATABASE CS HELAS">
                                 <i class="fas fa-fw fa-database"></i>
-                                <span><strong>DATABASE</strong></span>
+                                <span><strong>DATABASE CS HELAS</strong></span>
+                            </a>
+                        </li>
+                        <li class="nav-item {{ request()->routeIs('admin.database.database') && request('view_type') == 'chapter' ? 'active' : '' }}">
+                            <a class="nav-link" href="{{ route('admin.database.database', ['view_type' => 'chapter']) }}" title="DATABASE CHAPTER">
+                                <i class="fas fa-fw fa-university"></i>
+                                <span><strong>DATABASE CHAPTER</strong></span>
                             </a>
                         </li>
                     @endif

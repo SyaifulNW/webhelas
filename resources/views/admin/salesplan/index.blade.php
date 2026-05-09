@@ -1972,7 +1972,6 @@ $(document).ready(function() {
                 <th style="padding: 10px; border: 1px solid #ccc;">Keterangan</th>
                 <th style="padding: 10px; border: 1px solid #ccc;">Tanggal Closing</th>
                 <th style="padding: 10px; border: 1px solid #ccc;">Nama CS Closing</th>
-                <th style="padding: 10px; border: 1px solid #ccc; text-align: center;">Detail</th>
             </tr>
         </thead>
    <tbody>
@@ -1989,7 +1988,7 @@ $(document).ready(function() {
                     ? \Carbon\Carbon::parse($p->pesertaSmi->tanggal_masuk) 
                     : ($p->updated_at ? \Carbon\Carbon::parse($p->updated_at) : null));
             $pMonth = $closingDate ? $closingDate->locale('id')->isoFormat('MMMM Y') : 'Tanpa Tanggal';
-            $colspanHeader = ($isCsMbc || $kelasFilter == 'Start-Up Muslim Indonesia' || request('type') == 'smi' || request('type') == 'mbc') ? 7 : 5;
+            $colspanHeader = ($isCsMbc || $kelasFilter == 'Start-Up Muslim Indonesia' || request('type') == 'smi' || request('type') == 'mbc') ? 6 : 4;
         @endphp
         
         @if(empty($bulanFilter) && $currentClosingMonth !== $pMonth)
@@ -2000,6 +1999,10 @@ $(document).ready(function() {
             </tr>
             @php $currentClosingMonth = $pMonth; @endphp
         @endif
+
+        @php
+            $canEditThisParticipant = (strtolower(auth()->user()->role) === 'administrator' || (strtolower(auth()->user()->role) === 'cs-mbc' && $p->created_by == auth()->id()));
+        @endphp
 
         <tr style="background-color: #e3f2fd;">
             <td style="padding: 8px; border: 1px solid #ccc;">{{ $loop->iteration }}</td>
@@ -2021,45 +2024,34 @@ $(document).ready(function() {
                         $nominalAwal = $p->nominal;
                     }
                 @endphp
-                {{ $nominalAwal ? 'Rp ' . number_format((float)str_replace('.', '', (string)$nominalAwal), 0, ',', '.') : '-' }}
+                @if($canEditThisParticipant)
+                    <div class="d-flex align-items-center gap-1 justify-content-center">
+                        <span class="small text-muted">Rp</span>
+                        <span contenteditable="true" 
+                              class="editable nominal-editable"
+                              data-id="{{ $p->id }}"
+                              data-field="nominal">
+                              {{ number_format((float)str_replace('.', '', (string)$nominalAwal), 0, ',', '.') }}
+                        </span>
+                    </div>
+                @else
+                    <div class="d-flex align-items-center gap-1 justify-content-center">
+                        <span class="small text-muted">Rp</span>
+                        <span>{{ $nominalAwal ? number_format((float)str_replace('.', '', (string)$nominalAwal), 0, ',', '.') : '-' }}</span>
+                    </div>
+                @endif
             </td>
             @endif
-            {{-- KETERANGAN (Read-only) --}}
+            {{-- KETERANGAN --}}
             <td style="padding: 8px; border: 1px solid #ccc; max-width: 200px; white-space: normal;">
                 {{ $p->keterangan ?: '-' }}
             </td>
-            {{-- TGL CLOSING (Read-only Display) --}}
+            {{-- TGL CLOSING --}}
             <td style="padding: 8px; border: 1px solid #ccc; width: 150px; text-align: center;">
                 {{ $closingDate ? $closingDate->format('d/m/Y') : '-' }}
             </td>
             <td style="padding: 8px; border: 1px solid #ccc;">
                 {{ \App\Models\User::find($p->created_by)->name ?? '-' }}
-            </td>
-            <td style="padding: 8px; border: 1px solid #ccc; text-align: center;">
-                @php
-                    $customArr2 = [];
-                    if ($p->pesertaSmi) {
-                        for ($i = 1; $i <= 12; $i++) {
-                            $n = $p->pesertaSmi->{"spp_$i"};
-                            $t = $p->pesertaSmi->{"tanggal_spp_$i"};
-                            if ($n || $t) {
-                                $customArr2[] = ['month' => $i, 'nominal' => $n, 'tanggal' => $t];
-                            }
-                        }
-                    }
-                @endphp
-                <button type="button" class="btn btn-sm btn-info btn-month-detail-trigger"
-                    data-name="{{ $p->nama }}"
-                    data-custom-payments='@json($customArr2)'
-                    data-selection='@json($p->selected_months ?? [])'
-                    data-tanggal-masuk="{{ $p->pesertaSmi ? ($p->pesertaSmi->tanggal_masuk ? \Carbon\Carbon::parse($p->pesertaSmi->tanggal_masuk)->format('Y-m-d') : '') : '' }}"
-                    data-tanggal-selesai="{{ $p->pesertaSmi ? ($p->pesertaSmi->tanggal_selesai ? \Carbon\Carbon::parse($p->pesertaSmi->tanggal_selesai)->format('Y-m-d') : '') : '' }}"
-                    data-spp-awal="{{ $p->pesertaSmi ? $p->pesertaSmi->spp_awal : '' }}"
-                    data-biaya-pendaftaran="{{ $p->pesertaSmi ? $p->pesertaSmi->biaya_pendaftaran : '' }}"
-                    data-pembayaran-spp="{{ $p->pesertaSmi ? $p->pesertaSmi->pembayaran_spp : '' }}"
-                    data-total-pembayaran="{{ $p->pesertaSmi ? $p->pesertaSmi->total_pembayaran : '' }}">
-                    <i class="fas fa-eye"></i> Detail
-                </button>
             </td>
         </tr>
         @php 
@@ -2091,13 +2083,12 @@ $(document).ready(function() {
             <tr style="background: #f2f2f2; font-weight: bold; color: #040e0fff;">
                 <td colspan="{{ ($isCsMbc || $kelasFilter == 'Start-Up Muslim Indonesia' || request('type') == 'smi' || request('type') == 'mbc') ? 3 : 2 }}" style="padding: 10px; border: 1px solid #ccc; text-align: right;">Total Omset</td>
                 <td style="padding: 10px; border: 1px solid #ccc;">
-                    @if(request('type') == 'smi' || $kelasFilter == 'Start-Up Muslim Indonesia')
-                        Rp {{ number_format($totalSppAwal, 0, ',', '.') }}
-                    @else
-                        Rp {{ number_format($totalNominal, 0, ',', '.') }}
-                    @endif
+                    <div class="d-flex align-items-center gap-1 justify-content-center">
+                        <span class="small text-muted">Rp</span>
+                        <span>{{ number_format((request('type') == 'smi' || $kelasFilter == 'Start-Up Muslim Indonesia') ? $totalSppAwal : $totalNominal, 0, ',', '.') }}</span>
+                    </div>
                 </td>
-                <td colspan="4" style="border: 1px solid #ccc;"></td>
+                <td colspan="3" style="border: 1px solid #ccc;"></td>
             </tr>
 
             <!-- Target Omset -->
@@ -2116,7 +2107,10 @@ $(document).ready(function() {
                             $targetOmsetVal = isset($targetOmsetGlobal) && $targetOmsetGlobal > 0 ? $targetOmsetGlobal : 50000000;
                         }
                     @endphp
-                    Rp {{ number_format($targetOmsetVal, 0, ',', '.') }}
+                    <div class="d-flex align-items-center gap-1 justify-content-center">
+                        <span class="small text-success opacity-75">Rp</span>
+                        <span>{{ number_format($targetOmsetVal, 0, ',', '.') }}</span>
+                    </div>
                 </td>
                            <td style="padding: 10px; border: 1px solid #ccc;"></td>
             </tr>

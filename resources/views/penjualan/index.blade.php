@@ -79,7 +79,7 @@ function initSalesChart(datasets) {
 
     // Chart.js 2.x Syntax (Standard for SB Admin 2)
     salesChart = new Chart(ctx, {
-        type: 'line',
+        type: 'bar',
         data: {
             labels: ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'],
             datasets: datasets

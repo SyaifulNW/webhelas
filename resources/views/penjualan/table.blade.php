@@ -188,7 +188,7 @@
         <div class="card-header bg-gradient bg-indigo text-white py-3 border-0" style="background: linear-gradient(135deg, #6610f2 0%, #4e73df 100%) !important;">
             <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
                 <div class="fw-bold fs-5">
-                    <i class="fa-solid fa-chart-line me-2"></i> Grafik Penjualan CS Per Bulan
+                    <i class="fa-solid fa-chart-bar me-2"></i> Grafik Penjualan CS Per Bulan
                 </div>
                 <div class="d-flex align-items-center gap-2">
                     <span class="small">Pilih Tahun:</span>

@@ -191,8 +191,8 @@ class PenjualanController extends Controller
             $uRealisasi = $uTarget > 0 ? round(($userNominal / $uTarget) * 100) : 0;
             $uConv = $totalLeads > 0 ? round(($userCount / $totalLeads) * 100) : 0;
 
-            // [USER_REQUEST] Always show Yasmin and Linda even if 0 omset
-            $isTargetCS = in_array($user->name, ['Yasmin', 'Linda']);
+            // [USER_REQUEST] Always show active cs-mbc even if 0 omset
+            $isTargetCS = ($user->role === 'cs-mbc' && $user->is_active);
             if ($userNominal > 0 || $userCount > 0 || $isTargetCS) {
                 $salesData[] = [
                     'nama' => $user->name,
@@ -472,7 +472,7 @@ class PenjualanController extends Controller
                 'label' => $user->name,
                 'data' => $userMonthlyData,
                 'borderColor' => $colors[$idx % count($colors)],
-                'backgroundColor' => 'transparent',
+                'backgroundColor' => $colors[$idx % count($colors)],
                 'borderWidth' => 3,
                 'pointBackgroundColor' => $colors[$idx % count($colors)],
                 'pointBorderColor' => '#fff',

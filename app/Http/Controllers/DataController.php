@@ -28,7 +28,7 @@ use App\Models\SalesPlan; // Ensure you import the Salesplan model
         try {
             $user = Auth::user();
             $newData = new Data();
-            $newData->nama = '(Edit Nama)';
+            $newData->nama = '';
             $newData->status_peserta = 'peserta_baru';
             $newData->created_by = $user->name;
             $newData->created_by_role = $user->role;
@@ -116,8 +116,13 @@ use App\Models\SalesPlan; // Ensure you import the Salesplan model
             }, 'salesplan.kelas', 'createdBy'])
             ->whereIn('status_peserta', ['peserta_baru', 'pindah_salesplan']);
 
-        // CS-MBC Role -> CANNOT see data from Chapter/Reseller/Agen
-        if ($userRole === 'cs-mbc') {
+        $viewType = $request->input('view_type');
+        if ($viewType === 'cs') {
+            $query->where('created_by_role', 'cs-mbc');
+        } elseif ($viewType === 'chapter') {
+            $query->whereIn('created_by_role', ['chapter', 'reseller', 'agen']);
+        } elseif ($userRole === 'cs-mbc') {
+            // Default behavior for CS-MBC role
             $query->whereNotIn('created_by_role', ['chapter', 'reseller', 'agen']);
         }
 
@@ -271,15 +276,24 @@ use App\Models\SalesPlan; // Ensure you import the Salesplan model
             $query->where('bant', $bantFilter);
         }
 
-        // Filter Potensi (Cold, Warm, Hot)
+        // Filter Potensi
         $potensiFilter = $request->input('potensi');
+        $potensiKelasFilter = $request->input('potensi_kelas_id');
+
         if (!empty($potensiFilter) && $potensiFilter !== 'all') {
-            $query->where(function($q) use ($potensiFilter) {
-                $q->where('potensi', $potensiFilter)
-                  ->orWhere('potensi', strtolower($potensiFilter))
-                  ->orWhere('potensi', strtoupper($potensiFilter))
-                  ->orWhere('situasi_bisnis', 'like', '%Kategori: ' . strtoupper($potensiFilter) . '%');
-            });
+            if (in_array(strtoupper($potensiFilter), ['MBC', 'SMI'])) {
+                $query->where('potensi', strtoupper($potensiFilter));
+                if (!empty($potensiKelasFilter)) {
+                    $query->where('kelas_id', $potensiKelasFilter);
+                }
+            } else {
+                $query->where(function($q) use ($potensiFilter) {
+                    $q->where('potensi', $potensiFilter)
+                      ->orWhere('potensi', strtolower($potensiFilter))
+                      ->orWhere('potensi', strtoupper($potensiFilter))
+                      ->orWhere('situasi_bisnis', 'like', '%Kategori: ' . strtoupper($potensiFilter) . '%');
+                });
+            }
         }
 
         // Filter Status (Follow-up Status from SalesPlan) - Only for Chapter/Reseller/Agen as requested
@@ -338,9 +352,11 @@ use App\Models\SalesPlan; // Ensure you import the Salesplan model
         // KPI Query: Targets ALL data input (ignoring status_peserta) to reflect Acquisition Performance
         $kpiQuery = \App\Models\Data::query();
 
-        // CS-MBC Role -> CANNOT see data from Chapter/Reseller/Agen for stats too
-        if ($userRole === 'cs-mbc') {
-            $kpiQuery->whereNotIn('created_by_role', ['chapter', 'reseller', 'agen']);
+        // Filter by view_type or CS-MBC role for stats
+        if ($viewType === 'cs' || $userRole === 'cs-mbc') {
+            $kpiQuery->where('created_by_role', 'cs-mbc');
+        } elseif ($viewType === 'chapter') {
+            $kpiQuery->whereIn('created_by_role', ['chapter', 'reseller', 'agen']);
         }
         
         // Re-apply Permission/Ownership Logic to KPI Query
