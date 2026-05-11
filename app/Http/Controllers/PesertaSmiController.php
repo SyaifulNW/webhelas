@@ -155,7 +155,7 @@ class PesertaSmiController extends Controller
         }
 
         // 1. SCOPE FILTERS (Global Dashboard Scope: Month, Year, Entry Period)
-        $sppMonth = $request->get('filter_spp_month', 'all');
+        $sppMonth = $request->get('filter_spp_month', date('n'));
         $yearFilter = $request->get('filter_year', date('Y'));
         
         if ($sppMonth !== 'all') {
@@ -315,6 +315,10 @@ class PesertaSmiController extends Controller
             'nominal_spp' => 0,
             'count_belum' => 0,
             'nominal_belum' => 0,
+            'count_total_spp' => 0,
+            'nominal_total_spp' => 0,
+            'count_total_income' => 0,
+            'nominal_total_income' => 0,
             'is_month_filter' => ($sppMonth !== 'all'),
             'filter_month_name' => ($sppMonth !== 'all' ? ($monthsRaw[(int) $sppMonth] ?? '') : '')
         ];
@@ -466,8 +470,12 @@ class PesertaSmiController extends Controller
             }
 
             // Totals
-            $stats['sudah_bayar_total'] = $stats['count_closing'] + $stats['count_spp']; // For total revenue tracking
             $stats['nominal_total_paid'] = $stats['nominal_closing'] + $stats['nominal_spp'];
+            
+            $stats['count_total_spp'] = $stats['count_spp'] + $stats['count_belum'];
+            $stats['nominal_total_spp'] = $stats['nominal_spp'] + $stats['nominal_belum'];
+            $stats['count_total_income'] = $stats['count_closing'] + $stats['count_spp'];
+            $stats['nominal_total_income'] = $stats['nominal_total_paid'];
 
             // For the cards (specifically keeping them separate as requested)
             // 'sudah_bayar' in backward-compat will now mean strictly the Green one if that's what view expects

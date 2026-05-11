@@ -264,88 +264,128 @@
                 opacity: 0.8;
             }
             .stat-value-main {
-                font-size: 1.8rem;
+                font-size: 1.4rem;
                 line-height: 1;
             }
             .stat-value-sub {
-                font-size: 1rem;
+                font-size: 0.85rem;
                 font-weight: 700;
+            }
+            .stat-card-premium .card-body {
+                padding: 0.75rem !important;
             }
             .bg-gradient-blue { background: linear-gradient(135deg, #4e73df 0%, #224abe 100%); }
             .bg-gradient-green { background: linear-gradient(135deg, #1cc88a 0%, #13855c 100%); }
             .bg-gradient-red { background: linear-gradient(135deg, #e74a3b 0%, #be2617 100%); }
             .bg-gradient-info { background: linear-gradient(135deg, #36b9cc 0%, #258391 100%); }
             .bg-gradient-yellow { background: linear-gradient(135deg, #f6c23e 0%, #dda20a 100%); }
+            .col-stat-7 {
+                flex: 0 0 14.28%;
+                max-width: 14.28%;
+                padding-left: 6px;
+                padding-right: 6px;
+            }
+            .stat-label-mini {
+                font-size: 0.6rem;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+            .stat-value-main {
+                font-size: 1.25rem;
+            }
+            .stat-value-sub {
+                font-size: 0.8rem;
+            }
+            .stat-card-premium .card-body {
+                padding: 0.6rem 0.75rem !important;
+            }
         </style>
 
         <!-- Card Stats Section -->
-        <div class="col-xl-2 col-md-4 mb-3">
-            <div class="card stat-card-premium bg-gradient-blue text-white shadow-sm h-100">
-                <div class="card-body py-3 px-3 position-relative">
-                    <div class="stat-label-mini mb-1">Total Peserta</div>
-                    <div class="stat-value-main font-weight-bold" id="stat-total">{{ number_format($stats['total']) }}</div>
-                    <i class="fas fa-users stat-icon-bg"></i>
+        <div class="col-12 mb-3">
+            <div class="row flex-nowrap" style="margin-left: -6px; margin-right: -6px;">
+                <div class="col-stat-7 mb-2">
+                    <div class="card stat-card-premium bg-gradient-blue text-white shadow-sm h-100">
+                        <div class="card-body position-relative">
+                            <div class="stat-label-mini mb-1">Total Peserta</div>
+                            <div class="stat-value-main font-weight-bold" id="stat-total">{{ number_format($stats['total']) }}</div>
+                            <i class="fas fa-users stat-icon-bg"></i>
+                        </div>
+                    </div>
                 </div>
-            </div>
-        </div>
 
-        <div class="col-xl-2 col-md-4 mb-3">
-            <div class="card stat-card-premium bg-gradient-green text-white shadow-sm h-100">
-                <div class="card-body py-3 px-3 position-relative">
-                    <div class="stat-label-mini mb-1">Peserta Aktif</div>
-                    <div class="stat-value-main font-weight-bold" id="stat-aktif">{{ number_format($stats['aktif']) }}</div>
-                    <i class="fas fa-user-check stat-icon-bg"></i>
+                <div class="col-stat-7 mb-2">
+                    <div class="card stat-card-premium bg-gradient-green text-white shadow-sm h-100">
+                        <div class="card-body position-relative">
+                            <div class="stat-label-mini mb-1">Peserta Aktif</div>
+                            <div class="stat-value-main font-weight-bold" id="stat-aktif">{{ number_format($stats['aktif']) }}</div>
+                            <i class="fas fa-user-check stat-icon-bg"></i>
+                        </div>
+                    </div>
                 </div>
-            </div>
-        </div>
 
-        <div class="col-xl-2 col-md-4 mb-3">
-            <div class="card stat-card-premium bg-gradient-red text-white shadow-sm h-100">
-                <div class="card-body py-3 px-3 position-relative">
-                    <div class="stat-label-mini mb-1">Peserta Cuti</div>
-                    <div class="stat-value-main font-weight-bold" id="stat-cuti">{{ number_format($stats['cuti']) }}</div>
-                    <i class="fas fa-user-slash stat-icon-bg"></i>
+                <div class="col-stat-7 mb-2">
+                    <div class="card stat-card-premium bg-gradient-red text-white shadow-sm h-100">
+                        <div class="card-body position-relative">
+                            <div class="stat-label-mini mb-1">Peserta Cuti</div>
+                            <div class="stat-value-main font-weight-bold" id="stat-cuti">{{ number_format($stats['cuti']) }}</div>
+                            <i class="fas fa-user-slash stat-icon-bg"></i>
+                        </div>
+                    </div>
                 </div>
-            </div>
-        </div>
 
         @php
             $isMonthFilter = ($stats['is_month_filter'] ?? false);
             $monthName = $stats['filter_month_name'] ?? '';
         @endphp
 
-        <!-- MONTHLY CARDS -->
-        <div class="col-xl-2 col-md-6 mb-3 stat-month-only {{ $isMonthFilter ? '' : 'd-none' }}">
-            <div class="card stat-card-premium shadow-sm h-100 border-bottom-primary" style="background: #fff; border-left: 4px solid #4e73df;">
-                <div class="card-body py-3 px-3">
-                    <div class="stat-label-mini text-primary mb-1">Closing (Blue) <span class="stat-month-label">{{ $monthName }}</span></div>
-                    <div class="d-flex align-items-baseline">
-                        <div class="stat-value-main font-weight-bold text-gray-800 mr-2" id="stat-count-closing">{{ number_format($stats['count_closing'] ?? 0) }}</div>
-                        <div class="stat-value-sub text-primary" id="stat-nom-closing">Rp {{ number_format($stats['nominal_closing'] ?? 0, 0, ',', '.') }}</div>
+                <!-- MONTHLY CARDS -->
+                <div class="col-stat-7 mb-2 stat-month-only {{ $isMonthFilter ? '' : 'd-none' }}">
+                    <div class="card stat-card-premium shadow-sm h-100 border-bottom-primary" style="background: #fff; border-left: 4px solid #4e73df;">
+                        <div class="card-body">
+                            <div class="stat-label-mini text-primary mb-1">Closing (Blue) <span class="stat-month-label">{{ $monthName }}</span></div>
+                            <div class="d-flex align-items-baseline">
+                                <div class="stat-value-main font-weight-bold text-gray-800 mr-2" id="stat-count-closing">{{ number_format($stats['count_closing'] ?? 0) }}</div>
+                                <div class="stat-value-sub text-primary" id="stat-nom-closing">Rp {{ number_format($stats['nominal_closing'] ?? 0, 0, ',', '.') }}</div>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </div>
-        </div>
 
-        <div class="col-xl-2 col-md-6 mb-3 stat-month-only {{ $isMonthFilter ? '' : 'd-none' }}">
-            <div class="card stat-card-premium shadow-sm h-100 border-bottom-success" style="background: #fff; border-left: 4px solid #1cc88a;">
-                <div class="card-body py-3 px-3">
-                    <div class="stat-label-mini text-success mb-1">Sudah Bayar <span class="stat-month-label">{{ $monthName }}</span></div>
-                    <div class="d-flex align-items-baseline">
-                        <div class="stat-value-main font-weight-bold text-gray-800 mr-2" id="stat-count-spp">{{ number_format($stats['count_spp'] ?? 0) }}</div>
-                        <div class="stat-value-sub text-success" id="stat-nom-spp">Rp {{ number_format($stats['nominal_spp'] ?? 0, 0, ',', '.') }}</div>
+                <div class="col-stat-7 mb-2 stat-month-only {{ $isMonthFilter ? '' : 'd-none' }}">
+                    <div class="card stat-card-premium shadow-sm h-100 border-bottom-success" style="background: #fff; border-left: 4px solid #1cc88a;">
+                        <div class="card-body">
+                            <div class="stat-label-mini text-success mb-1">Sudah Bayar <span class="stat-month-label">{{ $monthName }}</span></div>
+                            <div class="d-flex align-items-baseline">
+                                <div class="stat-value-main font-weight-bold text-gray-800 mr-2" id="stat-count-spp">{{ number_format($stats['count_spp'] ?? 0) }}</div>
+                                <div class="stat-value-sub text-success" id="stat-nom-spp">Rp {{ number_format($stats['nominal_spp'] ?? 0, 0, ',', '.') }}</div>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </div>
-        </div>
 
-        <div class="col-xl-2 col-md-6 mb-3 stat-month-only {{ $isMonthFilter ? '' : 'd-none' }}">
-            <div class="card stat-card-premium shadow-sm h-100 border-bottom-warning" style="background: #fff; border-left: 4px solid #f6c23e;">
-                <div class="card-body py-3 px-3">
-                    <div class="stat-label-mini text-warning mb-1">Blm Bayar (Potensi) <span class="stat-month-label">{{ $monthName }}</span></div>
-                    <div class="d-flex align-items-baseline">
-                        <div class="stat-value-main font-weight-bold text-gray-800 mr-2" id="stat-count-belum">{{ number_format($stats['count_belum'] ?? 0) }}</div>
-                        <div class="stat-value-sub text-warning" id="stat-nom-belum">Rp {{ number_format($stats['nominal_belum'] ?? 0, 0, ',', '.') }}</div>
+                <div class="col-stat-7 mb-2 stat-month-only {{ $isMonthFilter ? '' : 'd-none' }}">
+                    <div class="card stat-card-premium shadow-sm h-100 border-bottom-warning" style="background: #fff; border-left: 4px solid #f6c23e;">
+                        <div class="card-body">
+                            <div class="stat-label-mini text-warning mb-1">Blm Bayar (Potensi) <span class="stat-month-label">{{ $monthName }}</span></div>
+                            <div class="d-flex align-items-baseline">
+                                <div class="stat-value-main font-weight-bold text-gray-800 mr-2" id="stat-count-belum">{{ number_format($stats['count_belum'] ?? 0) }}</div>
+                                <div class="stat-value-sub text-warning" id="stat-nom-belum">Rp {{ number_format($stats['nominal_belum'] ?? 0, 0, ',', '.') }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-stat-7 mb-2 stat-month-only {{ $isMonthFilter ? '' : 'd-none' }}">
+                    <div class="card stat-card-premium shadow-sm h-100 border-bottom-info" style="background: #fff; border-left: 4px solid #36b9cc;">
+                        <div class="card-body">
+                            <div class="stat-label-mini text-info mb-1">Total Keseluruhan <span class="stat-month-label">{{ $monthName }}</span></div>
+                            <div class="d-flex align-items-baseline">
+                                <div class="stat-value-main font-weight-bold text-gray-800 mr-2" id="stat-count-total-month">{{ number_format(($stats['count_spp'] ?? 0) + ($stats['count_belum'] ?? 0)) }}</div>
+                                <div class="stat-value-sub text-info" id="stat-nom-total-month">Rp {{ number_format(($stats['nominal_spp'] ?? 0) + ($stats['nominal_belum'] ?? 0), 0, ',', '.') }}</div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -428,9 +468,9 @@
                         <div class="d-flex flex-column" style="gap: 2px;">
                             <label class="mb-0 text-white font-weight-bold" style="font-size: 0.65rem; margin-left: 2px; letter-spacing: 0.5px;">PEMBAYARAN SPP</label>
                             <select form="sppFilterForm" name="filter_spp_month" id="smi_filter_spp_month" onchange="updateSmiFilters()" class="form-control form-control-sm border-0 bg-light" style="width: 110px; font-size: 0.75rem; height: 30px;">
-                                <option value="all" {{ request('filter_spp_month', 'all') == 'all' ? 'selected' : '' }}>ALL</option>
+                                <option value="all" {{ request('filter_spp_month') == 'all' ? 'selected' : '' }}>ALL</option>
                                 @foreach($monthsRaw as $key => $val)
-                                    <option value="{{ $key }}" {{ request('filter_spp_month') == $key ? 'selected' : '' }}>{{ $val }}</option>
+                                    <option value="{{ $key }}" {{ request('filter_spp_month', date('n')) == $key ? 'selected' : '' }}>{{ $val }}</option>
                                 @endforeach
                             </select>
                         </div>
@@ -1053,6 +1093,11 @@
                             if (statNomSpp) statNomSpp.innerText = fmt(data.stats.nominal_spp);
                             if (statCountBelum) statCountBelum.innerText = num(data.stats.count_belum);
                             if (statNomBelum) statNomBelum.innerText = fmt(data.stats.nominal_belum);
+
+                            const statCountTotalMonth = document.getElementById('stat-count-total-month');
+                            const statNomTotalMonth = document.getElementById('stat-nom-total-month');
+                            if (statCountTotalMonth) statCountTotalMonth.innerText = num(data.stats.count_spp + data.stats.count_belum);
+                            if (statNomTotalMonth) statNomTotalMonth.innerText = fmt(data.stats.nominal_spp + data.stats.nominal_belum);
 
                             monthLabelEls.forEach(el => el.innerText = data.stats.filter_month_name);
                             monthCardEls.forEach(el => el.classList.remove('d-none'));

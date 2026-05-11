@@ -1,194 +1,71 @@
+{{-- 1. HEADER: Tabs & Filters Aligned in ONE box (Full Width) --}}
+<div class="col-12 mb-2">
+    <div class="d-flex justify-content-start align-items-center flex-wrap bg-white p-2 rounded-4 shadow-sm border" style="width: fit-content;">
+        {{-- Tabs Navigation --}}
+        <ul class="nav nav-pills gap-2" id="pills-tab" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active rounded-pill px-4 fw-bold d-flex align-items-center gap-2" id="pills-pusat-tab" data-bs-toggle="pill" data-bs-target="#pills-pusat" type="button" role="tab" aria-controls="pills-pusat" aria-selected="true">
+                    <i class="fa-solid fa-building-user"></i> CS Helas Pusat
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link rounded-pill px-4 fw-bold d-flex align-items-center gap-2" id="pills-chapter-tab" data-bs-toggle="pill" data-bs-target="#pills-chapter" type="button" role="tab" aria-controls="pills-chapter" aria-selected="false">
+                    <i class="fa-solid fa-map-location-dot"></i> Chapter
+                </button>
+            </li>
+        </ul>
+
+        {{-- Vertical Divider --}}
+        <div class="vr mx-3 text-muted opacity-25" style="height: 30px;"></div>
+
+        {{-- Global Filters --}}
+        <div class="d-flex align-items-center gap-2 pe-2">
+            @include('penjualan.partials.filters')
+        </div>
+    </div>
+</div>
+
 <div class="col-12 col-lg-7">
-    <div class="card border-0 shadow-lg rounded-4 overflow-hidden mb-5 hover-lift">
-        <div class="card-header bg-gradient bg-primary text-white py-3 border-0">
-            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
-                <div class="fw-bold fs-5">
-                    <i class="fa-solid fa-ranking-star me-2"></i> Pencapaian Target Per CS
+    <div class="tab-content" id="pills-tabContent">
+        {{-- Panel 1: CS Helas Pusat --}}
+        <div class="tab-pane fade show active" id="pills-pusat" role="tabpanel" aria-labelledby="pills-pusat-tab">
+            <div class="card border-0 shadow-lg rounded-4 overflow-hidden mb-5 hover-lift">
+                <div class="card-header bg-gradient bg-primary text-white py-3 border-0">
+                    <div class="fw-bold fs-5">
+                        <i class="fa-solid fa-ranking-star me-2"></i> Pendapatan CS Helas Pusat
+                    </div>
                 </div>
-                <div class="d-flex flex-wrap gap-2 align-items-center">
-                    <!-- Tahun -->
-                    <select name="tahun" id="tahun" class="form-select form-select-sm border-0 rounded-pill text-dark fw-bold" style="width: 85px; font-size:0.75rem;">
-                        @php $currentYear = date('Y'); @endphp
-                        @for($y = $currentYear; $y >= $currentYear - 3; $y--)
-                            <option value="{{ $y }}" {{ request('tahun', $currentYear) == $y ? 'selected' : '' }}>{{ $y }}</option>
-                        @endfor
-                    </select>
-
-                    <!-- Bulan -->
-                    <select name="bulan" id="bulan" class="form-select form-select-sm border-0 rounded-pill text-dark fw-bold" style="width: 120px; font-size:0.75rem;">
-                        <option value="all" {{ request('bulan') == 'all' ? 'selected' : '' }}>Semua Bulan</option>
-                        @foreach(range(1, 12) as $m)
-                            <option value="{{ $m }}" {{ request('bulan', date('n')) == $m ? 'selected' : '' }}>
-                                {{ \Carbon\Carbon::create()->month($m)->translatedFormat('F') }}
-                            </option>
-                        @endforeach
-                    </select>
-
-                    <!-- Kategori Program -->
-                    <select name="type" id="type" class="form-select form-select-sm border-0 rounded-pill text-dark fw-bold" style="width: 160px; font-size:0.75rem;">
-                        <option value="all" {{ request('type', 'all') == 'all' ? 'selected' : '' }}>Semua Program</option>
-                        <option value="mbc"  {{ request('type') == 'mbc'  ? 'selected' : '' }}>MBC</option>
-                        <option value="m1t"  {{ request('type') == 'm1t'  ? 'selected' : '' }}>M1T</option>
-                    </select>
-
-
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        @include('penjualan.partials.table_body', ['data' => $salesDataPusat])
+                    </div>
                 </div>
             </div>
         </div>
-        <div class="card-body p-0">
-            <div class="table-responsive">
-                <table class="table table-bordered table-hover align-middle mb-0 custom-target-table" style="font-size: 1rem;">
-                    <thead class="table-secondary text-dark shadow-sm">
-                        <tr>
-                            <th class="text-center py-3" style="width: 50px;">No</th>
-                            <th class="py-3">Nama CS</th>
-                            <th class="text-end py-3 px-3">Pencapaian</th>
-                            <th class="text-end py-3 px-3">Target</th>
-                            <th class="text-center py-3" style="width: 150px;">Status</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse($salesData as $index => $sales)
-                            @php
-                                $isTercapai = $sales['realisasi'] >= 100;
-                                $showBreakdown = (request('type', 'all') === 'all') && (!($sales['is_spp_row'] ?? false)) && (($sales['mbc_nominal'] ?? 0) > 0 || ($sales['m1t_nominal'] ?? 0) > 0);
-                            @endphp
-                             <tr class="target-row transition-all position-relative {{ ($sales['is_spp_row'] ?? false) ? 'bg-light' : '' }}">
-                                 <td class="text-center fw-medium text-muted fs-6">{{ $index + 1 }}</td>
-                                 <td class="fw-bold">
-                                     <div class="d-flex align-items-center">
-                                         @if($sales['is_spp_row'] ?? false)
-                                             <div class="avatar bg-soft-info text-info fw-bold rounded-circle me-2 d-flex align-items-center justify-content-center" style="width: 36px; height: 36px; font-size: 1rem; background-color: #e0f7fa;">
-                                                 <i class="fa-solid fa-receipt"></i>
-                                             </div>
-                                             <div class="d-flex flex-column">
-                                                 <span class="fs-6 fw-bold text-dark">SPP M1T</span>
-                                                 <small class="badge badge-light border text-muted" style="font-size: 0.65rem; width: fit-content;">AUTO</small>
-                                             </div>
-                                         @elseif($sales['is_lainnya_row'] ?? false)
-                                             <div class="avatar bg-soft-warning text-warning fw-bold rounded-circle me-2 d-flex align-items-center justify-content-center" style="width: 36px; height: 36px; font-size: 1rem; background-color: #fff8e1;">
-                                                 <i class="fa-solid fa-sack-dollar"></i>
-                                             </div>
-                                             <div class="d-flex flex-column">
-                                                 <span class="fs-6 fw-bold text-dark">Pendapatan Lainnya</span>
-                                                 <small class="badge badge-light border text-muted" style="font-size: 0.65rem; width: fit-content;">MANUAL</small>
-                                             </div>
-                                         @else
-                                             <div class="avatar bg-soft-primary text-primary fw-bold rounded-circle me-2 d-flex align-items-center justify-content-center" style="width: 36px; height: 36px; font-size: 1rem; background-color: #e6f3ff;">
-                                                 {{ substr($sales['nama'], 0, 1) }}
-                                             </div>
-                                             <span class="text-truncate fs-6 fw-bold" style="max-width: 140px; display: inline-block;">{{ $sales['nama'] }}</span>
-                                         @endif
-                                     </div>
-                                 </td>
-                                <td class="text-end px-3 fw-bold text-dark" style="font-size: 1.05rem;">
-                                    Rp {{ number_format($sales['total_nominal'], 0, ',', '.') }}
-                                    @if($showBreakdown)
-                                        <div class="d-flex gap-2 justify-content-end flex-wrap mt-2">
-                                            @if(($sales['mbc_nominal'] ?? 0) > 0)
-                                                <div class="d-flex flex-column align-items-end">
-                                                    <div class="d-flex align-items-center gap-1">
-                                                        <span class="badge px-3 py-2 fw-semibold text-white" style="font-size:0.8rem; background:#4e73df; border-radius:20px; letter-spacing:0.3px;">
-                                                            MBC: Rp {{ number_format($sales['mbc_nominal'], 0, ',', '.') }}
-                                                        </span>
-                                                        <button class="btn btn-link p-0 text-primary" type="button" data-bs-toggle="collapse" data-bs-target="#mbc-detail-{{ $index }}" style="font-size: 1rem; text-decoration: none;">
-                                                            <i class="fa-solid fa-circle-plus"></i>
-                                                        </button>
-                                                    </div>
-                                                    <div class="collapse" id="mbc-detail-{{ $index }}">
-                                                        <div class="mt-2 text-end bg-white border rounded p-2 shadow-sm" style="min-width: 180px;">
-                                                            @foreach($sales['mbc_breakdown'] as $cName => $cNominal)
-                                                                <div class="d-flex justify-content-between gap-2 border-bottom py-1" style="font-size: 0.75rem;">
-                                                                    <span class="text-muted text-start">{{ $cName }}</span>
-                                                                    <span class="fw-bold text-dark">Rp {{ number_format($cNominal, 0, ',', '.') }}</span>
-                                                                </div>
-                                                            @endforeach
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            @endif
-                                            @if(($sales['m1t_nominal'] ?? 0) > 0)
-                                                <span class="badge px-3 py-2 fw-semibold text-white" style="font-size:0.8rem; background:#1cc88a; border-radius:20px; letter-spacing:0.3px;">
-                                                    M1T: Rp {{ number_format($sales['m1t_nominal'], 0, ',', '.') }}
-                                                </span>
-                                            @endif
-                                            @if(($sales['spp_nominal'] ?? 0) > 0)
-                                                <span class="badge px-3 py-2 fw-semibold text-white" style="font-size:0.8rem; background:#36b9cc; border-radius:20px; letter-spacing:0.3px;">
-                                                    SPP: Rp {{ number_format($sales['spp_nominal'], 0, ',', '.') }}
-                                                </span>
-                                            @endif
-                                        </div>
-                                    @endif
-                                </td>
-                                <td class="text-end px-3 text-muted fw-medium" style="font-size: 1rem;">
-                                    @if(!($sales['is_spp_row'] ?? false) && !($sales['is_lainnya_row'] ?? false))
-                                        Rp {{ number_format($sales['target'], 0, ',', '.') }}
-                                    @else
-                                        -
-                                    @endif
-                                </td>
-                                <td class="text-center px-2">
-                                    @if(!($sales['is_spp_row'] ?? false) && !($sales['is_lainnya_row'] ?? false))
-                                        <div class="d-flex flex-column align-items-center justify-content-center">
-                                            <span class="badge rounded-pill px-3 py-2 fw-bold mb-1 {{ $isTercapai ? 'bg-success text-white' : 'bg-warning text-dark' }}" style="font-size: 0.85rem;">
-                                                <i class="fa-solid {{ $isTercapai ? 'fa-check-circle' : 'fa-hourglass-start' }} me-1"></i>
-                                                {{ $isTercapai ? 'Tercapai' : 'Belum' }}
-                                            </span>
-                                            
-                                            <div class="w-100 px-2 mt-2">
-                                                <div class="progress rounded-pill bg-light" style="height: 7px;">
-                                                    <div class="progress-bar rounded-pill {{ $isTercapai ? 'bg-success' : 'bg-warning' }} progress-bar-animated" 
-                                                         role="progressbar" 
-                                                         style="width: {{ min(100, $sales['realisasi']) }}%;" 
-                                                         aria-valuenow="{{ min(100, $sales['realisasi']) }}" aria-valuemin="0" aria-valuemax="100">
-                                                    </div>
-                                                </div>
-                                                <small class="text-muted d-block mt-1 fw-bold" style="font-size:0.85rem;">{{ $sales['realisasi'] }}%</small>
-                                            </div>
-                                        </div>
-                                    @else
-                                        <span class="text-muted small italic">{{ ($sales['is_lainnya_row'] ?? false) ? 'Manual/Income' : 'Manual/Monthly' }}</span>
-                                    @endif
-                                </td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="5" class="text-muted fst-italic text-center py-4">
-                                    <i class="fa-regular fa-folder-open mb-2 fs-3 text-secondary opacity-50 block"></i><br>
-                                    Data pencapaian target belum tersedia.
-                                </td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                    <tfoot class="table-light fw-bold border-top-2">
-                        @php
-                            // Hitung total pencapaian dari semua SalesData
-                            $totalPencapaianAll = collect($salesData)->sum('total_nominal');
-                            $totalTargetAll = collect($salesData)->sum('target');
-                            $totalPersentaseAll = $totalTargetAll > 0 ? min(100, round(($totalPencapaianAll / $totalTargetAll) * 100)) : 0;
-                            $isTotalTercapai = $totalPersentaseAll >= 100;
-                        @endphp
-                        <tr>
-                            <td colspan="2" class="text-center py-3 fs-6">TOTAL KESELURUHAN</td>
-                            <td class="text-end px-3 py-3 text-dark fs-6">Rp {{ number_format($totalPencapaianAll, 0, ',', '.') }}</td>
-                            <td class="text-end px-3 py-3 text-dark fs-6">Rp {{ number_format($totalTargetAll, 0, ',', '.') }}</td>
-                            <td class="text-center px-2 py-3">
-                                <span class="badge rounded-pill {{ $isTotalTercapai ? 'bg-success' : 'bg-warning text-dark' }} px-3 py-2 fs-6 shadow-sm">
-                                    {{ $totalPersentaseAll }}%
-                                </span>
-                            </td>
-                        </tr>
-                    </tfoot>
-                </table>
+
+        {{-- Panel 2: Pendapatan Chapter --}}
+        <div class="tab-pane fade" id="pills-chapter" role="tabpanel" aria-labelledby="pills-chapter-tab">
+            <div class="card border-0 shadow-lg rounded-4 overflow-hidden mb-5 hover-lift">
+                <div class="card-header bg-gradient bg-info text-white py-3 border-0" style="background: linear-gradient(135deg, #36b9cc 0%, #258391 100%) !important;">
+                    <div class="fw-bold fs-5">
+                        <i class="fa-solid fa-map-location-dot me-2"></i> Pendapatan Chapter
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        @include('penjualan.partials.table_body', ['data' => $salesDataChapter, 'isChapter' => true])
+                    </div>
+                </div>
             </div>
         </div>
     </div>
+
     <!-- SALES PERFORMANCE CHART -->
     <div class="card border-0 shadow-lg rounded-4 overflow-hidden mb-5 hover-lift">
         <div class="card-header bg-gradient bg-indigo text-white py-3 border-0" style="background: linear-gradient(135deg, #6610f2 0%, #4e73df 100%) !important;">
             <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
                 <div class="fw-bold fs-5">
-                    <i class="fa-solid fa-chart-bar me-2"></i> Grafik Penjualan CS Per Bulan
+                    <i class="fa-solid fa-chart-bar me-2"></i> <span id="chart-title-text">Grafik Penjualan CS Per Bulan</span>
                 </div>
                 <div class="d-flex align-items-center gap-2">
                     <span class="small">Pilih Tahun:</span>
@@ -211,12 +88,61 @@
 </div>
 
 <script>
+    // [USER_REQUEST] Store both datasets for dynamic switching
+    window.chartDataPusat = @json($chartDataPusat);
+    window.chartDataChapter = @json($chartDataChapter);
+
     if (typeof initSalesChart === 'function') {
-        initSalesChart(@json($chartDataPerCs));
+        // Initial chart load based on active tab
+        const activeTab = document.querySelector('#pills-tab .nav-link.active');
+        const initialData = (activeTab && activeTab.id === 'pills-chapter-tab') ? window.chartDataChapter : window.chartDataPusat;
+        initSalesChart(initialData);
     } else {
-        // Fallback if script not yet loaded
-        window.pendingChartData = @json($chartDataPerCs);
+        window.pendingChartData = document.querySelector('#pills-chapter-tab.active') ? @json($chartDataChapter) : @json($chartDataPusat);
     }
+
+    // [USER_REQUEST] Handle Program Filter visibility & Chart Switching based on Tab
+    document.addEventListener('DOMContentLoaded', function() {
+        const typeSelect = document.getElementById('type');
+        const pusatTab = document.getElementById('pills-pusat-tab');
+        const chapterTab = document.getElementById('pills-chapter-tab');
+
+        function updateFilterAndChart() {
+            if (!typeSelect) return;
+            const mbcOption = typeSelect.querySelector('option[value="mbc"]');
+            const isChapter = chapterTab && chapterTab.classList.contains('active');
+            
+            // 1. Update Filter Options
+            if (isChapter) {
+                if (mbcOption) mbcOption.style.display = 'none';
+                if (typeSelect.value === 'mbc') {
+                    typeSelect.value = 'all';
+                    applyFilters();
+                }
+            } else {
+                if (mbcOption) mbcOption.style.display = 'block';
+            }
+
+            // 2. Update Chart Data
+            if (typeof initSalesChart === 'function') {
+                const newData = isChapter ? window.chartDataChapter : window.chartDataPusat;
+                initSalesChart(newData);
+            }
+
+            // 3. Update Chart Title
+            const titleText = document.getElementById('chart-title-text');
+            if (titleText) {
+                titleText.innerText = isChapter ? 'Grafik Penjualan Chapter Per Bulan' : 'Grafik Penjualan CS Per Bulan';
+            }
+        }
+
+        // Listen for tab clicks
+        if (pusatTab) pusatTab.addEventListener('shown.bs.tab', updateFilterAndChart);
+        if (chapterTab) chapterTab.addEventListener('shown.bs.tab', updateFilterAndChart);
+
+        // Initial check
+        updateFilterAndChart();
+    });
 </script>
 
 
@@ -258,7 +184,16 @@
                                 $persentase = $t > 0 ? min(100, round(($r / $t) * 100)) : 0;
                             @endphp
                             <tr>
-                                <td class="fw-bold px-3 py-2 text-muted">{{ $mName }}</td>
+                                <td class="fw-bold px-3 py-2 text-muted">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span>{{ $mName }}</span>
+                                        @if($r > 0)
+                                            <button class="btn btn-sm btn-link p-0 text-primary" type="button" data-bs-toggle="collapse" data-bs-target="#omset-breakdown-{{ $mNum }}" aria-expanded="false" style="text-decoration: none; font-size: 1rem;">
+                                                <i class="fa-solid fa-circle-plus"></i>
+                                            </button>
+                                        @endif
+                                    </div>
+                                </td>
                                 <td class="text-end px-3 py-2 text-dark fw-medium">Rp {{ number_format($t, 0, ',', '.') }}</td>
                                 <td class="text-end px-3 py-2 text-success fw-bold">Rp {{ number_format($r, 0, ',', '.') }}</td>
                                 <td class="text-center px-2 py-2">
@@ -267,6 +202,22 @@
                                     </span>
                                 </td>
                             </tr>
+                            @if($r > 0)
+                                <tr class="collapse" id="omset-breakdown-{{ $mNum }}">
+                                    <td colspan="4" class="p-0 border-0">
+                                        <div class="bg-light px-3 py-2 border-start border-primary border-4 rounded-end mx-2 my-1 shadow-sm">
+                                            <div class="d-flex justify-content-between mb-1" style="font-size: 0.75rem;">
+                                                <span class="text-muted"><i class="fa-solid fa-building-user me-1"></i> CS Helas Pusat:</span>
+                                                <span class="fw-bold text-primary">Rp {{ number_format($monthlyOmsetByGroup[$mNum]['pusat'], 0, ',', '.') }}</span>
+                                            </div>
+                                            <div class="d-flex justify-content-between" style="font-size: 0.75rem;">
+                                                <span class="text-muted"><i class="fa-solid fa-map-location-dot me-1"></i> Chapter:</span>
+                                                <span class="fw-bold text-info">Rp {{ number_format($monthlyOmsetByGroup[$mNum]['chapter'], 0, ',', '.') }}</span>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            @endif
                         @endforeach
                     </tbody>
                 </table>
@@ -351,7 +302,3 @@
         </div>
     </div>
 </div>
-
-
-
-    

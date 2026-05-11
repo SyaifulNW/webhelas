@@ -132,11 +132,14 @@ class PenjualanController extends Controller
         // ======================================================
         // 🧑‍💼 2. Penjualan Per CS & Target Pencapaian
         // ======================================================
-        // Semua CS ditampilkan - cs-mbc (Linda, Yasmin) juga bisa closing M1T
-        $csUsers = User::whereIn('role', ['cs-mbc', 'cs-smi'])
+        // Semua CS & Sales (Marketing) & Chapter (Hanya yang Aktif)
+        $staffUsers = User::whereIn('role', ['cs-mbc', 'cs-smi', 'marketing', 'chapter'])
+            ->where('is_active', 1)
             ->where('name', '!=', 'Fitra Jaya Saleh')
             ->get();
-        $salesData = [];
+            
+        $salesDataPusat = [];
+        $salesDataChapter = [];
 
         $calculateOmset = function ($plan) {
             if ($plan->pesertaSmi) {
@@ -145,7 +148,7 @@ class PenjualanController extends Controller
             return (float) str_replace('.', '', $plan->nominal ?: 0);
         };
 
-        foreach ($csUsers as $user) {
+        foreach ($staffUsers as $user) {
             // Gunakan $realSales (yang sudah diproses $dateFilter tingkat global)
             // agar data CS sinkron dengan data total di header & panel kanan.
             $userSalesAll = $realSales->where('created_by', $user->id);
@@ -191,10 +194,12 @@ class PenjualanController extends Controller
             $uRealisasi = $uTarget > 0 ? round(($userNominal / $uTarget) * 100) : 0;
             $uConv = $totalLeads > 0 ? round(($userCount / $totalLeads) * 100) : 0;
 
-            // [USER_REQUEST] Always show active cs-mbc even if 0 omset
-            $isTargetCS = ($user->role === 'cs-mbc' && $user->is_active);
-            if ($userNominal > 0 || $userCount > 0 || $isTargetCS) {
-                $salesData[] = [
+            // [USER_REQUEST] Always show active cs-mbc and chapter even if 0 omset
+            $isTargetUser = (in_array($user->role, ['cs-mbc', 'chapter']) && $user->is_active);
+
+            // [USER_REQUEST] Categorize into Pusat or Chapter
+            if ($userNominal > 0 || $userCount > 0 || $isTargetUser) {
+                $rowData = [
                     'nama' => $user->name,
                     'role' => $user->role,
                     'penjualan' => $userCount,
@@ -202,23 +207,31 @@ class PenjualanController extends Controller
                     'mbc_nominal' => $mbcNominal,
                     'mbc_breakdown' => $mbcBreakdown,
                     'm1t_nominal' => $m1tNominal,
-                    'spp_nominal' => $sppNominal, // [USER_REQUEST] Keep track of SPP per CS
+                    'spp_nominal' => 0, // Consolidated in SPP M1T row
                     'target' => $uTarget,
                     'realisasi' => $uRealisasi,
                     'conversion_rate' => $uConv,
                     'komisi' => $userNominal * 0.005,
                     'bonus' => ($uRealisasi >= 100) ? 500000 : 0
                 ];
+
+                if ($user->role === 'chapter') {
+                    $salesDataChapter[] = $rowData;
+                } else {
+                    $salesDataPusat[] = $rowData;
+                }
             }
         }
 
-        // Sorting CS Users
-        if ($sort === 'target')
-            usort($salesData, fn($a, $b) => ($b['target'] ?? 0) <=> ($a['target'] ?? 0));
-        elseif ($sort === 'realisasi')
-            usort($salesData, fn($a, $b) => ($b['realisasi'] ?? 0) <=> ($a['realisasi'] ?? 0));
-        else
-            usort($salesData, fn($a, $b) => ($b['total_nominal'] ?? 0) <=> ($a['total_nominal'] ?? 0));
+        // Sorting Logic
+        $sortFn = function($a, $b) use ($sort) {
+            if ($sort === 'target') return ($b['target'] ?? 0) <=> ($a['target'] ?? 0);
+            if ($sort === 'realisasi') return ($b['realisasi'] ?? 0) <=> ($a['realisasi'] ?? 0);
+            return ($b['total_nominal'] ?? 0) <=> ($a['total_nominal'] ?? 0);
+        };
+
+        usort($salesDataPusat, $sortFn);
+        usort($salesDataChapter, $sortFn);
 
         // [USER_REQUEST] Add Pendapatan Lainnya as a separate row at position 4 (consistent with Laba Rugi)
         $lainnyaNominal = 0;
@@ -244,16 +257,16 @@ class PenjualanController extends Controller
             'bonus' => 0
         ];
 
-        if (count($salesData) >= 3) {
-            array_splice($salesData, 3, 0, [$lainnyaRow]);
+        if (count($salesDataPusat) >= 3) {
+            array_splice($salesDataPusat, 3, 0, [$lainnyaRow]);
         } else {
-            $salesData[] = $lainnyaRow;
+            $salesDataPusat[] = $lainnyaRow;
         }
 
         // [USER_REQUEST] Add SPP M1T as a separate row instead of including it in CS achievement
         // [USER_REQUEST] Always show SPP M1T row even if achievement is 0
         if ($type === 'all' || $type === 'm1t') {
-            $salesData[] = [
+            $salesDataPusat[] = [
                 'nama' => 'SPP M1T',
                 'is_spp_row' => true,
                 'role' => 'system',
@@ -305,6 +318,7 @@ class PenjualanController extends Controller
         // ======================================================
         $monthlySMI = [];
         $monthlyOmset = [];
+        $monthlyOmsetByGroup = [];
 
         $m1tTahun = $request->input('m1t_tahun', $tahun);
         $m1tBulan = $request->input('m1t_bulan', 'all');
@@ -324,7 +338,8 @@ class PenjualanController extends Controller
                     ->sum('jumlah');
             }
 
-            $monthlyOmset[$m] = SalesPlan::where('status', 'sudah_transfer')
+            // Get breakdown by role
+            $salesForMonth = SalesPlan::where('status', 'sudah_transfer')
                 ->when($type !== 'all', function ($q) use ($type) {
                     if ($type === 'm1t') {
                         $q->whereHas('kelas', fn($kq) => $kq->where('nama_kelas', 'Start-Up Muslim Indonesia'));
@@ -335,12 +350,27 @@ class PenjualanController extends Controller
                 ->where(function ($q) use ($buildDateFilter, $tahun, $m) {
                     $buildDateFilter($q, $tahun, $m);
                 })
-                ->get()->sum(function ($plan) {
-                    if ($plan->pesertaSmi) {
-                        return (float) str_replace('.', '', $plan->pesertaSmi->total_pembayaran ?: ($plan->pesertaSmi->pembayaran_spp ?: $plan->pesertaSmi->spp_awal ?: 0));
-                    }
+                ->with(['createdBy', 'pesertaSmi'])
+                ->get();
+
+            $pusatSum = $salesForMonth->filter(fn($s) => in_array(optional($s->createdBy)->role, ['cs-mbc', 'cs-smi', 'marketing', 'administrator']))
+                ->sum(function($plan) {
+                    if ($plan->pesertaSmi) return (float) str_replace('.', '', $plan->pesertaSmi->total_pembayaran ?: ($plan->pesertaSmi->pembayaran_spp ?: $plan->pesertaSmi->spp_awal ?: 0));
                     return (float) str_replace('.', '', $plan->nominal ?: 0);
                 }) + (($type === 'all' || $type === 'm1t') ? $sppNominal : 0) + $lainnyaMonth;
+
+            $chapterSum = $salesForMonth->filter(fn($s) => optional($s->createdBy)->role === 'chapter')
+                ->sum(function($plan) {
+                    if ($plan->pesertaSmi) return (float) str_replace('.', '', $plan->pesertaSmi->total_pembayaran ?: ($plan->pesertaSmi->pembayaran_spp ?: $plan->pesertaSmi->spp_awal ?: 0));
+                    return (float) str_replace('.', '', $plan->nominal ?: 0);
+                });
+
+            $monthlyOmsetByGroup[$m] = [
+                'pusat' => $pusatSum,
+                'chapter' => $chapterSum
+            ];
+
+            $monthlyOmset[$m] = $pusatSum + $chapterSum;
 
             // Realisasi Peserta M1T per Bulan (Match dengan daftar di Salesplan)
             // Gunakan $m1tTahun agar filter tahun di tabel Pertumbuhan bekerja
@@ -442,10 +472,11 @@ class PenjualanController extends Controller
         // ======================================================
         // 📊 5.1 Grafik Per CS (Area Chart)
         // ======================================================
-        $chartDataPerCs = [];
+        $chartDataPusat = [];
+        $chartDataChapter = [];
         $colors = ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b', '#6610f2', '#fd7e14', '#20c997', '#d63384'];
 
-        foreach ($csUsers as $idx => $user) {
+        $buildUserChartData = function($user, $colorIdx) use ($type, $buildDateFilter, $tahun, $colors) {
             $userMonthlyData = [];
             for ($m = 1; $m <= 12; $m++) {
                 $sum = SalesPlan::where('status', 'sudah_transfer')
@@ -468,21 +499,31 @@ class PenjualanController extends Controller
                     });
                 $userMonthlyData[] = $sum > 0 ? $sum : null;
             }
-            $chartDataPerCs[] = [
+            return [
                 'label' => $user->name,
                 'data' => $userMonthlyData,
-                'borderColor' => $colors[$idx % count($colors)],
-                'backgroundColor' => $colors[$idx % count($colors)],
+                'borderColor' => $colors[$colorIdx % count($colors)],
+                'backgroundColor' => $colors[$colorIdx % count($colors)],
                 'borderWidth' => 3,
-                'pointBackgroundColor' => $colors[$idx % count($colors)],
+                'pointBackgroundColor' => $colors[$colorIdx % count($colors)],
                 'pointBorderColor' => '#fff',
                 'pointHoverRadius' => 5,
-                'pointHoverBackgroundColor' => $colors[$idx % count($colors)],
+                'pointHoverBackgroundColor' => $colors[$colorIdx % count($colors)],
                 'pointHoverBorderColor' => '#fff',
                 'pointHitRadius' => 10,
                 'pointBorderWidth' => 2,
                 'tension' => 0.35
             ];
+        };
+
+        $idxPusat = 0;
+        foreach ($staffUsers->whereIn('role', ['cs-mbc', 'cs-smi', 'marketing']) as $user) {
+            $chartDataPusat[] = $buildUserChartData($user, $idxPusat++);
+        }
+
+        $idxChapter = 0;
+        foreach ($staffUsers->where('role', 'chapter') as $user) {
+            $chartDataChapter[] = $buildUserChartData($user, $idxChapter++);
         }
 
 
@@ -516,9 +557,10 @@ class PenjualanController extends Controller
             'kelasList' => $kelasList,
             'tahun' => $tahun,
             'kontribusiDatabase' => $kontribusiDatabase,
-            'salesData' => $salesData,
-            'totalKomisi' => array_sum(array_column($salesData, 'komisi')),
-            'totalBonus' => array_sum(array_column($salesData, 'bonus')),
+            'salesDataPusat' => $salesDataPusat,
+            'salesDataChapter' => $salesDataChapter,
+            'totalKomisi' => array_sum(array_column($salesDataPusat, 'komisi')) + array_sum(array_column($salesDataChapter, 'komisi')),
+            'totalBonus' => array_sum(array_column($salesDataPusat, 'bonus')) + array_sum(array_column($salesDataChapter, 'bonus')),
             'totalPelangganAktif' => $totalPelangganAktif,
             'pelangganBaru' => $pelangganBaru,
             'pelangganLama' => $pelangganLama,
@@ -535,10 +577,12 @@ class PenjualanController extends Controller
             'rataSMI' => $currentDay > 0 ? round($penjualanSMI / $currentDay) : 0,
             'rataMBC' => $currentDay > 0 ? round($penjualanMBC / $currentDay) : 0,
             'monthlyOmset' => $monthlyOmset,
+            'monthlyOmsetByGroup' => $monthlyOmsetByGroup,
             'monthlySMI' => $monthlySMI,
             'm1tTahun' => $m1tTahun,
             'm1tBulan' => $m1tBulan,
-            'chartDataPerCs' => $chartDataPerCs,
+            'chartDataPusat' => $chartDataPusat,
+            'chartDataChapter' => $chartDataChapter,
             'cumulativeSMI' => $cumulativeSMI,
             'targetSMI' => $targetSMI,
         ];

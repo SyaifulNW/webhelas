@@ -227,7 +227,7 @@
     </td>
     @endif
 
-    {{-- SPIN: Budget, Authority, Time --}}
+    {{-- KUALIFIKASI: Budget, Authority, Time --}}
     <td class="col-bat">
         <div class="custom-control custom-checkbox">
             <input type="checkbox" class="custom-control-input check-bant-budget" id="budget{{ $item->id }}"

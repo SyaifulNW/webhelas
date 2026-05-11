@@ -898,14 +898,14 @@
                                     </th>
                                 @endif
 
-                                <!-- New Columns Grouped under SPIN -->
+                                <!-- New Columns Grouped under KUALIFIKASI -->
                                 <th colspan="{{ in_array($userRole, ['administrator', 'chapter', 'reseller']) ? '3' : '4' }}"
                                     class="text-center col-spin-header" style="padding: 5px 2px;">
-                                    SPIN <br>
+                                    KUALIFIKASI <br>
                                     <select id="filterSpin" class="form-control form-control-sm mt-1 mx-auto"
                                         onchange="updateFilter('filter_spin', this.value)"
                                         style="font-size: 0.7rem; height: auto; width: 90%;">
-                                        <option value="">-- SPIN --</option>
+                                        <option value="">-- KUALIFIKASI --</option>
                                         <option value="ALL" {{ request('filter_spin') == 'ALL' ? 'selected' : '' }}>ALL
                                         </option>
                                         <option value="NOT_ALL" {{ request('filter_spin') == 'NOT_ALL' ? 'selected' : '' }}>
