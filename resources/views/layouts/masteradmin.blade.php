@@ -480,18 +480,12 @@
                         </li>
                     @endif
 
-                    {{-- 2. DATABASE CS HELAS & CHAPTER --}}
+                    {{-- 2. DATABASE (COMBINED) --}}
                     @if(\App\Models\Menu::isActive('database_cs'))
-                        <li class="nav-item {{ request()->routeIs('admin.database.database') && request('view_type') == 'cs' ? 'active' : '' }}">
-                            <a class="nav-link" href="{{ route('admin.database.database', ['view_type' => 'cs']) }}" title="DATABASE CS HELAS">
+                        <li class="nav-item {{ request()->routeIs('admin.database.database') ? 'active' : '' }}">
+                            <a class="nav-link" href="{{ route('admin.database.database') }}" title="DATABASE">
                                 <i class="fas fa-fw fa-database"></i>
-                                <span><strong>DATABASE CS HELAS</strong></span>
-                            </a>
-                        </li>
-                        <li class="nav-item {{ request()->routeIs('admin.database.database') && request('view_type') == 'chapter' ? 'active' : '' }}">
-                            <a class="nav-link" href="{{ route('admin.database.database', ['view_type' => 'chapter']) }}" title="DATABASE CHAPTER">
-                                <i class="fas fa-fw fa-university"></i>
-                                <span><strong>DATABASE CHAPTER</strong></span>
+                                <span><strong>DATABASE</strong></span>
                             </a>
                         </li>
                     @endif
@@ -546,6 +540,14 @@
                         </li>
                     @endif
 
+                    {{-- 9. SETTING JADWAL --}}
+                    <li class="nav-item {{ request()->routeIs('admin.kelas.index') ? 'active' : '' }}">
+                        <a class="nav-link" href="{{ route('admin.kelas.index') }}" title="SETTING JADWAL">
+                            <i class="fas fa-fw fa-calendar-alt"></i>
+                            <span><strong>SETTING JADWAL</strong></span>
+                        </a>
+                    </li>
+
                     {{-- Extra Admin Menu --}}
                     @if(\App\Models\Menu::isActive('activity_cs'))
                         <li class="nav-item {{ request()->routeIs('admin.activity-cs.index') ? 'active' : '' }}">
@@ -596,7 +598,7 @@
                             </a>
                         </li>
                     @endif
-                @elseif(strtolower(trim(Auth::user()->role)) !== 'produksi')
+                @elseif(!in_array(strtolower(trim(Auth::user()->role)), ['produksi', 'operasional']))
                     @if(\App\Models\Menu::isActive('dashboard_general'))
                         <li class="nav-item {{ request()->routeIs('home') ? 'active' : '' }}">
                             {{-- Dashboard default --}}
@@ -800,8 +802,60 @@
 
 
 
+                    {{-- 🚀 SIDEBAR KHUSUS OPERASIONAL (RAFI) 🚀 --}}
+                    @if($userRole === 'operasional')
+                        <li class="nav-item {{ request()->routeIs('home') ? 'active' : '' }}">
+                            <a class="nav-link" href="{{ route('home') }}">
+                                <i class="fas fa-fw fa-tachometer-alt"></i>
+                                <span><strong>DASHBOARD OPERASIONAL</strong></span>
+                            </a>
+                        </li>
+                        
+                        <li class="nav-item {{ (request()->routeIs('admin.salesplan.index') && request('type') == 'mbc') ? 'active' : '' }}">
+                            <a class="nav-link" href="{{ route('admin.salesplan.index', ['type' => 'mbc']) }}">
+                                <i class="fas fa-fw fa-users"></i>
+                                <span><strong>PESERTA MBC</strong></span>
+                            </a>
+                        </li>
+
+                        <li class="nav-item {{ request()->routeIs('peserta-smi.index') ? 'active' : '' }}">
+                            <a class="nav-link" href="{{ route('peserta-smi.index') }}">
+                                <i class="fas fa-fw fa-user-graduate"></i>
+                                <span><strong>PESERTA M1T</strong></span>
+                            </a>
+                        </li>
+
+                        <li class="nav-item {{ request()->routeIs('programkerja.index') ? 'active' : '' }}">
+                            <a class="nav-link" href="{{ route('programkerja.index') }}">
+                                <i class="fas fa-fw fa-tasks"></i>
+                                <span><strong>PROGRAM KERJA</strong></span>
+                            </a>
+                        </li>
+
+                        <li class="nav-item {{ request()->routeIs('admin.keuangan.pengajuan-anggaran') ? 'active' : '' }}">
+                            <a class="nav-link" href="{{ route('admin.keuangan.pengajuan-anggaran') }}">
+                                <i class="fas fa-fw fa-wallet"></i>
+                                <span><strong>PENGAJUAN ANGGARAN</strong></span>
+                            </a>
+                        </li>
+
+                        <li class="nav-item {{ request()->routeIs('admin.kelas.index') ? 'active' : '' }}">
+                            <a class="nav-link" href="{{ route('admin.kelas.index') }}">
+                                <i class="fas fa-fw fa-calendar-alt"></i>
+                                <span><strong>SETTING JADWAL KELAS</strong></span>
+                            </a>
+                        </li>
+
+                        <li class="nav-item {{ request()->routeIs('admin.operasional') ? 'active' : '' }}">
+                            <a class="nav-link" href="{{ route('admin.operasional') }}">
+                                <i class="fas fa-fw fa-boxes"></i>
+                                <span><strong>STOK & PERBAIKAN</strong></span>
+                            </a>
+                        </li>
+                    @endif
+
                     {{-- Sidebar ini hanya tampil jika BUKAN administrator, marketing, manager, hrd, advertising --}}
-                    @if(!in_array($userRole, ['administrator', 'marketing', 'manager', 'hrd', 'advertising', 'produksi']))
+                    @if(!in_array($userRole, ['administrator', 'marketing', 'manager', 'hrd', 'advertising', 'produksi', 'operasional']))
                                 @if(\App\Models\Menu::isActive('data_calon_peserta'))
                                     <li
                                         class="nav-item {{ (request()->routeIs('admin.database.database') && request('view') == 'me') ? 'active' : '' }}">
@@ -873,7 +927,7 @@
                     @endif
 
 
-                    @if(!in_array($userRole, ['marketing', 'hrd', 'advertising', 'produksi']))
+                    @if(!in_array($userRole, ['marketing', 'hrd', 'advertising', 'produksi', 'operasional']))
                         @if(\App\Models\Menu::isActive('sales_plan'))
 
                             @if($userRole == 'administrator')
@@ -881,7 +935,7 @@
                             @else
 
                                 {{-- SALES PLAN MBC (LAINNYA) --}}
-                                @if(!in_array($userRole, ['cs-smi', 'reseller', 'chapter']) && !in_array($userName, ['Latifah', 'Tursia', 'Agus Setyo']))
+                                @if(!in_array($userRole, ['cs-smi', 'reseller', 'chapter', 'operasional']) && !in_array($userName, ['Latifah', 'Tursia', 'Agus Setyo']))
                                     @if($userRole === 'cs-mbc')
                                         {{-- Simple link for CS-MBC (same as administrator) --}}
                                         <li class="nav-item {{ request('type') == 'mbc' ? 'active' : '' }}">
@@ -934,7 +988,10 @@
 
                                 {{-- SALES PLAN SMI / M1T (LAINNYA) --}}
                                 @if(in_array($userRole, ['cs-smi', 'cs-mbc']) || in_array($userName, ['Latifah', 'Tursia', 'Agus Setyo', 'Linda', 'Fitra Jaya Saleh']))
-                                    @if(in_array($userName, ['Yasmin', 'Linda']))
+                                    {{-- Operasional handled in its own block --}}
+                                    @if($userRole === 'operasional')
+                                        {{-- Do nothing --}}
+                                    @elseif(in_array($userName, ['Yasmin', 'Linda']))
                                         {{-- 1. DATA PESERTA M1T (Sales Plan) --}}
                                         <li class="nav-item {{ (request('type') == 'smi' && request('kelas') == 'Start-Up Muslim Indonesia') ? 'active' : '' }}">
                                             <a class="nav-link" href="{{ route('admin.salesplan.index', ['type' => 'smi', 'kelas' => 'Start-Up Muslim Indonesia']) }}" title="DATA PESERTA M1T">
@@ -1253,7 +1310,7 @@
                         @endif
                     @endif
 
-                    @if(strtolower(auth()->user()->role) !== 'administrator' && strtolower(auth()->user()->role) !== 'produksi' && !in_array($userRole, ['reseller', 'chapter']) && stripos(auth()->user()->name, 'Linda') === false)
+                    @if(strtolower(auth()->user()->role) !== 'administrator' && strtolower(auth()->user()->role) !== 'produksi' && strtolower(auth()->user()->role) !== 'operasional' && !in_array($userRole, ['reseller', 'chapter']) && stripos(auth()->user()->name, 'Linda') === false)
 
                         <li class="nav-item {{ request()->routeIs('admin.keuangan.pengajuan-anggaran') ? 'active' : '' }}">
                             <a class="nav-link" href="{{ route('admin.keuangan.pengajuan-anggaran') }}">

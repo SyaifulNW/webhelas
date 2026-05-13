@@ -172,7 +172,7 @@
                     @if($item->bukti_transfer)
                         <button type="button" class="btn btn-outline-primary mt-1"
                             style="width: 85px; font-size: 0.75rem; padding: 2px 6px; border-radius: 50px; font-weight: 700; display: block; margin: 2px auto 0;"
-                            onclick="viewBuktiTransfer('{{ Storage::url($item->bukti_transfer) }}', '{{ addslashes($item->nama) }}')">
+                            onclick="viewBuktiTransfer('{{ str_starts_with($item->bukti_transfer, 'uploads/') ? asset($item->bukti_transfer) : Storage::url($item->bukti_transfer) }}', '{{ addslashes($item->nama) }}')">
                             <i class="fas fa-image"></i> Bukti
                         </button>
                     @else
@@ -185,7 +185,7 @@
                     </span>
                     <button type="button" class="btn btn-xs btn-info mt-1 shadow-sm"
                         style="font-size: 0.6rem; padding: 2px 6px; border-radius: 10px;"
-                        onclick="openUploadBukti({{ $item->id }}, '{{ addslashes($item->nama) }}', '{{ $item->bukti_transfer ? Storage::url($item->bukti_transfer) : '' }}')">
+                        onclick="openUploadBukti({{ $item->id }}, '{{ addslashes($item->nama) }}', '{{ $item->bukti_transfer ? (str_starts_with($item->bukti_transfer, 'uploads/') ? asset($item->bukti_transfer) : Storage::url($item->bukti_transfer)) : '' }}')">
                         <i class="fas fa-upload mr-1"></i>
                         {{ $item->bukti_transfer ? 'Ganti Bukti' : 'Upload Bukti' }}
                     </button>

@@ -270,6 +270,92 @@
         .editable-pill-submit:active {
             transform: scale(0.95);
         }
+
+        /* 📊 Performance Card Styling - Colorful Premium Edition */
+        .perf-card {
+            border-radius: 18px;
+            border: none;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            overflow: hidden;
+            position: relative;
+            z-index: 1;
+        }
+        .perf-card:hover {
+            transform: translateY(-5px) scale(1.01);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15) !important;
+        }
+        .perf-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            opacity: 0.4;
+            z-index: -1;
+        }
+        .perf-icon-box {
+            width: 42px;
+            height: 42px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            margin-bottom: 12px;
+            background: rgba(255,255,255,0.25);
+            color: white;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .perf-value {
+            font-size: 1.6rem;
+            font-weight: 800;
+            line-height: 1.1;
+            margin-bottom: 3px;
+            color: white;
+            letter-spacing: -0.5px;
+        }
+        .perf-label {
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: rgba(255,255,255,0.85);
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            margin-bottom: 8px;
+        }
+        .perf-target {
+            font-size: 0.65rem;
+            font-weight: 800;
+            padding: 4px 10px;
+            border-radius: 20px;
+            background: rgba(0,0,0,0.15);
+            color: white;
+            display: inline-block;
+            margin-top: 5px;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        .perf-progress {
+            height: 5px;
+            border-radius: 10px;
+            margin-top: 15px;
+            background: rgba(255,255,255,0.2);
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+        .perf-progress .progress-bar {
+            background-color: white !important;
+            box-shadow: 0 0 8px rgba(255,255,255,0.4);
+        }
+
+        /* Color Themes */
+        .perf-indigo { background: linear-gradient(135deg, #6610f2 0%, #6f42c1 100%); box-shadow: 0 8px 20px rgba(102, 16, 242, 0.25); }
+        .perf-emerald { background: linear-gradient(135deg, #10b981 0%, #059669 100%); box-shadow: 0 8px 20px rgba(16, 185, 129, 0.25); }
+        .perf-cyan { background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%); box-shadow: 0 8px 20px rgba(6, 182, 212, 0.25); }
+        .perf-amber { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); box-shadow: 0 8px 20px rgba(245, 158, 11, 0.25); }
+        .perf-rose { background: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%); box-shadow: 0 8px 20px rgba(244, 63, 94, 0.25); }
+        .perf-slate { background: linear-gradient(135deg, #475569 0%, #334155 100%); box-shadow: 0 8px 20px rgba(71, 85, 105, 0.25); }
+        .perf-violet { background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); box-shadow: 0 8px 20px rgba(139, 92, 246, 0.25); }
+        .perf-blue { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); box-shadow: 0 8px 20px rgba(59, 130, 246, 0.25); }
     </style>
 
     <div class="container-fluid px-4">
@@ -312,6 +398,13 @@
                         data-target="#dompet-tab" type="button" role="tab" aria-controls="dompet-tab"
                         aria-selected="false">
                         <i class="fas fa-wallet"></i> Dompet Digital
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link premium-tab color-info" id="performance-tab-link" data-toggle="tab"
+                        data-target="#performance-tab" type="button" role="tab" aria-controls="performance-tab"
+                        aria-selected="false">
+                        <i class="fas fa-chart-bar"></i> Performance Chapter
                     </button>
                 </li>
             </ul>
@@ -622,6 +715,136 @@
                 </div>
             </div>
             </div> <!-- End TAB 2 -->
+
+            <!-- ================== TAB 3: PERFORMANCE CHAPTER ================== -->
+            <div class="tab-pane fade p-4" id="performance-tab" role="tabpanel" aria-labelledby="performance-tab-link" 
+                 style="background: #f6f9ff; border-radius: 25px; box-shadow: inset 0 0 20px rgba(0,0,0,0.03); border: 1px solid #eef2f8;">
+                <div class="mb-4">
+                    <h4 class="font-weight-bold text-gray-800"><i class="fas fa-chart-line mr-2 text-primary"></i> Analisis Performa Chapter</h4>
+                    <p class="text-muted small">Pantau metrik utama pertumbuhan dan keberhasilan event chapter Anda secara real-time.</p>
+                </div>
+                <div class="row g-4 mb-5">
+                    <!-- 1. Jumlah Peserta Open House (Traffic) -->
+                    <div class="col-xl-3 col-md-6 mb-4">
+                        <div class="card perf-card perf-indigo h-100 p-3">
+                            <div class="perf-icon-box">
+                                <i class="fas fa-users"></i>
+                            </div>
+                            <div class="perf-label">Traffic Open House</div>
+                            <div class="perf-value">{{ number_format($trafficOH) }}</div>
+                            <div class="perf-target">Target: 30-50 / Event</div>
+                            <div class="perf-progress progress">
+                                <div class="progress-bar" role="progressbar" style="width: {{ min(100, ($trafficOH/40)*100) }}%"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 2. Persentase Peserta Berkualitas -->
+                    <div class="col-xl-3 col-md-6 mb-4">
+                        <div class="card perf-card perf-emerald h-100 p-3">
+                            <div class="perf-icon-box">
+                                <i class="fas fa-user-check"></i>
+                            </div>
+                            <div class="perf-label">Qualified Leads</div>
+                            <div class="perf-value">{{ $qualifiedRate }}%</div>
+                            <div class="perf-target">Target: ≥ 60% (Hot+Warm)</div>
+                            <div class="perf-progress progress">
+                                <div class="progress-bar" role="progressbar" style="width: {{ $qualifiedRate }}%"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 3. Conversion Rate Open House -->
+                    <div class="col-xl-3 col-md-6 mb-4">
+                        <div class="card perf-card perf-cyan h-100 p-3">
+                            <div class="perf-icon-box">
+                                <i class="fas fa-exchange-alt"></i>
+                            </div>
+                            <div class="perf-label">Closing Rate (OH)</div>
+                            <div class="perf-value">{{ $closingRateOH }}%</div>
+                            <div class="perf-target">Target: ≥ 30% On The Spot</div>
+                            <div class="perf-progress progress">
+                                <div class="progress-bar" role="progressbar" style="width: {{ $closingRateOH }}%"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 4. Total Closing per Event -->
+                    <div class="col-xl-3 col-md-6 mb-4">
+                        <div class="card perf-card perf-amber h-100 p-3">
+                            <div class="perf-icon-box">
+                                <i class="fas fa-cart-arrow-down"></i>
+                            </div>
+                            <div class="perf-label">Closing per Event</div>
+                            <div class="perf-value">{{ $avgClosingPerEvent }}</div>
+                            <div class="perf-target">Target: 8-15 / Event</div>
+                            <div class="perf-progress progress">
+                                <div class="progress-bar" role="progressbar" style="width: {{ min(100, ($avgClosingPerEvent/12)*100) }}%"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 5. Revenue per Event -->
+                    <div class="col-xl-3 col-md-6 mb-4">
+                        <div class="card perf-card perf-rose h-100 p-3">
+                            <div class="perf-icon-box">
+                                <i class="fas fa-money-bill-wave"></i>
+                            </div>
+                            <div class="perf-label">Revenue per Event</div>
+                            <div class="perf-value" style="font-size: 1.4rem;">Rp {{ number_format($avgRevenuePerEvent/1000000, 1) }}M</div>
+                            <div class="perf-target">Target: ≥ 12M - 20M</div>
+                            <div class="perf-progress progress">
+                                <div class="progress-bar" role="progressbar" style="width: {{ min(100, ($avgRevenuePerEvent/15000000)*100) }}%"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 6. Jumlah Member Aktif M1T -->
+                    <div class="col-xl-3 col-md-6 mb-4">
+                        <div class="card perf-card perf-slate h-100 p-3">
+                            <div class="perf-icon-box">
+                                <i class="fas fa-user-graduate"></i>
+                            </div>
+                            <div class="perf-label">Member Aktif M1T</div>
+                            <div class="perf-value">{{ number_format($totalMemberAktif) }}</div>
+                            <div class="perf-target">Target: Growth Stabil</div>
+                            <div class="perf-progress progress">
+                                <div class="progress-bar" role="progressbar" style="width: 100%"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 7. Retention Rate -->
+                    <div class="col-xl-3 col-md-6 mb-4">
+                        <div class="card perf-card perf-violet h-100 p-3">
+                            <div class="perf-icon-box">
+                                <i class="fas fa-shield-alt"></i>
+                            </div>
+                            <div class="perf-label">Retention Rate</div>
+                            <div class="perf-value">{{ $retentionRate }}%</div>
+                            <div class="perf-target">Target: ≥ 70% (12 Mo)</div>
+                            <div class="perf-progress progress">
+                                <div class="progress-bar" role="progressbar" style="width: {{ $retentionRate }}%"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 8. Frekuensi Event -->
+                    <div class="col-xl-3 col-md-6 mb-4">
+                        <div class="card perf-card perf-blue h-100 p-3">
+                            <div class="perf-icon-box">
+                                <i class="fas fa-calendar-check"></i>
+                            </div>
+                            <div class="perf-label">Frekuensi Event</div>
+                            <div class="perf-value">{{ $eventCount }}</div>
+                            <div class="perf-target">Target: 2-4 / Bulan</div>
+                            <div class="perf-progress progress">
+                                <div class="progress-bar" role="progressbar" style="width: {{ min(100, ($eventCount/3)*100) }}%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div> <!-- End TAB 3 -->
         </div> <!-- End tab-content -->
 
             </div>

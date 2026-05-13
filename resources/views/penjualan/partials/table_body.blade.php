@@ -14,7 +14,7 @@
             @if(!($isChapter ?? false))
                 <th class="text-end py-3 px-3">Target</th>
             @endif
-            <th class="text-center py-3" style="width: 150px;">Status</th>
+            <th class="text-center py-3" style="width: 150px;">{{ ($isChapter ?? false) ? 'Total Peserta M1T Aktif' : 'Status' }}</th>
         </tr>
     </thead>
     <tbody>
@@ -106,7 +106,12 @@
                     </td>
                 @endif
                 <td class="text-center px-2">
-                    @if(!($sales['is_spp_row'] ?? false) && !($sales['is_lainnya_row'] ?? false))
+                    @if($isChapter ?? false)
+                        <div class="d-flex flex-column align-items-center justify-content-center">
+                            <span class="fs-4 fw-bold text-primary">{{ number_format($sales['m1t_aktif_count'] ?? 0) }}</span>
+                            <small class="text-muted fw-bold" style="font-size: 0.75rem;">PESERTA AKTIF</small>
+                        </div>
+                    @elseif(!($sales['is_spp_row'] ?? false) && !($sales['is_lainnya_row'] ?? false))
                         <div class="d-flex flex-column align-items-center justify-content-center">
                             <span class="badge rounded-pill px-3 py-2 fw-bold mb-1 {{ $isTercapai ? 'bg-success text-white' : 'bg-warning text-dark' }}" style="font-size: 0.85rem;">
                                 <i class="fa-solid {{ $isTercapai ? 'fa-check-circle' : 'fa-hourglass-start' }} me-1"></i>

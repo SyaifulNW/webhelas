@@ -141,6 +141,26 @@ class PenjualanController extends Controller
         $salesDataPusat = [];
         $salesDataChapter = [];
 
+        // [USER_REQUEST] Get M1T Active Participants Count for each Chapter
+        $m1tClassNames = [
+            'Start-Up Muslim Indonesia',
+            'Grow Up',
+            'Mentoring 1 Tahun',
+            'Mentoring 1 Tahun (M1T)',
+            'M1T - Grow Up',
+            'M1T - Start-Up'
+        ];
+        
+        $m1tAktifCounts = PesertaSmi::where('peserta_smis.status', '!=', 'Cuti')
+            ->join('salesplans', 'peserta_smis.sales_plan_id', '=', 'salesplans.id')
+            ->join('kelas', 'salesplans.kelas_id', '=', 'kelas.id')
+            ->whereIn('kelas.nama_kelas', $m1tClassNames)
+            ->whereNull('peserta_smis.deleted_at')
+            ->whereNull('salesplans.deleted_at')
+            ->select('salesplans.created_by', DB::raw('count(*) as count'))
+            ->groupBy('salesplans.created_by')
+            ->pluck('count', 'salesplans.created_by');
+
         $calculateOmset = function ($plan) {
             if ($plan->pesertaSmi) {
                 return (float) str_replace('.', '', $plan->pesertaSmi->total_pembayaran ?: ($plan->pesertaSmi->pembayaran_spp ?: $plan->pesertaSmi->spp_awal ?: 0));
@@ -212,7 +232,8 @@ class PenjualanController extends Controller
                     'realisasi' => $uRealisasi,
                     'conversion_rate' => $uConv,
                     'komisi' => $userNominal * 0.005,
-                    'bonus' => ($uRealisasi >= 100) ? 500000 : 0
+                    'bonus' => ($uRealisasi >= 100) ? 500000 : 0,
+                    'm1t_aktif_count' => $m1tAktifCounts[$user->id] ?? 0
                 ];
 
                 if ($user->role === 'chapter') {

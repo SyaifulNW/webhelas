@@ -446,6 +446,26 @@
                 </style>
 
 
+                @if($userRole === 'administrator')
+                    <!-- Database View Type Tabs (Panels) -->
+                    <div class="mb-4">
+                        <ul class="nav nav-pills shadow-sm p-1 bg-white rounded-pill border" style="width: fit-content;" id="databaseTabs">
+                            <li class="nav-item">
+                                <button class="nav-link rounded-pill px-4 fw-bold {{ request('view_type') !== 'chapter' ? 'active' : '' }}" 
+                                        id="tab-cs" onclick="updateFilter('view_type', 'cs')">
+                                    <i class="fas fa-building me-2"></i> DATABASE CS HELAS
+                                </button>
+                            </li>
+                            <li class="nav-item">
+                                <button class="nav-link rounded-pill px-4 fw-bold {{ request('view_type') === 'chapter' ? 'active' : '' }}" 
+                                        id="tab-chapter" onclick="updateFilter('view_type', 'chapter')">
+                                    <i class="fas fa-university me-2"></i> DATABASE CHAPTER
+                                </button>
+                            </li>
+                        </ul>
+                    </div>
+                @endif
+
                 @if(!in_array($userRole, ['chapter', 'reseller']))
                     <div class="stat-card-group mb-4">
                         <!-- Database Baru -->
@@ -608,7 +628,7 @@
                             @endphp
 
                             @if(!in_array($userRole, ['reseller', 'chapter']))
-                                <div class="d-flex flex-column" style="gap: 2px;">
+                                <div class="flex-column" style="gap: 2px; display: {{ request('view_type') === 'chapter' ? 'none' : 'flex' }};" id="filterIkutKelasContainer">
                                     <label class="text-xs fw-bold mb-0 ml-2" style="font-size: 0.65rem; color: #555; text-transform: uppercase;">Pilih Status Ikut Kelas</label>
                                     <select id="filterIkutKelas" class="form-select form-select-sm modern-select"
                                         onchange="toggleDaftarKelas(this.value)">
@@ -636,8 +656,8 @@
                             </div>
 
                              {{-- Filter Input Oleh (Chapter) --}}
-                            @if((in_array(strtolower($user->role), ['administrator', 'manager', 'marketing']) || $user->name === 'Agus Setyo') && request('view_type') !== 'cs')
-                                <div class="d-flex flex-column" style="gap: 2px;">
+                            @if(in_array(strtolower($user->role), ['administrator', 'manager', 'marketing']) || $user->name === 'Agus Setyo')
+                                <div class="flex-column" style="gap: 2px; display: {{ request('view_type') === 'chapter' ? 'flex' : 'none' }};" id="filterChapterContainer">
                                     <label class="text-xs fw-bold mb-0 ml-2" style="font-size: 0.65rem; color: #555; text-transform: uppercase;">Pilih Chapter</label>
                                     <select id="filterChapter" class="form-select form-select-sm modern-select">
                                         <option value="">ALL CHAPTER</option>
@@ -653,8 +673,8 @@
                             @endif
 
                             {{-- Filter Input Oleh (CS) --}}
-                            @if((in_array(strtolower($user->role), ['administrator', 'manager', 'marketing']) || $user->name === 'Agus Setyo') && request('view_type') !== 'chapter')
-                                <div class="d-flex flex-column" style="gap: 2px;">
+                            @if(in_array(strtolower($user->role), ['administrator', 'manager', 'marketing']) || $user->name === 'Agus Setyo')
+                                <div class="flex-column" style="gap: 2px; display: {{ request('view_type') === 'chapter' ? 'none' : 'flex' }};" id="filterCSContainer">
                                     <label class="text-xs fw-bold mb-0 ml-2" style="font-size: 0.65rem; color: #555; text-transform: uppercase;">Pilih Tim CS</label>
                                     <select id="filterCS" class="form-select form-select-sm modern-select">
                                         <option value="">ALL Tim CS</option>
@@ -737,6 +757,32 @@
                             }
 
                             window.history.pushState({}, '', url.toString());
+
+                            // Update active tab visuals
+                            const params = new URLSearchParams(url.search);
+                            const currentViewType = params.get('view_type') || 'cs';
+                            const tabCs = document.getElementById('tab-cs');
+                            const tabChapter = document.getElementById('tab-chapter');
+                            
+                            if (tabCs && tabChapter) {
+                                if (currentViewType === 'chapter') {
+                                    tabChapter.classList.add('active');
+                                    tabCs.classList.remove('active');
+                                    
+                                    // Update filter visibility
+                                    if (document.getElementById('filterIkutKelasContainer')) document.getElementById('filterIkutKelasContainer').style.setProperty('display', 'none', 'important');
+                                    if (document.getElementById('filterCSContainer')) document.getElementById('filterCSContainer').style.setProperty('display', 'none', 'important');
+                                    if (document.getElementById('filterChapterContainer')) document.getElementById('filterChapterContainer').style.setProperty('display', 'flex', 'important');
+                                } else {
+                                    tabCs.classList.add('active');
+                                    tabChapter.classList.remove('active');
+                                    
+                                    // Update filter visibility
+                                    if (document.getElementById('filterIkutKelasContainer')) document.getElementById('filterIkutKelasContainer').style.setProperty('display', 'flex', 'important');
+                                    if (document.getElementById('filterCSContainer')) document.getElementById('filterCSContainer').style.setProperty('display', 'flex', 'important');
+                                    if (document.getElementById('filterChapterContainer')) document.getElementById('filterChapterContainer').style.setProperty('display', 'none', 'important');
+                                }
+                            }
 
                             // Scroll to top of table
                             document.getElementById('tableContainer').scrollIntoView({ behavior: 'smooth', block: 'start' });

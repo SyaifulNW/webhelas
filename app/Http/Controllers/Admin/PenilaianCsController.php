@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
@@ -30,16 +30,23 @@ class PenilaianCsController extends Controller
                              })
                              ->whereNotIn('name', ['Linda', 'Yasmin'])
                              ->where('id', '!=', 1)
+                             ->where('id', '!=', auth()->id())
                              ->where('is_active', 1)
                              ->orderBy('name')
                              ->get();
         } elseif ($userName === 'Agus Setyo') {
-             $daftarCs = User::where('name', 'Agus Setyo')->get();
+             $daftarCs = User::where('name', 'Agus Setyo')
+                             ->where('id', '!=', auth()->id())
+                             ->where('is_active', 1)
+                             ->get();
         } else {
              // Revised List for Admin & Others
-             $daftarCs = User::whereIn('name', ['Arifa', 'Puput', 'Yasmin', 'Linda', 'Diah Putri', 'Nisa', 'Felmi', 'Rofi', 'Eko Sulis', 'Shafa Zahra', 'Rida'])
-                             ->orWhere('id', 14)
+             $daftarCs = User::where(function($q) {
+                                $q->whereIn('name', ['Arifa', 'Puput', 'Yasmin', 'Linda', 'Diah Putri', 'Nisa', 'Felmi', 'Rofi', 'Eko Sulis', 'Shafa Zahra', 'Rida'])
+                                  ->orWhere('id', 14);
+                             })
                              ->where('id', '!=', 1)
+                             ->where('id', '!=', auth()->id())
                              ->where('is_active', 1)
                              ->orderBy('name')
                              ->get();
@@ -62,25 +69,35 @@ class PenilaianCsController extends Controller
                                   ->orWhereIn('role', ['cs-mbc', 'cs-smi', 'advertising', 'produksi']);
                              })
                              ->whereNotIn('name', ['Linda', 'Yasmin'])
+                             ->where('id', '!=', auth()->id())
+                             ->where('is_active', 1)
                              ->orderBy('name')
                              ->get();
              $routeView = 'admin.penilaian-cs.index'; // Tetap gunakan view admin jika diperlukan
         } elseif ($userName === 'Yasmin') {
             // Yasmin melihat 8 user spesifik
-            $daftarCs = User::whereIn('name', ['Arifa', 'Puput', 'Yasmin', 'Linda', 'Diah Putri', 'Nisa', 'Felmi', 'Rofi', 'Eko Sulis', 'Shafa Zahra', 'Rida'])
-                             ->orWhere('id', 14)
+            $daftarCs = User::where(function($q) {
+                                $q->whereIn('name', ['Arifa', 'Puput', 'Yasmin', 'Linda', 'Diah Putri', 'Nisa', 'Felmi', 'Rofi', 'Eko Sulis', 'Shafa Zahra', 'Rida'])
+                                  ->orWhere('id', 14);
+                             })
                              ->where('id', '!=', 1)
+                             ->where('id', '!=', auth()->id())
                              ->where('is_active', 1)
                              ->orderBy('name')
                              ->get();
             $routeView = 'admin.penilaian-cs.index';
         } elseif ($userName === 'Agus Setyo') {
-            // Agus Setyo view self
-            $daftarCs = User::where('name', 'Agus Setyo')->get();
+            // Agus Setyo view self (but excluded by user request)
+            $daftarCs = User::where('name', 'Agus Setyo')
+                            ->where('id', '!=', auth()->id())
+                            ->where('is_active', 1)
+                            ->get();
             $routeView = 'admin.penilaian-cs.index';
+        } else {
             // Administrator / Other Managers -> See all relevant roles
             $daftarCs = User::whereIn('role', ['cs', 'cs-mbc', 'cs-smi', 'marketing', 'advertising', 'produksi'])
                 ->where('id', '!=', 1)
+                ->where('id', '!=', auth()->id())
                 ->where('is_active', 1)
                 ->orderBy('name')
                 ->get();
@@ -111,16 +128,21 @@ class PenilaianCsController extends Controller
             }
         }
         
-        // Jika user_id tidak ada di request, dan ada daftarCs, gunakan id pertama dari daftarCs sebagai default
-        if ($request->has('user_id')) {
-            $userId = $request->user_id;
-        } else {
-             // Default ke user login jika dia ada di daftarCS, jika tidak ambil yg pertama dari list
+        // Jika user_id tidak ada di request, atau user tsb non-aktif, gunakan default
+        $requestedUserId = $request->user_id;
+        $targetUser = $requestedUserId ? User::find($requestedUserId) : null;
+        
+        if (!$targetUser || $targetUser->is_active != 1) {
+             // Default logic
              $userId = auth()->id();
-             // Cek apakah auth id ada di daftarCs
+             // Cek apakah auth id ada di daftarCs (yg sudah di-filter aktif & bukan diri sendiri)
              if (!$daftarCs->contains('id', $userId)) {
-                 $userId = $daftarCs->first()->id ?? $userId;
+                 // Prioritaskan CS (bukan Felmi/Nisa/Eko) agar muncul dashboard standar
+                 $defaultUser = $daftarCs->whereNotIn('name', ['Felmi', 'Nisa', 'Eko Sulis'])->first() ?? $daftarCs->first();
+                 $userId = $defaultUser->id ?? $userId;
              }
+        } else {
+            $userId = $requestedUserId;
         }
         
         $targetUser = User::find($userId);
@@ -316,31 +338,46 @@ public function store(Request $request)
             $roas = $biayaIklan > 0 ? round($totalOmset / $biayaIklan, 2) : 0;
             $targetRoas = 10;
             $persenRoas = $targetRoas > 0 ? min(($roas / $targetRoas) * 100, 100) : 0;
-            $nilaiRoas = $persenRoas; // Base 100
-            $nilaiAkhirRoas = round(($persenRoas / 100) * 30, 2); // Bobot 30%
+            $nilaiAkhirRoas = round(($persenRoas / 100) * 30, 2);
 
-            // 1. LEADS MBC (30%) - Target 300
-            $leadsMBC = Data::whereYear('created_at', $tahun)
+            $felmiUser = User::where('name', 'Felmi')->first();
+            $nisaUser = User::where('name', 'Nisa')->first();
+
+            // 1. LEADS ADS (20%)
+            $leadsAds = Data::whereYear('created_at', $tahun)
                 ->whereMonth('created_at', $bulanNum)
                 ->where('leads', 'like', '%Iklan%')
-                ->whereIn('created_by', $csMBC)
+                ->whereIn('created_by', array_merge($csMBC, $csSMI))
                 ->count();
-            $targetLeadsMBC = 300;
-            $persenLeadsMBC = $targetLeadsMBC > 0 ? min(($leadsMBC / $targetLeadsMBC) * 100, 100) : 0;
-            $nilaiLeadsMBC = round(($persenLeadsMBC / 100) * 30, 2);
+            $targetLeadsAds = 400;
+            $persenLeadsAds = $targetLeadsAds > 0 ? min(($leadsAds / $targetLeadsAds) * 100, 100) : 0;
+            $nilaiLeadsAds = round(($persenLeadsAds / 100) * 20, 2);
 
-            // 2. LEADS SMI (30%) - Target 200
-            $leadsSMI = Data::whereYear('created_at', $tahun)
-                ->whereMonth('created_at', $bulanNum)
-                ->where('leads', 'like', '%Iklan%')
-                ->whereIn('created_by', $csSMI)
-                ->count();
-            $targetLeadsSMI = 200;
-            $persenLeadsSMI = $targetLeadsSMI > 0 ? min(($leadsSMI / $targetLeadsSMI) * 100, 100) : 0;
-            $nilaiLeadsSMI = round(($persenLeadsSMI / 100) * 30, 2);
+            // 2. LEADS EVENT OFFLINE (FELMI) (20%)
+            $leadsFelmi = 0;
+            if ($felmiUser) {
+                $leadsFelmi = \App\Models\MarketingParticipant::whereYear('created_at', $tahun)
+                    ->whereMonth('created_at', $bulanNum)
+                    ->where('created_by', $felmiUser->id)
+                    ->count();
+            }
+            $targetLeadsFelmi = 100;
+            $persenLeadsFelmi = $targetLeadsFelmi > 0 ? min(($leadsFelmi / $targetLeadsFelmi) * 100, 100) : 0;
+            $nilaiLeadsFelmi = round(($persenLeadsFelmi / 100) * 20, 2);
 
-            // 3. PENILAIAN ATASAN (10%)
-            // Reuse code below
+            // 3. LEADS EVENT ONLINE (NISA) (20%)
+            $leadsNisa = 0;
+            if ($nisaUser) {
+                $leadsNisa = \App\Models\MarketingParticipant::whereYear('created_at', $tahun)
+                    ->whereMonth('created_at', $bulanNum)
+                    ->where('created_by', $nisaUser->id)
+                    ->count();
+            }
+            $targetLeadsNisa = 100;
+            $persenLeadsNisa = $targetLeadsNisa > 0 ? min(($leadsNisa / $targetLeadsNisa) * 100, 100) : 0;
+            $nilaiLeadsNisa = round(($persenLeadsNisa / 100) * 20, 2);
+
+            // 4. PENILAIAN ATASAN (10%)
             $manual = \App\Models\PenilaianManual::where('user_id', $userId)
                         ->where('bulan', $bulan)
                         ->where('tahun', $tahun)
@@ -349,7 +386,7 @@ public function store(Request $request)
             $persenManual = $totalSumManual;
             $nilaiManualPart = round(($persenManual / 100) * 10, 2);
 
-            $totalNilai = $nilaiAkhirRoas + $nilaiLeadsMBC + $nilaiLeadsSMI + $nilaiManualPart;
+            $totalNilai = $nilaiAkhirRoas + $nilaiLeadsAds + $nilaiLeadsFelmi + $nilaiLeadsNisa + $nilaiManualPart;
 
         } else {
             // --- LOGIK DEFAULT MARKETING (FELMI / NISA) ---
@@ -396,58 +433,112 @@ public function store(Request $request)
         // 5. HISTORY
         $historyNilai = array_fill(1, 12, 0);
         for ($m = 1; $m <= 12; $m++) {
-            $historyNilai[$m] = $this->hitungTotalNilaiMarketing(
-                $userId,
-                $m,
-                $tahun
-            );
+            $historyNilai[$m] = $this->hitungTotalNilaiMarketing($userId, $m, $tahun);
         }
 
         // 6. Daily Activity Score
         $dailyTotalKpi = $this->hitungDailyKpi($userId, $bulan, $tahun);
 
-        // Return View Marketing
-        // NOTE: View path is likely 'marketing.penilaian.index' but we need to pass sidebar variables?
-        // Actually, since we are in Admin layout, we might need to verify if 'layouts.masteradmin' works fine.
-        // Yes, 'marketing.penilaian.index' extends 'layouts.masteradmin'.
-        // But we need to ensure the variable names match what the view expects.
+        // 7. LOGIK KHUSUS FELMI (KPI TABLE)
+        $felmiKpi = [];
+        $totalFelmiKpiScore = 0;
+        $overallPerformanceScore = 0;
+
+        if (trim($targetUser->name) === 'Felmi') {
+            $kpiConfigs = [
+                ['nama' => 'Total Leads Baru/Bulan', 'target' => 100, 'bobot' => 40],
+                ['nama' => 'Entrepreneur Forum / E-Fest', 'target' => 50, 'bobot' => 30],
+                ['nama' => 'Bisnis Visit / UpRev', 'target' => 50, 'bobot' => 30],
+            ];
+
+            foreach ($kpiConfigs as $config) {
+                $real = 0;
+                if ($config['nama'] === 'Total Leads Baru/Bulan') {
+                    $real = \App\Models\MarketingParticipant::whereYear('created_at', $tahun)
+                        ->whereMonth('created_at', $bulanNum)
+                        ->where('created_by', $userId)
+                        ->count();
+                } elseif (stripos($config['nama'], 'E-Fest') !== false) {
+                    $real = \App\Models\MarketingPerformance::where('user_id', $userId)
+                        ->whereYear('tanggal', $tahun)
+                        ->whereMonth('tanggal', $bulanNum)
+                        ->where(function($q) {
+                            $q->where('event_name', 'LIKE', '%E-Fest%')
+                              ->orWhere('event_name', 'LIKE', '%E- Festival%');
+                        })
+                        ->sum('peserta_hadir') ?? 0;
+                } elseif (stripos($config['nama'], 'UpRev') !== false || stripos($config['nama'], 'Visit') !== false) {
+                    $real = \App\Models\MarketingPerformance::where('user_id', $userId)
+                        ->whereYear('tanggal', $tahun)
+                        ->whereMonth('tanggal', $bulanNum)
+                        ->where(function($q) {
+                            $q->where('event_name', 'LIKE', '%Up%Rev%')
+                              ->orWhere('event_name', 'LIKE', '%Bisnis%Visit%');
+                        })
+                        ->sum('peserta_hadir') ?? 0;
+                }
+                $persen = $config['target'] > 0 ? min(100, ($real / $config['target']) * 100) : 0;
+                $nilai = ($persen / 100) * $config['bobot'];
+                $felmiKpi[] = [
+                    'nama' => $config['nama'],
+                    'target' => $config['target'],
+                    'bobot' => $config['bobot'],
+                    'real' => $real,
+                    'nilai' => round($nilai, 2)
+                ];
+                $totalFelmiKpiScore += $nilai;
+            }
+            $overallPerformanceScore = $totalFelmiKpiScore;
+            $totalNilai = $totalFelmiKpiScore;
+        }
 
         // Return View Marketing dengan variabel yang sesuai ekspektasi view
-        return view('marketing.penilaian.index', compact(
-            'bulan', 'tahun', 'targetUser', 'daftarCs', 'routeAction', 'userId',
-            'totalNilai', 'nilaiManualPart', 'totalSumManual', 'persenManual',
-            'historyNilai', 'manual', 'dailyTotalKpi'
-        ) + [
-            // Variabel untuk Eko Sulis
-            'roas' => $roas ?? 0,
-            'targetRoas' => $targetRoas ?? 10,
-            'persenRoas' => $persenRoas ?? 0,
-            'nilaiAkhirRoas' => $nilaiAkhirRoas ?? 0,
-            'leadsAds' => $leadsMBC ?? 0,
-            'targetLeadsAds' => $targetLeadsMBC ?? 0,
-            'persenLeadsAds' => $persenLeadsMBC ?? 0,
-            'nilaiLeadsAds' => $nilaiLeadsMBC ?? 0,
-            'leadsFelmi' => $leadsSMI ?? 0,
-            'targetLeadsFelmi' => $targetLeadsSMI ?? 0,
-            'persenLeadsFelmi' => $persenLeadsSMI ?? 0,
-            'nilaiLeadsFelmi' => $nilaiLeadsSMI ?? 0,
-            'leadsNisa' => 0, // Placeholder jika ada logic tambahan
-            'targetLeadsNisa' => 50,
-            'persenLeadsNisa' => 0,
-            'nilaiLeadsNisa' => 0,
+        return view('marketing.penilaian.index', array_merge(
+            compact(
+                'bulan', 'tahun', 'targetUser', 'daftarCs', 'routeAction', 'userId',
+                'totalNilai', 'nilaiManualPart', 'totalSumManual', 'persenManual',
+                'historyNilai', 'manual', 'dailyTotalKpi', 'felmiKpi', 'totalFelmiKpiScore', 'overallPerformanceScore'
+            ),
+            [
+                // Variabel untuk Eko Sulis
+                'roas' => $roas ?? 0,
+                'targetRoas' => $targetRoas ?? 10,
+                'persenRoas' => $persenRoas ?? 0,
+                'nilaiAkhirRoas' => $nilaiAkhirRoas ?? 0,
+                'leadsAds' => $leadsAds ?? 0,
+                'targetLeadsAds' => $targetLeadsAds ?? 0,
+                'persenLeadsAds' => $persenLeadsAds ?? 0,
+                'nilaiLeadsAds' => $nilaiLeadsAds ?? 0,
+                'leadsFelmi' => $leadsFelmi ?? 0,
+                'targetLeadsFelmi' => $targetLeadsFelmi ?? 0,
+                'persenLeadsFelmi' => $persenLeadsFelmi ?? 0,
+                'nilaiLeadsFelmi' => $nilaiLeadsFelmi ?? 0,
+                'leadsNisa' => 0,
+                'targetLeadsNisa' => 50,
+                'persenLeadsNisa' => 0,
+                'nilaiLeadsNisa' => 0,
 
-            // Variabel untuk Felmi / Marketing Umum
-            'leadsMBC' => $leadsMBC ?? 0,
-            'targetLeadsMBC' => $targetLeadsMBC ?? 0,
-            'persenLeadsMBC' => $persenLeadsMBC ?? 0,
-            'nilaiLeadsMBC' => $nilaiLeadsMBC ?? 0,
-            'leadsSMI' => $leadsSMI ?? 0,
-            'targetLeadsSMI' => $targetLeadsSMI ?? 0,
-            'persenLeadsSMI' => $persenLeadsSMI ?? 0,
-            'nilaiLeadsSMI' => $nilaiLeadsSMI ?? 0,
-            'leadsFelmiCount' => $leadsSMI ?? 0, // Untuk view Felmi
-            'nilaiLeadsFelmiPart' => $nilaiLeadsSMI ?? 0
-        ]);
+                // Variabel untuk Felmi / Marketing Umum
+                'leadsMBC' => $leadsMBC ?? 0,
+                'targetLeadsMBC' => $targetLeadsMBC ?? 0,
+                'persenLeadsMBC' => $persenLeadsMBC ?? 0,
+                'nilaiLeadsMBC' => $nilaiLeadsMBC ?? 0,
+                'leadsSMI' => $leadsSMI ?? 0,
+                'targetLeadsSMI' => $targetLeadsSMI ?? 0,
+                'persenLeadsSMI' => $persenLeadsSMI ?? 0,
+                'nilaiLeadsSMI' => $nilaiLeadsSMI ?? 0,
+                
+                // Variabel spesifik untuk View Felmi (PENILAIAN HASIL)
+                'leadsFelmiCount' => $leadsFelmiCount ?? ($leadsSMI ?? 0),
+                'nilaiLeadsFelmiPart' => $nilaiLeadsFelmiPart ?? ($nilaiLeadsSMI ?? 0),
+                'efestCount' => $efestCount ?? 0,
+                'persenEfest' => $persenEfest ?? 0,
+                'nilaiEfest' => $nilaiEfest ?? 0,
+                'visitCount' => $visitCount ?? 0,
+                'persenVisit' => $persenVisit ?? 0,
+                'nilaiVisit' => $nilaiVisit ?? 0,
+            ]
+        ));
     }
 
     private function hitungTotalNilaiMarketing($userId, $bulan, $tahun)
@@ -456,11 +547,16 @@ public function store(Request $request)
         $csMBC = ['Administrator', 'Linda', 'Yasmin', 'Shafa', 'Arifa', 'Qiyya'];
 
         $userObj = User::find($userId);
-        if ($userObj && trim($userObj->name) === 'Eko Sulis') {
+        if (!$userObj) return 0;
+        
+        $namaUserData = trim($userObj->name);
+        $bulanNum = intval($bulan);
+
+        if ($namaUserData === 'Eko Sulis') {
              // 0. ROAS (30%)
             $totalOmset = SalesPlan::with('data')
                 ->whereYear('updated_at', $tahun)
-                ->whereMonth('updated_at', $bulan)
+                ->whereMonth('updated_at', $bulanNum)
                 ->where('status', 'sudah_transfer')
                 ->whereHas('data', function($q) {
                     $q->where('leads', 'LIKE', '%Iklan%');
@@ -472,62 +568,102 @@ public function store(Request $request)
             $persenRoas = $targetRoas > 0 ? min(($roas / $targetRoas) * 100, 100) : 0;
             $nilaiAkhirRoas = round(($persenRoas / 100) * 30, 2);
 
-            // 1. LEADS MBC (30%)
-            $leadsMBC = Data::whereYear('created_at', $tahun)
-                ->whereMonth('created_at', $bulan)
-                ->where('leads', 'like', '%Iklan%')
-                ->whereIn('created_by', $csMBC)
-                ->count();
-            $targetLeadsMBC = 300;
-            $persenLeadsMBC = $targetLeadsMBC > 0 ? min(($leadsMBC / $targetLeadsMBC) * 100, 100) : 0;
-            $nilaiLeadsMBC = round(($persenLeadsMBC / 100) * 30, 2);
+            $felmiUser = User::where('name', 'Felmi')->first();
+            $nisaUser = User::where('name', 'Nisa')->first();
 
-            // 2. LEADS SMI (30%)
-            $leadsSMI = Data::whereYear('created_at', $tahun)
-                ->whereMonth('created_at', $bulan)
+            // 1. LEADS ADS (20%)
+            $leadsAds = Data::whereYear('created_at', $tahun)
+                ->whereMonth('created_at', $bulanNum)
                 ->where('leads', 'like', '%Iklan%')
-                ->whereIn('created_by', $csSMI)
+                ->whereIn('created_by', array_merge($csMBC, $csSMI))
                 ->count();
-            $targetLeadsSMI = 200;
-            $persenLeadsSMI = $targetLeadsSMI > 0 ? min(($leadsSMI / $targetLeadsSMI) * 100, 100) : 0;
-            $nilaiLeadsSMI = round(($persenLeadsSMI / 100) * 30, 2);
+            $nilaiLeadsAds = round((min(($leadsAds / 400) * 100, 100) / 100) * 20, 2);
 
-            // 3. MANUAL (10%)
+            // 2. LEADS FELMI (20%)
+            $leadsFelmi = 0;
+            if ($felmiUser) {
+                $leadsFelmi = \App\Models\MarketingParticipant::whereYear('created_at', $tahun)
+                    ->whereMonth('created_at', $bulanNum)
+                    ->where('created_by', $felmiUser->id)
+                    ->count();
+            }
+            $nilaiLeadsFelmi = round((min(($leadsFelmi / 100) * 100, 100) / 100) * 20, 2);
+
+            // 3. LEADS NISA (20%)
+            $leadsNisa = 0;
+            if ($nisaUser) {
+                $leadsNisa = \App\Models\MarketingParticipant::whereYear('created_at', $tahun)
+                    ->whereMonth('created_at', $bulanNum)
+                    ->where('created_by', $nisaUser->id)
+                    ->count();
+            }
+            $nilaiLeadsNisa = round((min(($leadsNisa / 100) * 100, 100) / 100) * 20, 2);
+
+            // 4. MANUAL (10%)
             $manual = \App\Models\PenilaianManual::where('user_id', $userId)
-                        ->where('bulan', $bulan)
+                        ->where('bulan', $bulanNum)
                         ->where('tahun', $tahun)
                         ->first();
             $manualVal = $manual ? $manual->total_nilai : 0;
             $nilaiManualPart = round(($manualVal / 100) * 10, 2);
 
-            return $nilaiAkhirRoas + $nilaiLeadsMBC + $nilaiLeadsSMI + $nilaiManualPart;
+            return $nilaiAkhirRoas + $nilaiLeadsAds + $nilaiLeadsFelmi + $nilaiLeadsNisa + $nilaiManualPart;
+        }
+
+        if ($namaUserData === 'Felmi') {
+            // 1. Leads Felmi (40%)
+            $leadsFelmiCount = \App\Models\MarketingParticipant::whereYear('created_at', $tahun)
+                ->whereMonth('created_at', $bulanNum)
+                ->where('created_by', $userId)
+                ->count();
+            $nilaiLeadsFelmi = round((min(($leadsFelmiCount / 100) * 100, 100) / 100) * 40, 2);
+
+            // 2. E-Fest (30%)
+            $efestCount = \App\Models\MarketingPerformance::where('user_id', $userId)
+                ->whereYear('tanggal', $tahun)
+                ->whereMonth('tanggal', $bulanNum)
+                ->where(function($q) {
+                    $q->where('event_name', 'LIKE', '%E-Fest%')
+                      ->orWhere('event_name', 'LIKE', '%E- Festival%');
+                })
+                ->sum('peserta_hadir') ?? 0;
+            $nilaiEfest = round((min(($efestCount / 50) * 100, 100) / 100) * 30, 2);
+
+            // 3. Visit (30%)
+            $visitCount = \App\Models\MarketingPerformance::where('user_id', $userId)
+                ->whereYear('tanggal', $tahun)
+                ->whereMonth('tanggal', $bulanNum)
+                ->where(function($q) {
+                    $q->where('event_name', 'LIKE', '%Up%Rev%')
+                      ->orWhere('event_name', 'LIKE', '%Bisnis%Visit%');
+                })
+                ->sum('peserta_hadir') ?? 0;
+            $nilaiVisit = round((min(($visitCount / 50) * 100, 100) / 100) * 30, 2);
+
+            return $nilaiLeadsFelmi + $nilaiEfest + $nilaiVisit;
         }
 
         // --- DEFAULT ---
-
         // 1. LEADS MBC (45%)
         $leadsMBC = Data::whereYear('created_at', $tahun)
-            ->whereMonth('created_at', $bulan)
+            ->whereMonth('created_at', $bulanNum)
             ->where('leads', 'like', '%Marketing%')
             ->whereIn('created_by', $csMBC)
             ->count();
-        $targetLeadsMBC = 75;
-        $persenLeadsMBC = $targetLeadsMBC > 0 ? min(($leadsMBC / $targetLeadsMBC) * 100, 100) : 0;
-        $nilaiLeadsMBC = round(($persenLeadsMBC / 100) * 45, 2);
+        $targetMBC = ($namaUserData === 'Nisa') ? 100 : 150;
+        $nilaiLeadsMBC = round((min(($leadsMBC / $targetMBC) * 100, 100) / 100) * 45, 2);
 
         // 2. LEADS SMI (45%)
         $leadsSMI = Data::whereYear('created_at', $tahun)
-            ->whereMonth('created_at', $bulan)
+            ->whereMonth('created_at', $bulanNum)
             ->where('leads', 'like', '%Marketing%')
             ->whereIn('created_by', $csSMI)
             ->count();
-        $targetLeadsSMI = 50;
-        $persenLeadsSMI = $targetLeadsSMI > 0 ? min(($leadsSMI / $targetLeadsSMI) * 100, 100) : 0;
-        $nilaiLeadsSMI = round(($persenLeadsSMI / 100) * 45, 2);
+        $nilaiLeadsSMI = round((min(($leadsSMI / 100) * 100, 100) / 100) * 45, 2);
 
         // 3. MANUAL (10%)
         $manual = \App\Models\PenilaianManual::where('user_id', $userId)
-                    ->where('bulan', $bulan)
+                    ->where('bulan', $bulanNum)
                     ->where('tahun', $tahun)
                     ->first();
         $manualVal = $manual ? $manual->total_nilai : 0;

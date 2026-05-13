@@ -117,6 +117,9 @@ use App\Models\SalesPlan; // Ensure you import the Salesplan model
             ->whereIn('status_peserta', ['peserta_baru', 'pindah_salesplan']);
 
         $viewType = $request->input('view_type');
+        if (empty($viewType) && $userRole === 'administrator') {
+            $viewType = 'cs';
+        }
         if ($viewType === 'cs') {
             $query->where('created_by_role', 'cs-mbc');
         } elseif ($viewType === 'chapter') {

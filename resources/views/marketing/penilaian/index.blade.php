@@ -46,7 +46,8 @@
 @php
     $isEkoSulis = isset($targetUser) && trim($targetUser->name) === 'Eko Sulis';
     $isFelmi = isset($targetUser) && trim($targetUser->name) === 'Felmi';
-    $mainColClass = $isFelmi ? 'col-lg-12' : 'col-lg-6';
+    $isAdminOrManager = in_array(strtolower(auth()->user()->role), ['administrator', 'manager', 'admin']);
+    $mainColClass = ($isFelmi && !$isAdminOrManager) ? 'col-lg-12' : 'col-lg-6';
 @endphp
 
 <div class="row">
@@ -55,7 +56,7 @@
     <div class="{{ $mainColClass }} mb-4">
 
         <!-- Card Filter -->
-        @if(!$isFelmi)
+        @if(!$isFelmi || $isAdminOrManager)
         <div class="card shadow mb-4">
             <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
                 <h6 class="m-0 font-weight-bold text-primary">Filter Karyawan & Periode</h6>
@@ -246,7 +247,9 @@
                 </div>
             </div>
 
-        @else
+        @endif
+
+        @if(!$isFelmi || $isAdminOrManager)
             <!-- Card Input Penilaian Atasan -->
             @if(isset($routeAction))
             <div class="card shadow mb-4 border-left-danger">
@@ -307,7 +310,7 @@
 
     <!-- Kolom Kanan: Statistik System -->
     <div class="{{ $mainColClass }}">
-        @if(!$isFelmi)
+        @if(!$isFelmi || $isAdminOrManager)
         <div class="card shadow mb-4">
             <div class="card-header py-3">
                 <h6 class="m-0 font-weight-bold text-success">Statistik Sistem (Otomatis)</h6>

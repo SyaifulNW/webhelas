@@ -10,7 +10,7 @@ use App\Http\Controllers\SalesPlanController;
 use App\Http\Controllers\DailyController;
 use App\Http\Controllers\KoordinasiController;
 use App\Http\Controllers\GanttChartController;
-use App\Http\Controllers\PenilaianCsController;
+
 use App\Http\Controllers\AdminActivityController;
 use App\Http\Controllers\AdvertisingController;
 use App\Http\Controllers\HomeController;
@@ -241,9 +241,9 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/activity-cs', [AdminActivityController::class, 'index'])->name('activity-cs.index');
         Route::get('/activity-cs/export-pdf-bulanan', [AdminActivityController::class, 'viewPdfBulanan'])->name('activity-cs.viewPdfBulanan');
 
-        Route::get('/penilaian-cs', [PenilaianCsController::class, 'index'])->name('penilaian-cs.index');
-        Route::post('/penilaian-cs', [PenilaianCsController::class, 'store'])->name('penilaian-cs.store');
-        Route::post('/penilaian-cs/export-pdf', [PenilaianCsController::class, 'exportPdf'])->name('penilaian-cs.exportPdf');
+        Route::get('/penilaian-cs', [App\Http\Controllers\Admin\PenilaianCsController::class, 'index'])->name('penilaian-cs.index');
+        Route::post('/penilaian-cs', [App\Http\Controllers\Admin\PenilaianCsController::class, 'store'])->name('penilaian-cs.store');
+        Route::post('/penilaian-cs/export-pdf', [App\Http\Controllers\Admin\PenilaianCsController::class, 'exportPdf'])->name('penilaian-cs.exportPdf');
         Route::resource('penilaian', App\Http\Controllers\Admin\PenilaianCsController::class)->except(['index'])->names('penilaian');
 
         // Settings (Restricted inside group)
@@ -326,7 +326,7 @@ Route::middleware(['auth'])->group(function () {
     });
 
     // Others
-    Route::get('/manager/penilaian-cs', [PenilaianCsController::class, 'managerIndex'])->name('manager.penilaian-cs.index');
+    Route::get('/manager/penilaian-cs', [App\Http\Controllers\Admin\PenilaianCsController::class, 'managerIndex'])->name('manager.penilaian-cs.index');
     Route::get('/koordinasi/{id}', [KoordinasiController::class, 'show'])->name('koordinasi.show');
     Route::post('/koordinasi/komentar', [KoordinasiController::class, 'kirimKomentar'])->name('komentar.store');
     Route::get('/pembelajaran-siswa', [PembelajaranSiswaController::class, 'index'])->name('pembelajaran.index');

@@ -158,6 +158,10 @@ class PesertaSmiController extends Controller
         $sppMonth = $request->get('filter_spp_month', date('n'));
         $yearFilter = $request->get('filter_year', date('Y'));
         
+        // Ensure month is numeric for internal logic
+        $mNum = ($sppMonth !== 'all') ? (int)$sppMonth : null;
+        $yNum = ($yearFilter !== 'all') ? (int)$yearFilter : (int)date('Y');
+        
         if ($sppMonth !== 'all') {
             $month = (int) $sppMonth;
             if ($month >= 1 && $month <= 12) {
@@ -584,12 +588,12 @@ class PesertaSmiController extends Controller
         // --- AJAX RESPONSE ---
         if ($request->ajax() || $request->has('ajax')) {
             $html = view('admin.peserta-smi.table-rows', compact('data', 'monthsRaw'))->render();
-            $monthSpp = $request->get('filter_spp_month');
-            $yearSpp = $request->get('filter_year', date('Y'));
+            $monthSpp = $sppMonth;
+            $yearSpp = $yearFilter;
 
             $sppHeader = "MONITORING SPP ";
             if ($monthSpp && $monthSpp !== 'all') {
-                $sppHeader .= "BULAN " . strtoupper($monthsRaw[$monthSpp] ?? '') . " ";
+                $sppHeader .= "BULAN " . strtoupper($monthsRaw[(int)$monthSpp] ?? '') . " ";
             }
             if ($yearSpp && $yearSpp !== 'all') {
                 $sppHeader .= $yearSpp;
@@ -1070,12 +1074,33 @@ class PesertaSmiController extends Controller
         $peserta = \App\Models\PesertaSmi::findOrFail($id);
 
         if ($request->hasFile('bukti_transfer')) {
+            // Robust path detection for various server environments (Shared Hosting, XAMPP, etc.)
+            $basePublic = public_path();
+            if (isset($_SERVER['DOCUMENT_ROOT']) && !empty($_SERVER['DOCUMENT_ROOT']) && is_dir($_SERVER['DOCUMENT_ROOT'])) {
+                $basePublic = $_SERVER['DOCUMENT_ROOT'];
+            } elseif (is_dir(base_path('public_html'))) {
+                $basePublic = base_path('public_html');
+            }
+
+            $subFolder = 'uploads/bukti_transfer';
+            $destinationPath = rtrim($basePublic, '/') . '/' . $subFolder;
+
+            // Delete old file if exists
+            if ($peserta->bukti_transfer && file_exists(rtrim($basePublic, '/') . '/' . $peserta->bukti_transfer)) {
+                @unlink(rtrim($basePublic, '/') . '/' . $peserta->bukti_transfer);
+            }
+
             $file = $request->file('bukti_transfer');
-            $filename = time() . '_' . $file->getClientOriginalName();
-            $path = $file->storeAs('bukti_transfer', $filename, 'public');
+            $filename = time() . '_' . \Illuminate\Support\Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.' . $file->getClientOriginalExtension();
+
+            if (!file_exists($destinationPath)) {
+                mkdir($destinationPath, 0755, true);
+            }
+
+            $file->move($destinationPath, $filename);
             
-            $peserta->bukti_transfer = $path;
-            $peserta->approval_status = 'Pending'; // Reset to pending when new proof is uploaded
+            $peserta->bukti_transfer = $subFolder . '/' . $filename;
+            $peserta->approval_status = 'Pending'; 
             $peserta->save();
 
             return back()->with('success', 'Bukti transfer berhasil diunggah. Menunggu persetujuan admin.');

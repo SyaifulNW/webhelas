@@ -69,97 +69,44 @@
     }
 </style>
 
-<div class="container-fluid px-4 pb-5">
-    <!-- HEADER -->
-    <h3 class="mb-4 py-3 fw-bold text-dark text-center" style="letter-spacing: 1px; border-bottom: 2px dashed #ddd;">
-        <i class="fas fa-boxes me-2 text-warning"></i> MODUL OPERASIONAL HELAS
-    </h3>
-
-    <!-- STATS ROW -->
-    <div class="row g-4 mb-5">
-        <div class="col-xl-3 col-md-6 mb-3">
-            <div class="card stat-card shadow-sm h-100 py-2" style="border-left-color: #4e73df;">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
-                                Proyek Berjalan</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $stats['proyek_berjalan'] ?? 12 }}</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-calendar fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-xl-3 col-md-6 mb-3">
-            <div class="card stat-card shadow-sm h-100 py-2" style="border-left-color: #1cc88a;">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
-                                Karyawan Aktif</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $stats['karyawan_aktif'] ?? 45 }}</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-users fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-xl-3 col-md-6 mb-3">
-            <div class="card stat-card shadow-sm h-100 py-2" style="border-left-color: #36b9cc;">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                             <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Tiket Pending</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $stats['tiket_pending'] ?? 5 }}</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-clipboard-list fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-xl-3 col-md-6 mb-3">
-            <div class="card stat-card shadow-sm h-100 py-2" style="border-left-color: #f6c23e;">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
-                                Inventory Items</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $stats['inventory'] ?? 128 }}</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-boxes fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
+<div class="container-fluid px-4 pb-5 pt-4">
     <!-- MAIN MENU CARDS -->
     <h5 class="fw-bold text-dark mb-4 px-2" style="border-left: 5px solid #f6c23e;">
         <i class="fas fa-cogs me-2 text-warning"></i> MANAJEMEN OPERASIONAL
     </h5>
     
     <div class="row g-4">
-        <!-- Daily Activity -->
+        <!-- Inventaris Kantor -->
+        <div class="col-xl-4 col-md-6 mb-4">
+            <a href="#" class="text-decoration-none h-100 d-block">
+                <div class="card op-card h-100 shadow border-0" style="background: linear-gradient(135deg, #4e73df 0%, #224abe 100%) !important;">
+                    <div class="card-body p-4">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="flex-grow-1">
+                                <div class="op-card-title">Inventaris Kantor</div>
+                                <div class="op-card-text">Manajemen aset, perbaikan fasilitas, dan stok perlengkapan kantor.</div>
+                            </div>
+                            <div class="op-card-icon">
+                                <i class="fas fa-building fa-3x text-white"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <!-- Kebutuhan Kelas MBC -->
         <div class="col-xl-4 col-md-6 mb-4">
             <a href="#" class="text-decoration-none h-100 d-block">
                 <div class="card op-card h-100 shadow border-0" style="background: linear-gradient(135deg, #f6c23e 0%, #dda20a 100%) !important;">
                     <div class="card-body p-4">
                         <div class="d-flex justify-content-between align-items-start">
                             <div class="flex-grow-1">
-                                <div class="op-card-title">Daily Activity</div>
-                                <div class="op-card-text">Laporan dan tracking aktivitas harian operasional.</div>
+                                <div class="op-card-title">Kebutuhan Kelas MBC</div>
+                                <div class="op-card-text">Persiapan logistik, modul, dan perlengkapan untuk kelas MBC.</div>
                             </div>
                             <div class="op-card-icon">
-                                <i class="fas fa-tasks fa-3x text-white"></i>
+                                <i class="fas fa-chalkboard-teacher fa-3x text-white"></i>
                             </div>
                         </div>
                     </div>
@@ -167,44 +114,24 @@
             </a>
         </div>
 
-        <!-- Task List -->
+        <!-- Kebutuhan M1T -->
         <div class="col-xl-4 col-md-6 mb-4">
             <a href="#" class="text-decoration-none h-100 d-block">
                 <div class="card op-card h-100 shadow border-0" style="background: linear-gradient(135deg, #1cc88a 0%, #13855c 100%) !important;">
                     <div class="card-body p-4">
                         <div class="d-flex justify-content-between align-items-start">
                             <div class="flex-grow-1">
-                                <div class="op-card-title">Task & Project</div>
-                                <div class="op-card-text">Kelola tugas operasional, project berjalan, dan deadline.</div>
+                                <div class="op-card-title">Kebutuhan M1T</div>
+                                <div class="op-card-text">Manajemen stok buku, seragam, dan kebutuhan operasional M1T.</div>
                             </div>
                             <div class="op-card-icon">
-                                <i class="fas fa-project-diagram fa-3x text-white"></i>
+                                <i class="fas fa-user-graduate fa-3x text-white"></i>
                             </div>
                         </div>
                     </div>
                 </div>
             </a>
         </div>
-
-        <!-- Inventory -->
-        <div class="col-xl-4 col-md-6 mb-4">
-            <a href="#" class="text-decoration-none h-100 d-block">
-                <div class="card op-card h-100 shadow border-0" style="background: linear-gradient(135deg, #4e73df 0%, #2e59d9 100%) !important;">
-                    <div class="card-body p-4">
-                        <div class="d-flex justify-content-between align-items-start">
-                            <div class="flex-grow-1">
-                                <div class="op-card-title">Inventory</div>
-                                <div class="op-card-text">Pencatatan barang masuk/keluar dan aset perusahaan.</div>
-                            </div>
-                            <div class="op-card-icon">
-                                <i class="fas fa-box-open fa-3x text-white"></i>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </a>
-        </div>
-        
     </div>
 </div>
 @endsection
